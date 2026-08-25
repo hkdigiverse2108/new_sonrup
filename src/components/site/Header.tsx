@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Heart, Search, ShoppingBag, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
@@ -37,7 +37,6 @@ export function AnnouncementBar() {
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [menu, setMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [q, setQ] = useState("");
   const { count, setCartOpen, wishlist } = useStore();
@@ -58,23 +57,23 @@ export function Header() {
           "border-b border-transparent transition-all duration-500",
           scrolled
             ? "border-border/70 bg-background/80 py-2 shadow-[var(--shadow-soft)] backdrop-blur-xl"
-            : "bg-background py-4",
+            : "bg-background py-3 lg:py-4",
         )}
       >
-        <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 lg:px-10">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 lg:px-10">
           <Link to="/" className="flex shrink-0 items-center gap-1">
             <span className="font-display text-2xl font-extrabold lowercase tracking-[-0.06em]">
               sonrup<span className="text-gradient-gold">.</span>
             </span>
           </Link>
 
-          <nav className="hidden flex-1 items-center justify-center gap-7 lg:flex">
+          <nav className="order-3 flex w-full items-center justify-center gap-4 sm:gap-7 lg:order-2 lg:w-auto lg:flex-1">
             {NAV.map((item) => (
               <Link
                 key={item.label}
                 to={item.to}
                 {...("search" in item ? { search: item.search as never } : {})}
-                className="group relative text-[12px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground"
+                className="group relative text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground sm:text-[12px]"
               >
                 {item.label}
                 <span className="absolute -bottom-1.5 left-0 h-[2px] w-0 rounded-full bg-[image:var(--gradient-gold)] transition-all duration-300 group-hover:w-full" />
@@ -82,7 +81,7 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="order-2 ml-auto flex items-center gap-1 lg:order-3">
             <button
               aria-label="Search"
               onClick={() => setSearchOpen((s) => !s)}
@@ -93,14 +92,14 @@ export function Header() {
             <Link
               to="/login"
               aria-label="Account"
-              className="hidden h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted sm:grid"
+              className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
             >
               <User className="h-[18px] w-[18px]" />
             </Link>
             <Link
               to="/wishlist"
               aria-label="Wishlist"
-              className="relative hidden h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted sm:grid"
+              className="relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
             >
               <Heart className="h-[18px] w-[18px]" />
               {wishlist.length > 0 && (
@@ -119,13 +118,6 @@ export function Header() {
                 </span>
               )}
             </button>
-            <button
-              aria-label="Menu"
-              onClick={() => setMenu(true)}
-              className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted lg:hidden"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
           </div>
         </div>
 
@@ -139,7 +131,7 @@ export function Header() {
               }}
               className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3 shadow-[var(--shadow-soft)]"
             >
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 autoFocus
                 value={q}
@@ -147,93 +139,17 @@ export function Header() {
                 placeholder="Search gummies, flavours, benefits…"
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
+              <button
+                type="button"
+                aria-label="Close search"
+                onClick={() => setSearchOpen(false)}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </form>
           </div>
         )}
-      </div>
-
-      {/* Mobile menu */}
-      <div
-        className={cn(
-          "fixed inset-0 z-60 lg:hidden",
-          menu ? "pointer-events-auto" : "pointer-events-none",
-        )}
-      >
-        <div
-          onClick={() => setMenu(false)}
-          className={cn("absolute inset-0 bg-ink/55 backdrop-blur-sm transition-opacity duration-400", menu ? "opacity-100" : "opacity-0")}
-        />
-        <div
-          className={cn(
-            "absolute inset-y-0 right-0 flex w-[88%] max-w-sm flex-col bg-background shadow-[var(--shadow-lift)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            menu ? "translate-x-0" : "translate-x-full",
-          )}
-        >
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border/60 px-6 py-4">
-            <span className="truncate font-display text-xl font-extrabold lowercase tracking-[-0.06em]">
-              sonrup<span className="text-gradient-gold">.</span>
-            </span>
-            <button
-              aria-label="Close menu"
-              onClick={() => setMenu(false)}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border/70 transition-colors hover:bg-muted"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-6 py-5">
-            <nav className="flex flex-col">
-              {NAV.map((item, i) => (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  {...("search" in item ? { search: item.search as never } : {})}
-                  onClick={() => setMenu(false)}
-                  className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/50 py-4 transition-colors hover:text-secondary"
-                  style={{ animation: menu ? `rise-in 0.5s ${i * 60}ms both` : undefined }}
-                >
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground">
-                    0{i + 1}
-                  </span>
-                  <span className="display-xl truncate text-2xl">{item.label}</span>
-                  <span className="text-muted-foreground transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              ))}
-            </nav>
-
-            <div className="mt-6 grid grid-cols-3 gap-2">
-              {[
-                { to: "/account", label: "Account", icon: User },
-                { to: "/wishlist", label: "Wishlist", icon: Heart },
-                { to: "/blog", label: "Journal", icon: Search },
-              ].map(({ to, label, icon: Icon }) => (
-                <Link
-                  key={label}
-                  to={to}
-                  onClick={() => setMenu(false)}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border/70 bg-card px-2 py-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-muted"
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-border/60 px-6 py-5">
-            <button
-              onClick={() => {
-                setMenu(false);
-                setCartOpen(true);
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-secondary px-5 py-3.5 text-[12px] font-bold uppercase tracking-[0.16em] text-secondary-foreground transition-opacity hover:opacity-90"
-            >
-              <ShoppingBag className="h-4 w-4 shrink-0" />
-              View cart{count > 0 ? ` (${count})` : ""}
-            </button>
-          </div>
-        </div>
       </div>
     </header>
   );
