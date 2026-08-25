@@ -1,12 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { z } from "zod";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, ProductCard, Reveal } from "@/components/site/Primitives";
 import { goals, products } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
-type ShopSearch = { q: string; goal: string; sort: string; max: number };
+const shopSearchSchema = z.object({
+  q: z.string().default(""),
+  goal: z.string().default(""),
+  sort: z.string().default("featured"),
+  max: z.preprocess((v) => (Number(v) > 0 ? Number(v) : 1500), z.number()).default(1500),
+});
+
+type ShopSearch = z.infer<typeof shopSearchSchema>;
 
 const SORTS = [
   { value: "featured", label: "Featured" },
@@ -18,12 +26,7 @@ const SORTS = [
 ];
 
 export const Route = createFileRoute("/shop")({
-  validateSearch: (search: Partial<ShopSearch>): ShopSearch => ({
-    q: typeof search.q === "string" ? search.q : "",
-    goal: typeof search.goal === "string" ? search.goal : "",
-    sort: typeof search.sort === "string" ? search.sort : "featured",
-    max: Number(search.max) > 0 ? Number(search.max) : 1500,
-  }),
+  validateSearch: shopSearchSchema,
   head: () => ({
     meta: [
       { title: "Shop All Gummies — Sonrup Nutrition" },
