@@ -1,14 +1,20 @@
-# Welcome to your Lovable project
+# Glow Up Studio
+
+https://github.com/Janvii1505/gummy-glow-complete.git
+Take this website as a reference and please generate all the pages that have not been generated and also please change the hero section in the home page and add some animation 
+je pages already created chhe e change na karo baki je baki chhe pages generate karvana e generate karavo please
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://joyous-web-refine.lovable.app
+
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/0cbea478-5ffc-4d99-8111-f446e8a7fb00).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +26,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
