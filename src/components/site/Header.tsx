@@ -161,35 +161,77 @@ export function Header() {
       >
         <div
           onClick={() => setMenu(false)}
-          className={cn("absolute inset-0 bg-ink/45 transition-opacity duration-400", menu ? "opacity-100" : "opacity-0")}
+          className={cn("absolute inset-0 bg-ink/55 backdrop-blur-sm transition-opacity duration-400", menu ? "opacity-100" : "opacity-0")}
         />
         <div
           className={cn(
-            "absolute inset-y-0 right-0 flex w-[86%] max-w-sm flex-col bg-background p-7 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "absolute inset-y-0 right-0 flex w-[88%] max-w-sm flex-col bg-background shadow-[var(--shadow-lift)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
             menu ? "translate-x-0" : "translate-x-full",
           )}
         >
-          <button aria-label="Close menu" onClick={() => setMenu(false)} className="ml-auto grid h-10 w-10 place-items-center rounded-full hover:bg-muted">
-            <X className="h-5 w-5" />
-          </button>
-          <nav className="mt-6 flex flex-col gap-1">
-            {NAV.map((item, i) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                {...("search" in item ? { search: item.search as never } : {})}
-                onClick={() => setMenu(false)}
-                className="display-xl border-b border-border/60 py-4 text-3xl transition-colors hover:text-secondary"
-                style={{ animation: menu ? `rise-in 0.5s ${i * 60}ms both` : undefined }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-8 flex flex-col gap-2 text-sm font-semibold">
-            <Link to="/account" onClick={() => setMenu(false)} className="py-1.5">My Account</Link>
-            <Link to="/wishlist" onClick={() => setMenu(false)} className="py-1.5">Wishlist</Link>
-            <Link to="/blog" onClick={() => setMenu(false)} className="py-1.5">Journal</Link>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border/60 px-6 py-4">
+            <span className="truncate font-display text-xl font-extrabold lowercase tracking-[-0.06em]">
+              sonrup<span className="text-gradient-gold">.</span>
+            </span>
+            <button
+              aria-label="Close menu"
+              onClick={() => setMenu(false)}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border/70 transition-colors hover:bg-muted"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <nav className="flex flex-col">
+              {NAV.map((item, i) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  {...("search" in item ? { search: item.search as never } : {})}
+                  onClick={() => setMenu(false)}
+                  className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/50 py-4 transition-colors hover:text-secondary"
+                  style={{ animation: menu ? `rise-in 0.5s ${i * 60}ms both` : undefined }}
+                >
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground">
+                    0{i + 1}
+                  </span>
+                  <span className="display-xl truncate text-2xl">{item.label}</span>
+                  <span className="text-muted-foreground transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              {[
+                { to: "/account", label: "Account", icon: User },
+                { to: "/wishlist", label: "Wishlist", icon: Heart },
+                { to: "/blog", label: "Journal", icon: Search },
+              ].map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={label}
+                  to={to}
+                  onClick={() => setMenu(false)}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border/70 bg-card px-2 py-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-muted"
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-border/60 px-6 py-5">
+            <button
+              onClick={() => {
+                setMenu(false);
+                setCartOpen(true);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-secondary px-5 py-3.5 text-[12px] font-bold uppercase tracking-[0.16em] text-secondary-foreground transition-opacity hover:opacity-90"
+            >
+              <ShoppingBag className="h-4 w-4 shrink-0" />
+              View cart{count > 0 ? ` (${count})` : ""}
+            </button>
           </div>
         </div>
       </div>
