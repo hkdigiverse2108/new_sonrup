@@ -6,8 +6,6 @@ import { useStore } from "@/lib/store";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
-  { label: "Best Sellers", to: "/shop", search: { sort: "bestsellers" } },
-  { label: "New Arrivals", to: "/shop", search: { sort: "new" } },
   { label: "About", to: "/about" },
   { label: "FAQs", to: "/faq" },
   { label: "Contact", to: "/contact" },

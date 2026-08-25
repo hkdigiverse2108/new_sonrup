@@ -214,23 +214,6 @@ function Hero() {
           </div>
         </div>
       </div>
-
-      {/* Kinetic footer line */}
-      <div className="relative overflow-hidden border-y border-cream/10 py-3">
-        <div className="marquee-track flex w-max gap-8 whitespace-nowrap">
-          {[0, 1].map((k) => (
-            <div key={k} className="flex gap-8">
-              {["Biotin + Multivitamin", "Himalayan Shilajit", "Kid's Immunity", "Real fruit flavours", "No proprietary blends"].map(
-                (t) => (
-                  <span key={t} className="text-[11px] font-bold uppercase tracking-[0.28em] text-cream/45">
-                    {t} <span className="ml-8 text-primary">✦</span>
-                  </span>
-                ),
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
