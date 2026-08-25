@@ -94,7 +94,7 @@ function Checkout() {
         <h1 className="display-xl mt-6 text-4xl sm:text-6xl">Checkout</h1>
 
         <div className="mt-8 flex items-center gap-3">
-          {["Contact", "Shipping", "Payment"].map((s, i) => (
+          {["Details", "Payment"].map((s, i) => (
             <div key={s} className="flex items-center gap-3">
               <span
                 className={cn(
@@ -104,7 +104,7 @@ function Checkout() {
               >
                 {i + 1}. {s}
               </span>
-              {i < 2 && <span className="h-px w-6 bg-border" />}
+              {i < 1 && <span className="h-px w-6 bg-border" />}
             </div>
           ))}
         </div>
@@ -113,13 +113,26 @@ function Checkout() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (step < 3) {
+              if (step < 2) {
                 setStep(step + 1);
                 return;
               }
               const id = `SNR-${Math.floor(100000 + Math.random() * 899999)}`;
               
-              const newOrder: Order = {
+              const formData = new FormData(e.currentTarget);
+              const customerName = formData.get("customer_name") as string || "Guest";
+              const customerEmail = formData.get("customer_email") as string || "guest@example.com";
+              const customerPhone = formData.get("customer_phone") as string || "";
+              
+              const shippingAddress = {
+                line1: formData.get("line1") as string || "",
+                city: formData.get("city") as string || "",
+                state: formData.get("state") as string || "",
+                pincode: formData.get("pincode") as string || "",
+                landmark: formData.get("landmark") as string || "",
+              };
+
+              const newOrder = {
                 id,
                 date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
                 status: "Processing",
@@ -132,12 +145,17 @@ function Checkout() {
                   count: l.product.count,
                   qty: l.qty,
                 })),
+                customer_name: customerName,
+                customer_email: customerEmail,
+                customer_phone: customerPhone,
+                shipping_address: shippingAddress,
+                payment_method: pay,
               };
 
               if (user) {
-                addOrderLocal(newOrder);
-                apiAddOrder(user.email, newOrder).catch(console.error);
+                addOrderLocal(newOrder as any);
               }
+              apiAddOrder(newOrder).catch(console.error);
 
               clear();
               setDone(id);
@@ -146,17 +164,15 @@ function Checkout() {
             className="surface-card grid gap-6 p-6 sm:p-8"
           >
             {step === 1 && (
-              <Section title="Contact details">
-                <Grid>
-                  <Field label="Full name" placeholder="Janvi Vasani" />
-                  <Field label="Phone" placeholder="98200 00000" />
-                </Grid>
-                <Field label="Email" type="email" placeholder="you@email.com" />
-              </Section>
-            )}
-
-            {step === 2 && (
-              <Section title="Shipping address">
+              <div className="grid gap-12">
+                <Section title="Contact details">
+                  <Grid>
+                    <Field label="Full name" name="customer_name" placeholder="Janvi Vasani" defaultValue={user?.name} />
+                    <Field label="Phone" name="customer_phone" placeholder="98200 00000" defaultValue={user?.phone} />
+                  </Grid>
+                  <Field label="Email" name="customer_email" type="email" placeholder="you@email.com" defaultValue={user?.email} />
+                </Section>
+                <Section title="Shipping address">
                 {addresses.length > 0 && (
                   <div className="mb-6 grid gap-3 sm:grid-cols-2">
                     {addresses.map((a) => (
@@ -197,27 +213,26 @@ function Checkout() {
                   </div>
                 )}
 
-                {selectedAddressId === "new" && (
-                  <div className="grid gap-5">
-                    <Field label="Address line" placeholder="Flat / house, street" />
-                    <Grid>
-                      <Field label="City" placeholder="Mumbai" />
-                      <Field label="State" placeholder="Maharashtra" />
-                    </Grid>
-                    <Grid>
-                      <Field label="Pincode" placeholder="400069" />
-                      <Field label="Landmark (optional)" required={false} placeholder="Near the park" />
-                    </Grid>
-                  </div>
-                )}
+                <div key={selectedAddressId} className="grid gap-5">
+                  <Field label="Address line" name="line1" placeholder="Flat / house, street" defaultValue={addresses.find(a => a.id === selectedAddressId)?.line1} />
+                  <Grid>
+                    <Field label="City" name="city" placeholder="Mumbai" defaultValue={addresses.find(a => a.id === selectedAddressId)?.city} />
+                    <Field label="State" name="state" placeholder="Maharashtra" defaultValue={addresses.find(a => a.id === selectedAddressId)?.state} />
+                  </Grid>
+                  <Grid>
+                    <Field label="Pincode" name="pincode" placeholder="400069" defaultValue={addresses.find(a => a.id === selectedAddressId)?.pincode} />
+                    <Field label="Landmark (optional)" name="landmark" required={false} placeholder="Near the park" defaultValue={addresses.find(a => a.id === selectedAddressId)?.landmark} />
+                  </Grid>
+                </div>
 
                 <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                   <Truck className="h-4 w-4 text-secondary" /> Delivered in 2–5 working days across India.
                 </p>
               </Section>
+              </div>
             )}
 
-            {step === 3 && (
+            {step === 2 && (
               <Section title="Payment method">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {PAYMENTS.map((p) => (
@@ -250,8 +265,8 @@ function Checkout() {
                 </BrandButton>
               )}
               <BrandButton type="submit" variant="solid" size="lg">
-                {step < 3 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
-                {step === 3 && <CreditCard className="h-4 w-4" />}
+                {step < 2 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
+                {step === 2 && <CreditCard className="h-4 w-4" />}
               </BrandButton>
             </div>
           </form>
@@ -309,16 +324,20 @@ function Field({
   placeholder,
   type = "text",
   required = true,
+  defaultValue,
+  name,
 }: {
   label: string;
   placeholder?: string;
   type?: string;
   required?: boolean;
+  defaultValue?: string;
+  name?: string;
 }) {
   return (
     <label className="grid gap-2">
       <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
-      <input className="field" type={type} placeholder={placeholder} required={required} />
+      <input className="field" type={type} placeholder={placeholder} required={required} defaultValue={defaultValue} name={name} />
     </label>
   );
 }

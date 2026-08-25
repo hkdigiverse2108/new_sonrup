@@ -114,12 +114,7 @@ export const useMilestones = () => {
   });
 };
 
-export const useHomeContent = () => {
-  return useQuery({
-    queryKey: ["home_content"],
-    queryFn: () => fetchJson("/api/content/home"),
-  });
-};
+
 
 // --- Auth & User APIs ---
 export const apiLogin = (data: any) => fetchJson("/api/auth/login", { method: "POST", body: JSON.stringify(data) });
@@ -127,5 +122,5 @@ export const apiRegister = (data: any) => fetchJson("/api/auth/register", { meth
 export const apiGetMe = () => fetchJson("/api/auth/me");
 export const apiUpdateUser = (data: any) => fetchJson(`/api/user/profile`, { method: "PUT", body: JSON.stringify(data) });
 export const apiSyncAddresses = (addresses: any[]) => fetchJson(`/api/user/addresses`, { method: "POST", body: JSON.stringify(addresses) });
-export const apiAddOrder = (order: any) => fetchJson(`/api/user/orders`, { method: "POST", body: JSON.stringify(order) });
+export const apiAddOrder = (order: any) => fetchJson(`/api/orders`, { method: "POST", body: JSON.stringify(order) });
 export const apiSubscribeNewsletter = (email: string) => fetchJson("/api/newsletter/subscribe", { method: "POST", body: JSON.stringify({ email }) });

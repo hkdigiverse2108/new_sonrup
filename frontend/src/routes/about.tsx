@@ -50,7 +50,7 @@ function About() {
               <img
                 src={IMG.multi}
                 alt="Sonrup gummies range"
-                className="relative w-full rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
+                className="relative w-full aspect-[4/5] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
               />
             </div>
           </Reveal>

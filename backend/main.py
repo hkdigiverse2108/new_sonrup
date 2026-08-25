@@ -10,6 +10,10 @@ import jwt
 from datetime import datetime, timedelta
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import connect_to_mongo, close_mongo_connection, get_database
+from backend.models import (
+    UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
+    HomePageContentModel
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -156,10 +160,7 @@ async def get_home_content(db=Depends(get_database)):
 # Auth & User Endpoints
 # -------------------------------------------------------------------
 
-from backend.models import (
-    UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
-    HomePageContentModel
-)
+
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "sonrup_fallback_secret_key_2026")
 JWT_ALGORITHM = "HS256"
@@ -218,13 +219,15 @@ async def login_user(req: UserLogin, db=Depends(get_database)):
     return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/api/auth/me")
-async def get_my_profile(current_user=Depends(get_current_user)):
+async def get_my_profile(current_user=Depends(get_current_user), db=Depends(get_database)):
+    orders_cursor = db["orders"].find({"customer_email": current_user["email"]}, {"_id": 0})
+    user_orders = await orders_cursor.to_list(length=100)
     return {
         "email": current_user["email"],
         "name": current_user["name"],
         "phone": current_user.get("phone", ""),
         "addresses": current_user.get("addresses", []),
-        "orders": current_user.get("orders", [])
+        "orders": user_orders
     }
 
 @app.put("/api/user/profile")
@@ -260,15 +263,10 @@ async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True}
 
-@app.post("/api/user/orders")
-async def add_my_order(order: OrderModel, current_user=Depends(get_current_user), db=Depends(get_database)):
-    result = await db["users"].update_one(
-        {"email": current_user["email"]},
-        {"$push": {"orders": order.model_dump()}}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"success": True}
+@app.post("/api/orders")
+async def create_order(order: OrderModel, db=Depends(get_database)):
+    await db["orders"].insert_one(order.model_dump())
+    return {"success": True, "order_id": order.id}
 
 # -------------------------------------------------------------------
 # Newsletter Endpoint

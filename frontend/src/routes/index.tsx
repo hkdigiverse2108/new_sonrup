@@ -22,7 +22,7 @@ import {
   SectionTitle,
 } from "@/components/site/Primitives";
 import { IMG, inr } from "@/lib/products";
-import { useProducts, useFlavours, useGoals, useReviews, useFaqs, useHomeContent } from "@/lib/api";
+import { useProducts, useFlavours, useGoals, useReviews, useFaqs } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -45,17 +45,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { data: content, isLoading } = useHomeContent();
-  if (isLoading || !content) return <div className="min-h-screen bg-background" />;
-
   return (
     <main>
-      <Hero content={content.hero} />
-      <TrustStrip content={content.trust_strip} />
+      <Hero />
+      <TrustStrip />
       <BestSellers />
       <FlavourExperience />
-      <WhyOurGummies content={content.why} />
-      <IngredientStory content={content.ingredient_story} />
+      <WhyOurGummies />
+      <IngredientStory />
       <FindYourGummy />
       <BrandStory />
       <Reviews />
@@ -68,14 +65,22 @@ function Home() {
 
 /* ---------------- HERO ---------------- */
 
-function Hero({ content }: { content: any }) {
+const HERO_ROTATE = ["glow", "energy", "immunity", "focus", "calm"];
+
+const HERO_STATS = [
+  { k: "5000 mcg", v: "Biotin per serving" },
+  { k: "60", v: "Gummies per tube" },
+  { k: "4.8/5", v: "From 4,356 reviews" },
+];
+
+function Hero() {
   const [word, setWord] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const id = setInterval(() => setWord((i) => (i + 1) % content.rotate.length), 2400);
+    const id = setInterval(() => setWord((i) => (i + 1) % HERO_ROTATE.length), 2400);
     return () => clearInterval(id);
-  }, [content]);
+  }, []);
 
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -112,7 +117,7 @@ function Hero({ content }: { content: any }) {
             <span className="mask-rise mt-2 flex flex-wrap items-baseline gap-x-4 [--d:320ms]">
               <span className="text-[0.42em] font-bold uppercase tracking-[0.3em] text-cream/45">for your</span>
               <span className="relative inline-block h-[1.02em] min-w-[7.5em] overflow-hidden align-bottom">
-                {content.rotate.map((w: string, i: number) => (
+                {HERO_ROTATE.map((w, i) => (
                   <span
                     key={w}
                     aria-hidden={i !== word}
@@ -152,7 +157,7 @@ function Hero({ content }: { content: any }) {
           </div>
 
           <dl className="mask-rise mt-14 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur [--d:700ms]">
-            {content.stats.map((s: any) => (
+            {HERO_STATS.map((s) => (
               <div key={s.k} className="px-4 py-5">
                 <dt className="font-display text-xl font-extrabold text-primary sm:text-2xl">{s.k}</dt>
                 <dd className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cream/50">{s.v}</dd>
@@ -225,13 +230,11 @@ const trust = [
   { icon: Heart, label: "Loved by Customers" },
 ];
 
-function TrustStrip({ content }: { content: string[] }) {
+function TrustStrip() {
   return (
     <section className="border-y border-border bg-card">
       <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-px px-5 py-2 sm:grid-cols-3 lg:grid-cols-5 lg:px-10">
-        {content.map((label: string, i: number) => {
-          const Icon = trust[i % trust.length]?.icon || BadgeCheck;
-          return (
+        {trust.map(({ icon: Icon, label }, i) => (
           <Reveal key={label} delay={i * 70}>
             <div className="flex items-center gap-3 px-2 py-6">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-ink">
@@ -240,8 +243,7 @@ function TrustStrip({ content }: { content: string[] }) {
               <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{label}</span>
             </div>
           </Reveal>
-          );
-        })}
+        ))}
       </div>
     </section>
   );
@@ -346,15 +348,15 @@ function FlavourExperience() {
 /* ---------------- WHY ---------------- */
 
 const whys = [
-  { icon: Leaf },
-  { icon: Sparkles },
-  { icon: Clock },
-  { icon: FlaskConical },
-  { icon: BadgeCheck },
-  { icon: PackageCheck },
+  { icon: Leaf, title: "Premium Ingredients", text: "Actives at doses that matter, sourced from suppliers we can name." },
+  { icon: Sparkles, title: "Delicious Taste", text: "Real fruit concentrates. No chalky aftertaste, ever." },
+  { icon: Clock, title: "Easy Daily Routine", text: "One or two gummies. No water, no measuring, no excuses." },
+  { icon: FlaskConical, title: "Carefully Crafted", text: "Small-batch formulation with in-house pharmacists." },
+  { icon: BadgeCheck, title: "Quality Assured", text: "Every batch third-party tested for purity and potency." },
+  { icon: PackageCheck, title: "Convenient Format", text: "A tube that travels, seals tight and looks good on the counter." },
 ];
 
-function WhyOurGummies({ content }: { content: any }) {
+function WhyOurGummies() {
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
       <div className="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
@@ -363,7 +365,7 @@ function WhyOurGummies({ content }: { content: any }) {
             <img
               src={IMG.multi}
               alt="Sonrup multivitamin gummies packaging"
-              className="w-full rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
+              className="w-full aspect-[4/5] rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
             />
           </div>
           <div className="float-slow absolute -bottom-8 -right-4 max-w-[220px] rounded-3xl bg-card p-5 shadow-[var(--shadow-lift)]">
@@ -376,27 +378,24 @@ function WhyOurGummies({ content }: { content: any }) {
           <Reveal>
             <SectionTitle
               eyebrow="Why our gummies"
-              title={<>{content.title}</>}
-              sub={content.sub}
+              title={<>Built to be taken, not just bought.</>}
+              sub="Most supplements fail on the shelf, not in the lab. We designed ours to be the part of your day you actually look forward to."
             />
           </Reveal>
           <div className="mt-10 grid gap-x-8 sm:grid-cols-2">
-            {content.features.map((w: any, i: number) => {
-              const Icon = whys[i % whys.length]?.icon || BadgeCheck;
-              return (
+            {whys.map((w, i) => (
               <Reveal key={w.title} delay={i * 80}>
                 <div className="group flex gap-4 border-b border-border/70 py-5">
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-muted transition-colors group-hover:bg-primary/25">
-                    <Icon className="h-5 w-5" />
+                    <w.icon className="h-5 w-5" />
                   </span>
                   <div>
                     <h3 className="text-sm font-extrabold uppercase tracking-[0.1em]">{w.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{w.desc}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{w.text}</p>
                   </div>
                 </div>
               </Reveal>
-              );
-            })}
+            ))}
           </div>
         </div>
       </div>
@@ -413,16 +412,16 @@ const ringItems = [
   { name: "Tamarind", note: "Real imli flavour", pos: "right-0 bottom-16" },
 ];
 
-function IngredientStory({ content }: { content: any }) {
+function IngredientStory() {
   return (
     <section className="relative overflow-hidden bg-muted/50 py-24">
       <div className="mx-auto max-w-[1400px] px-5 lg:px-10">
         <Reveal>
           <SectionTitle
             align="center"
-            eyebrow={content.eyebrow}
-            title={<>{content.title}</>}
-            sub={content.sub}
+            eyebrow="Ingredient story"
+            title={<>What's inside the tube</>}
+            sub="Every gummy is a short ingredient list you could read out loud without flinching."
           />
         </Reveal>
 

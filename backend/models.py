@@ -103,12 +103,24 @@ class OrderItemModel(BaseModel):
     count: str
     qty: int
 
+class ShippingAddress(BaseModel):
+    line1: str
+    city: str
+    state: str
+    pincode: str
+    landmark: Optional[str] = None
+
 class OrderModel(BaseModel):
     id: str
     date: str
     status: str
     total: float
     items: List[OrderItemModel]
+    customer_name: str
+    customer_email: str
+    customer_phone: str
+    shipping_address: ShippingAddress
+    payment_method: str
 
 class UserModel(BaseModel):
     email: str
