@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Clock, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { apiSubmitContact } from "@/lib/api";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
 
@@ -22,57 +24,72 @@ export const Route = createFileRoute("/contact")({
   component: Contact,
 });
 
-const CHANNELS = [
-  { icon: Mail, label: "Email us", value: "care@sonrup.in", note: "Replies within one working day" },
-  { icon: Phone, label: "Call us", value: "+91 98200 00000", note: "Mon–Sat, 10am – 7pm IST" },
-  { icon: MessageCircle, label: "WhatsApp", value: "+91 98200 00000", note: "Fastest for order updates" },
-  { icon: MapPin, label: "Visit", value: "Andheri East, Mumbai 400069", note: "By appointment only" },
-];
-
+function getIcon(name: string) {
+  if (name === "Mail") return Mail;
+  if (name === "Phone") return Phone;
+  if (name === "MessageCircle") return MessageCircle;
+  if (name === "MapPin") return MapPin;
+  return Mail;
+}
 
 function Contact() {
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [formState, setFormState] = useState({ name: "", email: "", phone: "", message: "" });
 
-  const set = (k: keyof typeof form) => (e: { target: { value: string } }) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const { data: contactContent, isLoading } = useContactContent();
+
+  const set = (k: keyof typeof formState) => (e: { target: { value: string } }) =>
+    setFormState((f) => ({ ...f, [k]: e.target.value }));
+
+  const hero = contactContent?.hero || { eyebrow: "Contact", title_black: "Talk to", title_gold: "real humans.", sub: "No bots, no ticket queues you never hear back from. Our small care team handles every message." };
+  const channels = contactContent?.channels || [
+    { icon: "Mail", label: "Email us", value: "care@sonrup.in", note: "Replies within one working day" },
+    { icon: "Phone", label: "Call us", value: "+91 98200 00000", note: "Mon–Sat, 10am – 7pm IST" },
+    { icon: "MessageCircle", label: "WhatsApp", value: "+91 98200 00000", note: "Fastest for order updates" },
+    { icon: "MapPin", label: "Visit", value: "Andheri East, Mumbai 400069", note: "By appointment only" },
+  ];
+  const supportHours = contactContent?.support_hours || { text: "Support hours: Monday to Saturday, 10am – 7pm IST." };
+  const formContent = contactContent?.form || { title: "Send us a message" };
 
   return (
     <main>
       <PageHero
-        eyebrow="Contact"
+        eyebrow={hero.eyebrow}
         title={
           <>
-            Talk to
-            <span className="text-gradient-gold"> real humans.</span>
+            {hero.title_black}
+            <span className="text-gradient-gold"> {hero.title_gold}</span>
           </>
         }
-        sub="No bots, no ticket queues you never hear back from. Our small care team handles every message."
+        sub={hero.sub}
       />
 
       <Container className="py-14 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr]">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            {CHANNELS.map(({ icon: Icon, label, value, note }, i) => (
-              <Reveal key={label} delay={i * 70}>
-                <div className="surface-card lift flex gap-4 p-6">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-muted">
-                    <Icon className="h-5 w-5 text-secondary" />
+            {channels.map(({ icon, label, value, note }: any, i: number) => {
+              const Icon = getIcon(icon);
+              return (
+                <Reveal key={label} delay={i * 70}>
+                  <div className="surface-card lift flex gap-4 p-6">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-muted">
+                      <Icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                        {label}
+                      </p>
+                      <p className="mt-1 font-display text-lg font-extrabold">{value}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      {label}
-                    </p>
-                    <p className="mt-1 font-display text-lg font-extrabold">{value}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{note}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
             <div className="surface-card flex items-center gap-3 p-6">
               <Clock className="h-5 w-5 text-primary" />
               <p className="text-sm text-muted-foreground">
-                Support hours: Monday to Saturday, 10am – 7pm IST.
+                {supportHours.text}
               </p>
             </div>
           </div>
@@ -86,7 +103,7 @@ function Contact() {
                   </div>
                   <h3 className="display-xl text-3xl">Message sent</h3>
                   <p className="max-w-sm text-sm text-muted-foreground">
-                    Thanks {form.name.split(" ")[0] || "there"} — we'll reply to {form.email} within one working
+                    Thanks {formState.name.split(" ")[0] || "there"} — we'll reply to {formState.email} within one working
                     day.
                   </p>
                   <BrandButton variant="outline" onClick={() => setSent(false)}>
@@ -95,19 +112,24 @@ function Contact() {
                 </div>
               ) : (
                 <form
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
-                    setSent(true);
-                    toast.success("Message sent — we'll be in touch soon.");
+                    try {
+                      await apiSubmitContact(formState);
+                      setSent(true);
+                      toast.success("Message sent — we'll be in touch soon.");
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to send message. Please try again.");
+                    }
                   }}
                   className="grid gap-8"
                 >
-                  <h2 className="display-xl text-3xl">Send us a message</h2>
+                  <h2 className="display-xl text-3xl">{formContent.title}</h2>
                   <div className="grid gap-8 sm:grid-cols-2">
                     <Field label="Full Name">
                       <input
                         required
-                        value={form.name}
+                        value={formState.name}
                         onChange={set("name")}
                         className="field"
                         placeholder="e.g. Jane Doe"
@@ -117,7 +139,7 @@ function Contact() {
                       <input
                         required
                         type="email"
-                        value={form.email}
+                        value={formState.email}
                         onChange={set("email")}
                         className="field"
                         placeholder="jane@example.com"
@@ -128,7 +150,7 @@ function Contact() {
                     <input
                       required
                       type="tel"
-                      value={form.phone}
+                      value={formState.phone}
                       onChange={set("phone")}
                       className="field"
                       placeholder="+91 98765 43210"
@@ -138,7 +160,7 @@ function Contact() {
                     <textarea
                       required
                       rows={5}
-                      value={form.message}
+                      value={formState.message}
                       onChange={set("message")}
                       className="field resize-none"
                       placeholder="How can we help you?"

@@ -2,10 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Youtube, Mail, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { apiSubscribeNewsletter } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { apiSubscribeNewsletter, useContactContent, usePolicies } from "@/lib/api";
 import { BrandButton } from "./Primitives";
 
 export function Footer() {
+  const { data: contactContent } = useContactContent();
+  const { data: policies = [] } = usePolicies();
+
+  const email = contactContent?.channels?.find((c: any) => c.icon === "Mail")?.value || "care@sonrup.in";
+  const phone = contactContent?.channels?.find((c: any) => c.icon === "Phone")?.value || "+91 98200 00000";
+
   return (
     <footer className="relative mt-24 overflow-hidden bg-ink text-cream">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 blob bg-primary/15 blur-3xl" />
@@ -89,10 +96,10 @@ export function Footer() {
             </form>
             <div className="mt-6 space-y-2 text-sm text-cream/65">
               <p className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" /> care@sonrup.in
+                <Mail className="h-4 w-4 text-primary" /> {email}
               </p>
               <p className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-primary" /> +91 98200 00000
+                <Phone className="h-4 w-4 text-primary" /> {phone}
               </p>
             </div>
           </div>
@@ -101,14 +108,9 @@ export function Footer() {
         <div className="mt-16 flex flex-col gap-4 border-t border-cream/10 pt-8 text-xs text-cream/50 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Sonrup Nutrition. All rights reserved.</p>
           <div className="flex flex-wrap gap-5">
-            {[
-              { label: "Privacy Policy", slug: "privacy-policy" },
-              { label: "Terms & Conditions", slug: "terms-and-conditions" },
-              { label: "Shipping Policy", slug: "shipping-policy" },
-              { label: "Refund & Cancellation", slug: "refund-and-cancellation" },
-            ].map((p) => (
+            {policies.map((p) => (
               <Link key={p.slug} to="/policies/$slug" params={{ slug: p.slug }} className="transition-colors hover:text-primary">
-                {p.label}
+                {p.title}
               </Link>
             ))}
           </div>

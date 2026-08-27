@@ -25,7 +25,16 @@ export const Route = createFileRoute("/faq")({
 
 function Faq() {
   const { data: faqs = [], isLoading } = useFaqs();
-  const categories = useMemo(() => ["All", ...Array.from(new Set(faqs.map((f) => f.category)))], [faqs]);
+  const { data: homeContent } = useHomeContent();
+
+  const pageHeader = homeContent?.faq_settings?.page_header || {
+    eyebrow: "Help centre",
+    title_black: "Questions, ",
+    title_gold: "answered.",
+    sub: "Ingredients, dosage, delivery and returns — if it isn't here, our team replies within one working day."
+  };
+
+  const categories = ["All", ...(homeContent?.faq_settings?.categories || ["PRODUCTS", "INGREDIENTS", "SHIPPING", "RETURNS", "PAYMENTS", "ORDERS"])];
   const [cat, setCat] = useState("All");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(faqs[0]?.q ?? null);
@@ -39,14 +48,14 @@ function Faq() {
   return (
     <main>
       <PageHero
-        eyebrow="Help centre"
+        eyebrow={pageHeader.eyebrow}
         title={
           <>
-            Questions,
-            <span className="text-gradient-gold"> answered.</span>
+            {pageHeader.title_black}
+            <span className="text-gradient-gold">{pageHeader.title_gold}</span>
           </>
         }
-        sub="Ingredients, dosage, delivery and returns — if it isn't here, our team replies within one working day."
+        sub={pageHeader.sub}
       />
 
       <Container className="py-14 sm:py-20">

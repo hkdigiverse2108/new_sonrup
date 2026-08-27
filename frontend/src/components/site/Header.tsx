@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, Search, ShoppingBag, User, X } from "lucide-react";
+import { Heart, Search, ShoppingBag, User, X, Menu } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
@@ -40,6 +40,7 @@ export function AnnouncementBar() {
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [q, setQ] = useState("");
   const { count, setCartOpen, wishlist } = useStore();
   const { user } = useAuth();
@@ -84,11 +85,15 @@ export function Header() {
             </span>
           </Link>
 
-          <nav className="order-3 flex w-full items-center justify-center gap-4 sm:gap-7 lg:order-2 lg:w-auto lg:flex-1">
+          <nav className={cn(
+            "order-3 w-full lg:order-2 lg:flex lg:w-auto lg:flex-1 items-center justify-center gap-4 sm:gap-7",
+            mobileMenuOpen ? "flex flex-col py-6 border-t border-border mt-3 lg:border-none lg:py-0 lg:mt-0 lg:flex-row" : "hidden lg:flex"
+          )}>
             {NAV.map((item) => (
               <Link
                 key={item.label}
                 to={item.to}
+                onClick={() => setMobileMenuOpen(false)}
                 {...("search" in item ? { search: item.search as never } : {})}
                 className="group relative text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground sm:text-[12px]"
               >
@@ -134,6 +139,13 @@ export function Header() {
                   {count}
                 </span>
               )}
+            </button>
+            <button
+              aria-label="Menu"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted lg:hidden"
+            >
+              {mobileMenuOpen ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
             </button>
           </div>
         </div>

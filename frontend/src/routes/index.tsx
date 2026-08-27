@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BadgeCheck,
@@ -12,6 +13,7 @@ import {
   PackageCheck,
   ChevronDown,
   Quote,
+  Star, Shield, Check, ThumbsUp
 } from "lucide-react";
 import {
   BrandButton,
@@ -22,7 +24,7 @@ import {
   SectionTitle,
 } from "@/components/site/Primitives";
 import { IMG, inr } from "@/lib/products";
-import { useProducts, useFlavours, useGoals, useReviews, useFaqs } from "@/lib/api";
+import { useProducts, useFlavours, useGoals, useReviews, useFaqs, useHomeContent, fetchJson } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -65,22 +67,43 @@ function Home() {
 
 /* ---------------- HERO ---------------- */
 
-const HERO_ROTATE = ["glow", "energy", "immunity", "focus", "calm"];
-
-const HERO_STATS = [
-  { k: "5000 mcg", v: "Biotin per serving" },
-  { k: "60", v: "Gummies per tube" },
-  { k: "4.8/5", v: "From 4,356 reviews" },
-];
+// Fallback defaults (used while loading or if DB is empty)
+const HERO_DEFAULTS = {
+  rotate: ["glow", "energy", "immunity", "focus", "calm"],
+  stats: [
+    { k: "5000 mcg", v: "Biotin per serving" },
+    { k: "60", v: "Gummies per tube" },
+    { k: "4.8/5", v: "From 4,356 reviews" },
+  ],
+  eyebrow: "Est. 2023 · Made in India",
+  headline_line1: "A daily ritual",
+  headline_line2: "worth savouring",
+  headline_for_your: "for your",
+  subtext: "Chef-crafted gummies with real fruit flavour and actives listed to the milligram. Nutrition you look forward to, not nutrition you endure.",
+  cta1_text: "Shop the range",
+  cta1_href: "/shop",
+  cta2_text: "Taste the flavours",
+  cta2_href: "#flavours",
+  badge1_label: "Third-party tested",
+  badge1_value: "Every single batch",
+  badge2_label: "Pectin based",
+  badge2_value: "100% vegetarian",
+};
 
 function Hero() {
   const [word, setWord] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const { data: homeContent } = useHomeContent();
+  
+  const hero = homeContent?.hero ? { ...HERO_DEFAULTS, ...homeContent.hero } : HERO_DEFAULTS;
+
+  const rotate: string[] = hero.rotate?.length ? hero.rotate : HERO_DEFAULTS.rotate;
+  const stats: any[] = hero.stats?.length ? hero.stats : HERO_DEFAULTS.stats;
 
   useEffect(() => {
-    const id = setInterval(() => setWord((i) => (i + 1) % HERO_ROTATE.length), 2400);
+    const id = setInterval(() => setWord((i) => (i + 1) % rotate.length), 2400);
     return () => clearInterval(id);
-  }, []);
+  }, [rotate.length]);
 
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -105,19 +128,24 @@ function Hero() {
         <div className="relative z-10">
           <div className="mask-rise">
             <Eyebrow className="border-cream/15 bg-cream/[0.06] text-cream/70 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-primary" /> Est. 2023 · Made in India
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> {hero.eyebrow}
             </Eyebrow>
           </div>
 
           <h1 className="mt-8 font-display text-[clamp(2.9rem,9vw,5.9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
-            <span className="mask-rise block [--d:80ms]">A daily ritual</span>
+            <span className="mask-rise block [--d:80ms]">{hero.headline_line1}</span>
             <span className="mask-rise block [--d:200ms]">
-              worth <span className="italic font-semibold tracking-[-0.02em]">savouring</span>
+              {hero.headline_line2.includes(" ") ? (
+                <>
+                  {hero.headline_line2.split(" ").slice(0, -1).join(" ")}{" "}
+                  <span className="italic font-semibold tracking-[-0.02em]">{hero.headline_line2.split(" ").at(-1)}</span>
+                </>
+              ) : <span className="italic font-semibold tracking-[-0.02em]">{hero.headline_line2}</span>}
             </span>
             <span className="mask-rise mt-2 flex flex-wrap items-baseline gap-x-4 [--d:320ms]">
-              <span className="text-[0.42em] font-bold uppercase tracking-[0.3em] text-cream/45">for your</span>
+              <span className="text-[0.42em] font-bold uppercase tracking-[0.3em] text-cream/45">{hero.headline_for_your}</span>
               <span className="relative inline-block h-[1.02em] min-w-[7.5em] overflow-hidden align-bottom">
-                {HERO_ROTATE.map((w, i) => (
+                {rotate.map((w, i) => (
                   <span
                     key={w}
                     aria-hidden={i !== word}
@@ -134,30 +162,29 @@ function Hero() {
           </h1>
 
           <p className="mask-rise mt-8 max-w-md text-base leading-relaxed text-cream/65 sm:text-lg [--d:460ms]">
-            Chef-crafted gummies with real fruit flavour and actives listed to the milligram. Nutrition you look
-            forward to, not nutrition you endure.
+            {hero.subtext}
           </p>
 
           <div className="mask-rise mt-10 flex flex-wrap items-center gap-3 [--d:580ms]">
-            <Link to="/shop">
+            <Link to={hero.cta1_href?.startsWith("/") ? hero.cta1_href : "/shop"}>
               <BrandButton variant="gold" size="lg" className="group">
-                Shop the range
+                {hero.cta1_text}
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </BrandButton>
             </Link>
-            <a href="#flavours">
+            <a href={hero.cta2_href ?? "#flavours"}>
               <BrandButton
                 variant="ghost"
                 size="lg"
                 className="border border-cream/20 text-cream hover:bg-cream/10"
               >
-                Taste the flavours
+                {hero.cta2_text}
               </BrandButton>
             </a>
           </div>
 
           <dl className="mask-rise mt-14 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur [--d:700ms]">
-            {HERO_STATS.map((s) => (
+            {stats.map((s) => (
               <div key={s.k} className="px-4 py-5">
                 <dt className="font-display text-xl font-extrabold text-primary sm:text-2xl">{s.k}</dt>
                 <dd className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cream/50">{s.v}</dd>
@@ -176,7 +203,7 @@ function Hero() {
             <div className="relative overflow-hidden rounded-t-[999px] rounded-b-[2.5rem] border border-cream/12 bg-cream/[0.05] p-3 shadow-[var(--shadow-lift)] backdrop-blur">
               <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-70" />
               <img
-                src={IMG.multi}
+                src={hero.main_image || IMG.multi}
                 alt="Sonrup Biotin + Multivitamin gummies tube"
                 className="float-slow relative z-10 aspect-4/5 w-full rounded-t-[999px] rounded-b-[2rem] object-cover"
               />
@@ -187,8 +214,8 @@ function Hero() {
               className="absolute -left-5 top-24 z-20 rounded-2xl border border-cream/10 bg-ink/85 px-4 py-3 shadow-[var(--shadow-lift)] backdrop-blur sm:-left-10"
               style={{ transform: `translate3d(${tilt.x * -46}px, ${tilt.y * -36}px, 0)` }}
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Third-party tested</p>
-              <p className="font-display text-base font-extrabold text-cream">Every single batch</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{hero.badge1_label}</p>
+              <p className="font-display text-base font-extrabold text-cream">{hero.badge1_value}</p>
             </div>
 
             <div
@@ -197,18 +224,18 @@ function Hero() {
             >
               <Leaf className="h-5 w-5 text-leaf" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Pectin based</p>
-                <p className="font-display text-base font-extrabold">100% vegetarian</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{hero.badge2_label}</p>
+                <p className="font-display text-base font-extrabold">{hero.badge2_value}</p>
               </div>
             </div>
 
             <img
-              src={IMG.shilajit}
+              src={hero.left_image || IMG.shilajit}
               alt="Sonrup Himalayan Shilajit gummies"
               className="float-fast absolute -left-8 bottom-2 z-20 hidden h-32 w-24 rotate-[-8deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block"
             />
             <img
-              src={IMG.kids}
+              src={hero.right_image || IMG.kids}
               alt="Sonrup Kid's Multivitamin gummies"
               className="float-slow absolute -right-6 -top-4 z-20 hidden h-32 w-24 rotate-[9deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block [animation-delay:-2.5s]"
             />
@@ -230,20 +257,35 @@ const trust = [
   { icon: Heart, label: "Loved by Customers" },
 ];
 
+const iconMap: Record<string, any> = {
+  Leaf, Sparkles, BadgeCheck, Truck, Heart, Clock, FlaskConical, PackageCheck, Star, Shield, Check, ThumbsUp
+};
+
 function TrustStrip() {
+  const { data: homeContent } = useHomeContent();
+
+  const rawItems = homeContent?.trust_strip?.length ? homeContent.trust_strip : trust;
+  // Normalize legacy string arrays from DB to object format
+  const displayItems = typeof rawItems[0] === 'string' 
+    ? rawItems.map((t: string) => ({ icon: "BadgeCheck", label: t }))
+    : rawItems;
+
   return (
     <section className="border-y border-border bg-card">
       <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-px px-5 py-2 sm:grid-cols-3 lg:grid-cols-5 lg:px-10">
-        {trust.map(({ icon: Icon, label }, i) => (
-          <Reveal key={label} delay={i * 70}>
-            <div className="flex items-center gap-3 px-2 py-6">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-ink">
-                <Icon className="h-[18px] w-[18px]" />
-              </span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{label}</span>
-            </div>
-          </Reveal>
-        ))}
+        {displayItems.map((item: any, i: number) => {
+          const Icon = typeof item.icon === "string" ? (iconMap[item.icon] || BadgeCheck) : (item.icon || BadgeCheck);
+          return (
+            <Reveal key={item.label + i} delay={i * 70}>
+              <div className="flex items-center gap-3 px-2 py-6">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-ink">
+                  <Icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{item.label}</span>
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );
@@ -291,14 +333,22 @@ const flavourBg: Record<string, string> = {
 function FlavourExperience() {
   const [active, setActive] = useState(1);
   const { data: flavours = [] } = useFlavours();
+  const { data: homeContent } = useHomeContent();
+
+  const section = homeContent?.flavour_section ?? {
+    eyebrow: "Flavour experience",
+    title_black: "Five flavours.",
+    title_gold: "Zero compromise."
+  };
+
   return (
     <section id="flavours" className="relative overflow-hidden bg-ink py-24 text-cream">
       <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 blob bg-primary/20 blur-[100px]" />
       <div className="relative mx-auto max-w-[1400px] px-5 lg:px-10">
         <Reveal>
-          <Eyebrow className="border-cream/15 bg-cream/5 text-cream/70">Flavour experience</Eyebrow>
+          <Eyebrow className="border-cream/15 bg-cream/5 text-cream/70">{section.eyebrow}</Eyebrow>
           <h2 className="display-xl mt-5 max-w-3xl text-4xl leading-[0.92] sm:text-5xl lg:text-6xl">
-            Five flavours. <span className="text-gradient-gold">Zero compromise.</span>
+            {section.title_black} <span className="text-gradient-gold">{section.title_gold}</span>
           </h2>
         </Reveal>
 
@@ -311,9 +361,10 @@ function FlavourExperience() {
               onClick={() => setActive(i)}
               className={cn(
                 "group relative overflow-hidden rounded-[2rem] border border-cream/10 text-left transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] max-lg:h-28",
-                flavourBg[f.token],
+                f.token?.startsWith('#') ? "" : flavourBg[f.token],
                 active === i ? "lg:flex-[3.2]" : "lg:flex-[1]",
               )}
+              style={f.token?.startsWith('#') ? { backgroundColor: f.token } : {}}
             >
               <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-40" />
               <div className="relative flex h-full flex-col justify-between p-6">
@@ -356,46 +407,62 @@ const whys = [
   { icon: PackageCheck, title: "Convenient Format", text: "A tube that travels, seals tight and looks good on the counter." },
 ];
 
+
 function WhyOurGummies() {
+  const { data: homeContent } = useHomeContent();
+
+  const rawWhy = homeContent?.why || {};
+  const why = {
+    eyebrow: rawWhy.eyebrow || "WHY OUR GUMMIES",
+    title: rawWhy.title || "BUILT TO BE TAKEN, NOT JUST BOUGHT.",
+    sub: rawWhy.sub || "Most supplements fail on the shelf, not in the lab. We designed ours to be the part of your day you actually look forward to.",
+    image: rawWhy.image || IMG.multi,
+    stat_value: rawWhy.stat_value || "98%",
+    stat_text: rawWhy.stat_text || "of customers say they'd never go back to tablets.",
+    features: rawWhy.features || whys
+  };
+
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
       <div className="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <Reveal className="relative">
           <div className="relative overflow-hidden rounded-[2.5rem] bg-[image:var(--gradient-gold)] p-8">
             <img
-              src={IMG.multi}
+              src={why.image}
               alt="Sonrup multivitamin gummies packaging"
               className="w-full aspect-[4/5] rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
             />
           </div>
           <div className="float-slow absolute -bottom-8 -right-4 max-w-[220px] rounded-3xl bg-card p-5 shadow-[var(--shadow-lift)]">
-            <p className="font-display text-4xl font-extrabold">98%</p>
-            <p className="mt-1 text-xs text-muted-foreground">of customers say they'd never go back to tablets.</p>
+            <p className="font-display text-4xl font-extrabold">{why.stat_value}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{why.stat_text}</p>
           </div>
         </Reveal>
 
         <div>
           <Reveal>
-            <SectionTitle
-              eyebrow="Why our gummies"
-              title={<>Built to be taken, not just bought.</>}
-              sub="Most supplements fail on the shelf, not in the lab. We designed ours to be the part of your day you actually look forward to."
-            />
+            <Eyebrow className="border-muted bg-muted/30 text-muted-foreground">{why.eyebrow}</Eyebrow>
+            <h2 className="display-xl mt-5 text-4xl leading-[0.9] sm:text-5xl lg:text-[3.5rem]">{why.title}</h2>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+              {why.sub}
+            </p>
           </Reveal>
-          <div className="mt-10 grid gap-x-8 sm:grid-cols-2">
-            {whys.map((w, i) => (
-              <Reveal key={w.title} delay={i * 80}>
-                <div className="group flex gap-4 border-b border-border/70 py-5">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-muted transition-colors group-hover:bg-primary/25">
-                    <w.icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-extrabold uppercase tracking-[0.1em]">{w.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{w.text}</p>
+
+          <div className="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2">
+            {why.features.map((feature: any, i: number) => {
+              const Icon = typeof feature.icon === "string" ? (iconMap[feature.icon] || BadgeCheck) : (feature.icon || BadgeCheck);
+              const desc = feature.text || feature.desc || "Description missing.";
+              return (
+                <Reveal key={i} delay={i * 80} className="relative">
+                  <div className="absolute -left-3 top-0 h-[42px] w-[42px] rounded-full bg-primary/10" />
+                  <div className="relative">
+                    <Icon className="h-[22px] w-[22px] text-ink/80" />
+                    <h3 className="mt-5 text-[11px] font-bold uppercase tracking-widest">{feature.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -413,15 +480,28 @@ const ringItems = [
 ];
 
 function IngredientStory() {
+  const { data: homeContent } = useHomeContent();
+
+  const rawStory = homeContent?.ingredient_story || {};
+  const story = {
+    eyebrow: rawStory.eyebrow || "Ingredient story",
+    title: rawStory.title || "What's inside the tube",
+    sub: rawStory.sub || "Every gummy is a short ingredient list you could read out loud without flinching.",
+    image: rawStory.image || IMG.shilajit,
+    ingredients: rawStory.ingredients || ringItems,
+  };
+
+  const positions = ["left-0 top-6", "left-0 bottom-24", "right-0 top-16", "right-0 bottom-16"];
+
   return (
     <section className="relative overflow-hidden bg-muted/50 py-24">
       <div className="mx-auto max-w-[1400px] px-5 lg:px-10">
         <Reveal>
           <SectionTitle
             align="center"
-            eyebrow="Ingredient story"
-            title={<>What's inside the tube</>}
-            sub="Every gummy is a short ingredient list you could read out loud without flinching."
+            eyebrow={story.eyebrow}
+            title={<>{story.title}</>}
+            sub={story.sub}
           />
         </Reveal>
 
@@ -431,15 +511,15 @@ function IngredientStory() {
 
           <div className="relative mx-auto w-[min(70vw,320px)]">
             <img
-              src={IMG.shilajit}
-              alt="Sonrup Himalayan Shilajit gummies"
+              src={story.image}
+              alt="Sonrup gummies ingredients"
               className="float-slow w-full rounded-[2rem] shadow-[var(--shadow-lift)]"
             />
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:absolute lg:inset-0 lg:mt-0 lg:block">
-            {ringItems.map((it, i) => (
-              <Reveal key={it.name} delay={i * 120} className={cn("lg:absolute lg:w-56", it.pos)}>
+            {story.ingredients.map((it: any, i: number) => (
+              <Reveal key={i} delay={i * 120} className={cn("lg:absolute lg:w-56", positions[i] || "left-0 top-0")}>
                 <div className="surface-card p-4">
                   <p className="text-sm font-extrabold">{it.name}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{it.note}</p>
@@ -528,54 +608,65 @@ function FindYourGummy() {
 /* ---------------- BRAND STORY ---------------- */
 
 function BrandStory() {
+  const { data: homeContent } = useHomeContent();
+
+  const rawStory = homeContent?.brand_story || {};
+  const story = {
+    eyebrow: rawStory.eyebrow || "Our story",
+    title_black1: rawStory.title_black1 || "We started with a",
+    title_gold: rawStory.title_gold || " half-empty ",
+    title_black2: rawStory.title_black2 || "bottle of vitamins.",
+    paragraph1: rawStory.paragraph1 || "Every household has one — bought with the best intentions, abandoned by week three. Sonrup began by asking a simpler question: what if taking your vitamins was the nicest thirty seconds of your morning?",
+    paragraph2: rawStory.paragraph2 || "So we formulate backwards. Taste first, then texture, then the actives — never sacrificing the dose to get there. Small batches, honest labels, and packaging you don't have to hide in a cupboard.",
+    cta_text: rawStory.cta_text || "Read our story",
+    cta_link: rawStory.cta_link || "/about",
+    main_image: rawStory.main_image || IMG.kids,
+    floating_image: rawStory.floating_image || IMG.multi,
+    stats: rawStory.stats?.length ? rawStory.stats : [
+      { value: "4.8★", label: "Average rating" },
+      { value: "120k+", label: "Tubes shipped" },
+      { value: "100%", label: "Vegetarian" },
+    ]
+  };
+
   return (
     <section className="relative overflow-hidden py-24">
       <div className="mx-auto grid max-w-[1400px] items-center gap-14 px-5 lg:grid-cols-2 lg:px-10">
         <Reveal>
-          <Eyebrow>Our story</Eyebrow>
+          <Eyebrow>{story.eyebrow}</Eyebrow>
           <h2 className="display-xl mt-6 text-4xl leading-[0.9] sm:text-5xl lg:text-[4.2rem]">
-            We started with a
-            <span className="text-gradient-gold"> half-empty </span>
-            bottle of vitamins.
+            {story.title_black1}
+            <span className="text-gradient-gold">{story.title_gold}</span>
+            {story.title_black2}
           </h2>
           <div className="mt-8 space-y-5 text-base leading-relaxed text-muted-foreground">
-            <p>
-              Every household has one — bought with the best intentions, abandoned by week three. Sonrup began by asking
-              a simpler question: what if taking your vitamins was the nicest thirty seconds of your morning?
-            </p>
-            <p>
-              So we formulate backwards. Taste first, then texture, then the actives — never sacrificing the dose to get
-              there. Small batches, honest labels, and packaging you don't have to hide in a cupboard.
-            </p>
+            <p>{story.paragraph1}</p>
+            <p>{story.paragraph2}</p>
           </div>
           <div className="mt-10 grid grid-cols-3 gap-6">
-            {[
-              ["4.8★", "Average rating"],
-              ["120k+", "Tubes shipped"],
-              ["100%", "Vegetarian"],
-            ].map(([n, l]) => (
-              <div key={l}>
-                <p className="font-display text-3xl font-extrabold">{n}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">{l}</p>
+            {story.stats.map((s: any, i: number) => (
+              <div key={i}>
+                <p className="font-display text-3xl font-extrabold">{s.value || s[0]}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">{s.label || s[1]}</p>
               </div>
             ))}
           </div>
-          <Link to="/about" className="mt-10 inline-block">
+          <Link to={story.cta_link} className="mt-10 inline-block">
             <BrandButton variant="outline" size="lg">
-              Read our story
+              {story.cta_text}
             </BrandButton>
           </Link>
         </Reveal>
 
         <Reveal delay={140} className="relative">
           <img
-            src={IMG.kids}
-            alt="Sonrup Kid's Multivitamin gummies"
+            src={story.main_image}
+            alt="Sonrup main story image"
             className="ml-auto w-[76%] rounded-[2.5rem] object-cover shadow-[var(--shadow-lift)]"
           />
           <img
-            src={IMG.multi}
-            alt="Sonrup Biotin multivitamin gummies"
+            src={story.floating_image}
+            alt="Sonrup floating story image"
             className="float-slow absolute bottom-[-3rem] left-0 w-[46%] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
           />
         </Reveal>
@@ -588,11 +679,18 @@ function BrandStory() {
 
 function Reviews() {
   const { data: reviewsList = [] } = useReviews();
+  const { data: homeContent } = useHomeContent();
+
+  const section = homeContent?.reviews_section || {
+    eyebrow: "Reviews",
+    title: "Loved by 120,000+ mornings"
+  };
+
   return (
     <section className="bg-muted/50 py-24">
       <div className="mx-auto max-w-[1400px] px-5 lg:px-10">
         <Reveal>
-          <SectionTitle eyebrow="Reviews" title={<>Loved by 120,000+ mornings</>} />
+          <SectionTitle eyebrow={section.eyebrow} title={<>{section.title}</>} />
         </Reveal>
         <div className="mt-12 columns-1 gap-6 sm:columns-2 lg:columns-3 [&>*]:mb-6">
           {reviewsList.map((r, i) => (
@@ -626,32 +724,67 @@ function Reviews() {
 /* ---------------- SOCIAL ---------------- */
 
 function SocialGrid() {
-  const tiles = [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
+  const { data: homeContent } = useHomeContent();
+
+  const section = homeContent?.social_section || {
+    eyebrow: "@sonrup",
+    title: "Join the gummy club",
+    cta_text: "Follow us",
+    cta_link: "#",
+    images: []
+  };
+
+  const tiles = section.images?.length === 6 ? section.images : [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
+  
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <Reveal>
-          <SectionTitle eyebrow="@sonrup" title={<>Join the gummy club</>} />
+          <SectionTitle eyebrow={section.eyebrow} title={<>{section.title}</>} />
         </Reveal>
         <Reveal delay={100}>
-          <BrandButton variant="ink" size="lg">
-            Follow us
-          </BrandButton>
+          {section.cta_link && section.cta_link !== "#" ? (
+            <a href={section.cta_link} target="_blank" rel="noopener noreferrer">
+              <BrandButton variant="ink" size="lg">
+                {section.cta_text}
+              </BrandButton>
+            </a>
+          ) : (
+            <BrandButton variant="ink" size="lg">
+              {section.cta_text}
+            </BrandButton>
+          )}
         </Reveal>
       </div>
       <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((src, i) => (
-          <Reveal key={i} delay={i * 60} className={cn(i === 1 && "md:row-span-2", i === 4 && "lg:col-span-2")}>
-            <div className="group h-full overflow-hidden rounded-3xl">
-              <img
-                src={src}
-                alt="Sonrup gummies lifestyle"
-                loading="lazy"
-                className="h-full min-h-48 w-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-            </div>
-          </Reveal>
-        ))}
+        {tiles.map((src: string, i: number) => {
+          const link = section.image_links?.[i] || "#";
+          const isLink = link !== "#" && link !== "";
+          
+          const ImageWrapper = ({ children }: { children: React.ReactNode }) => 
+            isLink ? (
+              <a href={link} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+                {children}
+              </a>
+            ) : (
+              <div className="h-full w-full">{children}</div>
+            );
+
+          return (
+            <Reveal key={i} delay={i * 60} className={cn(i === 1 && "md:row-span-2", i === 4 && "lg:col-span-2")}>
+              <div className="group h-full overflow-hidden rounded-3xl bg-muted/20">
+                <ImageWrapper>
+                  <img
+                    src={src}
+                    alt="Sonrup gummies lifestyle"
+                    loading="lazy"
+                    className="h-full min-h-48 w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                </ImageWrapper>
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );
@@ -662,13 +795,21 @@ function SocialGrid() {
 function FaqTeaser() {
   const [open, setOpen] = useState(0);
   const { data: faqs = [] } = useFaqs();
+  const { data: homeContent } = useHomeContent();
+
+  const section = homeContent?.faq_settings?.home_section || {
+    eyebrow: "FAQ",
+    title: "Good questions, straight answers",
+    cta_text: "All FAQs"
+  };
+
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-16 lg:px-10">
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <Reveal>
-          <SectionTitle eyebrow="FAQ" title={<>Good questions, straight answers</>} />
+          <SectionTitle eyebrow={section.eyebrow} title={<>{section.title}</>} />
           <Link to="/faq" className="mt-6 inline-block">
-            <BrandButton variant="outline">All FAQs</BrandButton>
+            <BrandButton variant="outline">{section.cta_text}</BrandButton>
           </Link>
         </Reveal>
         <div className="divide-y divide-border border-y border-border">
@@ -702,36 +843,52 @@ function FaqTeaser() {
 /* ---------------- FINAL CTA ---------------- */
 
 function FinalCta() {
+  const { data: homeContent } = useHomeContent();
+
+  const section = homeContent?.final_cta || {
+    title_white: "Ready to make your day a little ",
+    title_gold: "sweeter?",
+    button_1_text: "Shop all gummies",
+    button_1_link: "/shop",
+    button_2_text: "Best sellers",
+    button_2_link: "/shop?sort=bestsellers",
+    image_left: "",
+    image_right: ""
+  };
+
+  const imgLeft = section.image_left || IMG.multi;
+  const imgRight = section.image_right || IMG.kids;
+
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-20 lg:px-10">
       <div className="relative overflow-hidden rounded-[3rem] bg-ink px-6 py-20 text-center text-cream sm:px-16">
         <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 blob bg-primary/25 blur-[80px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-80 w-80 blob bg-secondary/25 blur-[80px]" />
         <img
-          src={IMG.multi}
+          src={imgLeft}
           alt=""
           aria-hidden
-          className="float-slow pointer-events-none absolute -left-10 bottom-0 hidden w-48 rotate-[-12deg] rounded-3xl opacity-90 lg:block"
+          className="float-slow pointer-events-none absolute -left-10 bottom-0 hidden w-48 rotate-[-12deg] rounded-3xl opacity-90 lg:block object-cover h-64"
         />
         <img
-          src={IMG.kids}
+          src={imgRight}
           alt=""
           aria-hidden
-          className="float-fast pointer-events-none absolute -right-8 top-4 hidden w-48 rotate-[10deg] rounded-3xl opacity-90 lg:block"
+          className="float-fast pointer-events-none absolute -right-8 top-4 hidden w-48 rotate-[10deg] rounded-3xl opacity-90 lg:block object-cover h-64"
         />
         <div className="relative">
           <h2 className="display-xl mx-auto max-w-3xl text-4xl leading-[0.92] sm:text-5xl lg:text-6xl">
-            Ready to make your day a little <span className="text-gradient-gold">sweeter?</span>
+            {section.title_white} <span className="text-gradient-gold">{section.title_gold}</span>
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link to="/shop">
+            <Link to={section.button_1_link}>
               <BrandButton variant="gold" size="lg">
-                Shop all gummies
+                {section.button_1_text}
               </BrandButton>
             </Link>
-            <Link to="/shop" search={{ sort: "bestsellers" }}>
+            <Link to={section.button_2_link}>
               <BrandButton size="lg" variant="outline" className="border-cream/30 text-cream hover:bg-cream hover:text-ink">
-                Best sellers
+                {section.button_2_text}
               </BrandButton>
             </Link>
           </div>

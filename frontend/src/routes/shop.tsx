@@ -5,12 +5,11 @@ import { z } from "zod";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, ProductCard, Reveal } from "@/components/site/Primitives";
 import { Product } from "@/lib/products";
-import { useProducts, useGoals } from "@/lib/api";
+import { useProducts } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const shopSearchSchema = z.object({
   q: z.string().default(""),
-  goal: z.string().default(""),
   sort: z.string().default("featured"),
   max: z.preprocess((v) => (Number(v) > 0 ? Number(v) : 1500), z.number()).default(1500),
 });
@@ -43,7 +42,6 @@ export const Route = createFileRoute("/shop")({
 export function useShopFilters(search: ShopSearch, products: Product[]) {
   return useMemo(() => {
     let list = products.filter((p) => p.price <= search.max);
-    if (search.goal) list = list.filter((p) => p.goals.includes(search.goal));
     if (search.q.trim()) {
       const q = search.q.trim().toLowerCase();
       list = list.filter((p) =>
@@ -70,15 +68,13 @@ function ShopPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
-  const { data: goalsData = [], isLoading: isLoadingGoals } = useGoals();
-  const goals = goalsData.map(g => g.name);
   
   const results = useShopFilters(search, products);
 
   const set = (patch: Partial<ShopSearch>) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }) });
 
-  const active = Boolean(search.q || search.goal || search.max !== 1500 || search.sort !== "featured");
+  const active = Boolean(search.q || search.max !== 1500 || search.sort !== "featured");
 
   return (
     <main>
@@ -88,7 +84,7 @@ function ShopPage() {
         sub="Clean actives, real fruit flavours, and doses printed in plain numbers. Filter by what you're actually trying to fix."
       />
 
-      {(isLoadingProducts || isLoadingGoals) ? (
+      {isLoadingProducts ? (
         <Container className="py-24 text-center">Loading gummies...</Container>
       ) : (
       <Container className="py-12 lg:py-16">
@@ -119,19 +115,6 @@ function ShopPage() {
                 />
               </FilterBlock>
 
-              <FilterBlock title="Goal">
-                <div className="flex flex-wrap gap-2">
-                  <Chip active={!search.goal} onClick={() => set({ goal: "" })}>
-                    All
-                  </Chip>
-                  {goals.map((g) => (
-                    <Chip key={g} active={search.goal === g} onClick={() => set({ goal: search.goal === g ? "" : g })}>
-                      {g}
-                    </Chip>
-                  ))}
-                </div>
-              </FilterBlock>
-
               <FilterBlock title={`Max price: ₹${search.max}`}>
                 <input
                   type="range"
@@ -145,7 +128,7 @@ function ShopPage() {
               </FilterBlock>
 
               {active && (
-                <BrandButton variant="outline" size="sm" onClick={() => navigate({ to: ".", search: { q: "", goal: "", sort: "featured", max: 1500 } })}>
+                <BrandButton variant="outline" size="sm" onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 1500 } })}>
                   Clear all filters
                 </BrandButton>
               )}
@@ -189,7 +172,7 @@ function ShopPage() {
                 title="No gummies match that"
                 body="Try loosening a filter or clearing your search — our range is small and mighty."
                 action={
-                  <BrandButton onClick={() => navigate({ to: ".", search: { q: "", goal: "", sort: "featured", max: 1500 } })}>
+                  <BrandButton onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 1500 } })}>
                     Clear filters
                   </BrandButton>
                 }

@@ -18,6 +18,7 @@ import { Header } from "../components/site/Header";
 import { Footer } from "../components/site/Footer";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { Toaster } from "../components/ui/sonner";
+import { ConfirmProvider } from "../components/ui/confirm";
 
 
 function NotFoundComponent() {
@@ -127,18 +128,20 @@ const BARE_ROUTES = ["/login", "/register"];
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const bare = BARE_ROUTES.includes(pathname);
+  const bare = BARE_ROUTES.includes(pathname) || pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <StoreProvider>
-          {!bare && <Header />}
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          {!bare && <Footer />}
-          <CartDrawer />
-          <Toaster position="bottom-right" />
+          <ConfirmProvider>
+            {!bare && <Header />}
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            {!bare && <Footer />}
+            <CartDrawer />
+            <Toaster position="bottom-right" />
+          </ConfirmProvider>
         </StoreProvider>
       </AuthProvider>
     </QueryClientProvider>

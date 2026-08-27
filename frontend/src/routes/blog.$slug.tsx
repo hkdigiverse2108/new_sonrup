@@ -1,9 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Container, Crumbs, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { usePosts } from "@/lib/api";
+import { usePosts, fetchJson } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const accentBg: Record<string, string> = {
@@ -16,11 +16,12 @@ const accentBg: Record<string, string> = {
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    const res = await fetch(`${API_URL}/api/posts/${params.slug}`);
-    if (!res.ok) throw notFound();
-    const post = await res.json();
-    return { post, body: post.body ?? [] };
+    try {
+      const post = await fetchJson<any>(`/api/posts/${params.slug}`);
+      return { post, body: post.body ?? [] };
+    } catch (e) {
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -88,16 +89,12 @@ function ArticlePage() {
         <div className="spin-slow pointer-events-none absolute -right-24 -top-24 h-80 w-80 blob bg-card/40" />
         <div className="float-slow pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 blob bg-card/30" />
         <Container className="relative py-14 lg:py-20">
-          <Crumbs items={[{ label: "Journal", to: "/blog" }, { label: post.category }]} />
+          <Crumbs items={[{ label: "Journal", to: "/blog" }, { label: post.title }]} />
           <h1 className="mask-rise mt-8 max-w-4xl font-display text-[clamp(2.2rem,6.5vw,4.2rem)] font-extrabold leading-[0.94] tracking-[-0.05em]">
             {post.title}
           </h1>
           <div className="mask-rise mt-8 flex flex-wrap items-center gap-5 text-[11px] font-bold uppercase tracking-[0.18em] text-ink/55 [--d:180ms]">
             <span>{post.date}</span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" /> {post.read}
-            </span>
-            <span className="rounded-full bg-card/70 px-3 py-1.5">{post.category}</span>
           </div>
         </Container>
       </section>
@@ -108,19 +105,33 @@ function ArticlePage() {
             {post.excerpt}
           </p>
           <div className="mt-10 space-y-7">
-            {body.map((para, i) => (
-              <Reveal key={i} delay={i * 60}>
-                <p
-                  className={cn(
-                    "text-base leading-[1.85] text-foreground/85",
-                    i === 0 &&
-                      "first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-6xl first-letter:font-extrabold first-letter:leading-[0.8] first-letter:text-secondary",
+            {(Array.isArray(body) ? body : (body ? [body] : [])).map((block: any, i: number) => {
+              if (!block) return null;
+              const isText = typeof block === "string" || block.type === "text";
+              const content = typeof block === "string" ? block : block.content;
+
+              if (!content) return null;
+
+              return (
+                <Reveal key={i} delay={i * 60}>
+                  {isText ? (
+                    <p
+                      className={cn(
+                        "text-base leading-[1.85] text-foreground/85 whitespace-pre-wrap",
+                        i === 0 &&
+                          "first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-6xl first-letter:font-extrabold first-letter:leading-[0.8] first-letter:text-secondary",
+                      )}
+                    >
+                      {content}
+                    </p>
+                  ) : (
+                    <div className="my-10 overflow-hidden rounded-2xl border bg-muted shadow-sm">
+                      <img src={content} alt="Blog post visual" className="w-full object-cover" />
+                    </div>
                   )}
-                >
-                  {para}
-                </p>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
           </div>
 
           <div className="mt-14 flex items-center justify-between border-t border-border pt-8">

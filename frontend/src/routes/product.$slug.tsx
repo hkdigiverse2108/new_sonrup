@@ -6,17 +6,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Container, Crumbs, NotFoundBlock, RouteError } from "@/components/site/Page";
 import { Badge, BrandButton, Price, ProductCard, QtyStepper, Rating, Reveal, SectionTitle } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
-import { useProducts, useReviews } from "@/lib/api";
+import { useProducts, useProductReviews, fetchJson } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    const res = await fetch(`${API_URL}/api/products/${params.slug}`);
-    if (!res.ok) throw notFound();
-    const product = await res.json();
-    return { product };
+    try {
+      const product = await fetchJson<any>(`/api/products/${params.slug}`);
+      return { product };
+    } catch (e) {
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/product/$slug")({
   ),
 });
 
+
 function ProductPage() {
   const { product } = Route.useLoaderData();
   const { add, wishlist, toggleWish, setCartOpen } = useStore();
@@ -48,14 +50,17 @@ function ProductPage() {
   const [activeImg, setActiveImg] = useState(0);
 
   const { data: allProducts = [] } = useProducts();
-  const { data: reviewsList = [] } = useReviews();
+  const { data: productReviewsAll = [] } = useProductReviews();
 
-  const gallery = [product.image, product.image, product.image];
+  const gallery = product.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
   const wished = wishlist.includes(product.slug);
   const related = allProducts.filter((p) => p.slug !== product.slug);
-  const reviews = reviewsList.filter((r) => product.name.toLowerCase().includes(r.product.toLowerCase().split(" ")[0]!.toLowerCase())).length
-    ? reviewsList.filter((r) => product.name.toLowerCase().includes(r.product.toLowerCase().split(" ")[0]!.toLowerCase()))
-    : reviewsList.slice(0, 3);
+
+  const productReviews = productReviewsAll.filter((r: any) => r.product_slug === product.slug);
+  const reviewsCount = productReviews.length;
+  const averageRating = reviewsCount > 0 
+    ? (productReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewsCount).toFixed(1)
+    : "5.0";
 
   const bundle = related.slice(0, 2);
   const bundleTotal = [product, ...bundle].reduce((s, p) => s + p.price, 0);
@@ -119,7 +124,7 @@ function ProductPage() {
           <p className="mt-3 text-lg text-muted-foreground">{product.tagline}</p>
 
           <div className="mt-5 flex flex-wrap items-center gap-4">
-            <Rating value={product.rating} count={product.reviews} size={16} />
+            <Rating value={parseFloat(averageRating)} count={reviewsCount} size={16} />
             <a href="#reviews" className="text-xs font-bold uppercase tracking-[0.14em] underline-offset-4 hover:underline">
               Read reviews
             </a>
@@ -261,25 +266,46 @@ function ProductPage() {
 
       {/* Reviews */}
       <Container id="reviews" className="py-14">
-        <SectionTitle eyebrow="Verified reviews" title="What customers say" />
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <SectionTitle eyebrow="Verified reviews" title="What customers say" />
+          {productReviews.length > 0 && (
+            <div className="flex items-center gap-2 bg-[#faf9f6] px-4 py-2.5 rounded-2xl border border-[#e5e1dc] self-start md:self-auto shadow-sm">
+              <Rating value={parseFloat(averageRating)} size={16} />
+              <span className="text-sm font-bold text-[#3E332A]">{averageRating} out of 5</span>
+              <span className="text-xs text-muted-foreground">({reviewsCount} reviews)</span>
+            </div>
+          )}
+        </div>
         <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {reviews.map((r, i) => (
-            <Reveal key={r.name} delay={i * 80}>
-              <div className="surface-card h-full p-6">
-                <Rating value={r.rating} />
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">"{r.text}"</p>
-                <div className="mt-5 flex items-center gap-2">
-                  <div className="grid h-9 w-9 place-items-center rounded-full bg-[image:var(--gradient-gold)] text-xs font-extrabold text-ink">
+          {reviewsCount > 0 ? (
+            productReviews.map((r: any) => (
+              <div key={r._id} className="surface-card flex flex-col justify-between p-6 sm:p-8">
+                <div>
+                  <div className="mb-4 flex -space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className={`h-4 w-4 ${i < Math.floor(r.rating) ? "text-[#f59e0b]" : "text-gray-200"}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="font-medium text-foreground">"{r.text}"</p>
+                </div>
+                <div className="mt-6 flex items-center gap-3 border-t border-border pt-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10 font-bold text-secondary">
                     {r.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{r.name}</p>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-leaf">Verified purchase · {r.city}</p>
+                    <p className="text-sm font-bold leading-none text-foreground">{r.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{r.city}</p>
                   </div>
                 </div>
               </div>
-            </Reveal>
-          ))}
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center text-muted-foreground surface-card">
+              No reviews yet. Be the first to leave a review!
+            </div>
+          )}
         </div>
       </Container>
 

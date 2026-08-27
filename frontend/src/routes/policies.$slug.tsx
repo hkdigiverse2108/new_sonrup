@@ -1,15 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { usePolicies } from "@/lib/api";
+import { usePolicies, fetchJson } from "@/lib/api";
 
 export const Route = createFileRoute("/policies/$slug")({
   loader: async ({ params }) => {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    const res = await fetch(`${API_URL}/api/policies/${params.slug}`);
-    if (!res.ok) throw notFound();
-    const doc = await res.json();
-    return { doc };
+    try {
+      const doc = await fetchJson<any>(`/api/policies/${params.slug}`);
+      return { doc };
+    } catch (e) {
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -19,9 +20,7 @@ export const Route = createFileRoute("/policies/$slug")({
     return {
       meta: [
         { title: `${doc.title} — Sonrup Nutrition` },
-        { name: "description", content: doc.intro.slice(0, 155) },
         { property: "og:title", content: `${doc.title} — Sonrup Nutrition` },
-        { property: "og:description", content: doc.intro.slice(0, 155) },
       ],
     };
   },
@@ -50,15 +49,15 @@ function PolicyPage() {
 
   return (
     <main>
-      <PageHero eyebrow={doc.updated} title={doc.title} sub={doc.intro} />
+      <PageHero eyebrow={doc.updated || "Legal"} title={doc.title} sub={doc.intro || ""} />
       <Container className="grid gap-14 py-14 lg:grid-cols-[1fr_260px] lg:py-20">
         <div className="max-w-2xl space-y-10">
-          {doc.sections.map((s, i) => (
-            <Reveal key={s.heading} delay={i * 70}>
+          {doc.sections?.map((s: any, i: number) => (
+            <Reveal key={s.heading || i} delay={i * 70}>
               <section>
                 <h2 className="font-display text-2xl font-extrabold tracking-[-0.03em]">{s.heading}</h2>
                 <div className="mt-4 space-y-4">
-                  {s.body.map((p, j) => (
+                  {s.body?.map((p: string, j: number) => (
                     <p key={j} className="text-sm leading-[1.85] text-muted-foreground">
                       {p}
                     </p>

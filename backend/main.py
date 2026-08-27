@@ -1,18 +1,21 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer
 import hashlib
 import os
 import smtplib
+import shutil
+import uuid
 from email.message import EmailMessage
 from typing import List
 import jwt
 from datetime import datetime, timedelta
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.database import connect_to_mongo, close_mongo_connection, get_database
 from backend.models import (
     UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
-    HomePageContentModel
+    HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload
 )
 
 @asynccontextmanager
@@ -20,6 +23,34 @@ async def lifespan(app: FastAPI):
     # Startup: Connect to MongoDB
     await connect_to_mongo()
     yield
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "sonrup_fallback_secret_key_2026_super_secure")
+JWT_ALGORITHM = "HS256"
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(days=7)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_database)):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    user = await db["users"].find_one({"email": email})
+    if user is None:
+        ADMIN_USER = os.getenv("ADMIN_USERNAME", "admin")
+        if email == ADMIN_USER:
+            return {"email": ADMIN_USER, "name": "Admin User", "is_admin": True, "role": "admin"}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
     # Shutdown: Close Connection
     await close_mongo_connection()
 
@@ -45,6 +76,20 @@ async def root():
         "message": "Welcome to Sparkle Stream Cleaner API",
         "status": "online"
     }
+
+@app.post("/api/admin/login")
+async def admin_login(payload: dict):
+    ADMIN_USER = os.getenv("ADMIN_USERNAME", "admin")
+    ADMIN_PASS = os.getenv("ADMIN_PASSWORD", "admin123")
+    if payload.get("username") == ADMIN_USER and payload.get("password") == ADMIN_PASS:
+        # Issue a simple JWT token with admin flag
+        token = jwt.encode(
+            {"sub": ADMIN_USER, "admin": True, "exp": datetime.utcnow() + timedelta(hours=12)},
+            JWT_SECRET,
+            algorithm=JWT_ALGORITHM
+        )
+        return {"token": token}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @app.get("/health")
 async def health_check(db=Depends(get_database)):
@@ -95,11 +140,29 @@ async def test_db_interaction(db=Depends(get_database)):
 @app.get("/api/products")
 async def get_products(db=Depends(get_database)):
     cursor = db["products"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    products = await cursor.to_list(length=100)
+    for p in products:
+        reviews_cursor = db["product_reviews"].find({"product_slug": p["slug"]})
+        reviews = await reviews_cursor.to_list(length=1000)
+        p["reviews"] = len(reviews)
+        if len(reviews) > 0:
+            p["rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
+        else:
+            p["rating"] = 5.0
+    return products
 
 @app.get("/api/products/{slug}")
 async def get_product(slug: str, db=Depends(get_database)):
-    return await db["products"].find_one({"slug": slug}, {"_id": 0})
+    product = await db["products"].find_one({"slug": slug}, {"_id": 0})
+    if product:
+        reviews_cursor = db["product_reviews"].find({"product_slug": slug})
+        reviews = await reviews_cursor.to_list(length=1000)
+        product["reviews"] = len(reviews)
+        if len(reviews) > 0:
+            product["rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
+        else:
+            product["rating"] = 5.0
+    return product
 
 @app.get("/api/flavours")
 async def get_flavours(db=Depends(get_database)):
@@ -115,6 +178,15 @@ async def get_goals(db=Depends(get_database)):
 async def get_reviews(db=Depends(get_database)):
     cursor = db["reviews"].find({}, {"_id": 0})
     return await cursor.to_list(length=100)
+
+@app.get("/api/product-reviews")
+async def get_product_reviews(db=Depends(get_database)):
+    cursor = db["product_reviews"].find()
+    reviews = []
+    async for r in cursor:
+        r["_id"] = str(r["_id"])
+        reviews.append(r)
+    return reviews
 
 @app.get("/api/faqs")
 async def get_faqs(db=Depends(get_database)):
@@ -139,6 +211,15 @@ async def get_policies(db=Depends(get_database)):
 async def get_policy(slug: str, db=Depends(get_database)):
     return await db["policies"].find_one({"slug": slug}, {"_id": 0})
 
+from datetime import datetime
+
+@app.post("/api/contact")
+async def submit_contact(data: ContactSubmissionModel, db=Depends(get_database)):
+    submission = data.dict()
+    submission["createdAt"] = datetime.utcnow().isoformat() + "Z"
+    await db["contact_messages"].insert_one(submission)
+    return {"message": "Contact submission received successfully"}
+
 @app.get("/api/brand-values")
 async def get_brand_values(db=Depends(get_database)):
     cursor = db["brand_values"].find({}, {"_id": 0})
@@ -149,12 +230,190 @@ async def get_milestones(db=Depends(get_database)):
     cursor = db["milestones"].find({}, {"_id": 0})
     return await cursor.to_list(length=100)
 
-@app.get("/api/content/home", response_model=HomePageContentModel)
+@app.put("/api/admin/content/home")
+async def update_home_content(content: HomePageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["home_content"].replace_one({}, content.dict(), upsert=True)
+    return {"message": "Home content updated successfully"}
+
+@app.put("/api/admin/content/about")
+async def update_about_content(content: AboutPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["about_content"].replace_one({}, content.dict(), upsert=True)
+    return {"message": "About content updated successfully"}
+
+@app.put("/api/admin/content/contact")
+async def update_contact_content(content: ContactPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["contact_content"].replace_one({}, content.dict(), upsert=True)
+    return {"message": "Contact content updated successfully"}
+
+@app.put("/api/admin/content/journal")
+async def update_journal_content(content: JournalPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["journal_content"].replace_one({}, content.dict(), upsert=True)
+    return {"message": "Journal content updated successfully"}
+
+@app.post("/api/admin/posts")
+async def create_post(post: PostModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    if await db["posts"].find_one({"slug": post.slug}):
+        raise HTTPException(status_code=400, detail="Post with this slug already exists")
+    await db["posts"].insert_one(post.dict())
+    return {"message": "Post created successfully"}
+
+@app.put("/api/admin/posts/{slug}")
+async def update_post(slug: str, post: PostModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    result = await db["posts"].replace_one({"slug": slug}, post.dict())
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"message": "Post updated successfully"}
+
+@app.delete("/api/admin/posts/{slug}")
+async def delete_post(slug: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    result = await db["posts"].delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"message": "Post deleted successfully"}
+
+@app.post("/api/admin/policies")
+async def create_policy(policy: PolicyModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    if await db["policies"].find_one({"slug": policy.slug}):
+        raise HTTPException(status_code=400, detail="Policy with this slug already exists")
+    await db["policies"].insert_one(policy.dict())
+    return {"message": "Policy created successfully"}
+
+@app.put("/api/admin/policies/{slug}")
+async def update_policy(slug: str, policy: PolicyModel, db=Depends(get_database), current_user=Depends(get_current_user)):
+    result = await db["policies"].replace_one({"slug": slug}, policy.dict())
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return {"message": "Policy updated successfully"}
+
+@app.delete("/api/admin/policies/{slug}")
+async def delete_policy(slug: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    result = await db["policies"].delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return {"message": "Policy deleted successfully"}
+
+@app.get("/api/admin/contacts")
+async def get_contacts(db=Depends(get_database), current_user=Depends(get_current_user)):
+    cursor = db["contact_messages"].find({}).sort("createdAt", -1)
+    contacts = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        contacts.append(doc)
+    return contacts
+
+from bson import ObjectId
+
+@app.delete("/api/admin/contacts/{id}")
+async def delete_contact(id: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    try:
+        result = await db["contact_messages"].delete_one({"_id": ObjectId(id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Inquiry not found")
+        return {"message": "Inquiry deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid ID: {str(e)}")
+
+@app.get("/api/admin/customers")
+async def get_customers(db=Depends(get_database), current_user=Depends(get_current_user)):
+    cursor = db["users"].find({})
+    customers = []
+    async for doc in cursor:
+        # Extract registration date from MongoDB ObjectId
+        doc["createdAt"] = doc["_id"].generation_time.isoformat()
+        doc["_id"] = str(doc["_id"])
+        if "password_hash" in doc:
+            del doc["password_hash"]
+        customers.append(doc)
+    return customers
+
+@app.delete("/api/admin/customers/{id}")
+async def delete_customer(id: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    try:
+        result = await db["users"].delete_one({"_id": ObjectId(id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        return {"message": "Customer deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid ID: {str(e)}")
+
+@app.post("/api/admin/brand-values")
+async def add_brand_value(data: dict, db=Depends(get_database), current_user=Depends(get_current_user)):
+    if await db["brand_values"].find_one({"title": data["title"]}):
+        raise HTTPException(status_code=400, detail="Brand value already exists")
+    await db["brand_values"].insert_one(data)
+    return {"message": "Brand value added"}
+
+@app.put("/api/admin/brand-values/{title}")
+async def update_brand_value(title: str, data: dict, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["brand_values"].update_one({"title": title}, {"$set": data})
+    return {"message": "Brand value updated"}
+
+@app.delete("/api/admin/brand-values/{title}")
+async def delete_brand_value(title: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["brand_values"].delete_one({"title": title})
+    return {"message": "Brand value deleted"}
+
+@app.post("/api/admin/milestones")
+async def add_milestone(data: dict, db=Depends(get_database), current_user=Depends(get_current_user)):
+    if await db["milestones"].find_one({"year": data["year"]}):
+        raise HTTPException(status_code=400, detail="Milestone for this year already exists")
+    await db["milestones"].insert_one(data)
+    return {"message": "Milestone added"}
+
+@app.put("/api/admin/milestones/{year}")
+async def update_milestone(year: str, data: dict, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["milestones"].update_one({"year": year}, {"$set": data})
+    return {"message": "Milestone updated"}
+
+@app.delete("/api/admin/milestones/{year}")
+async def delete_milestone(year: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["milestones"].delete_one({"year": year})
+    return {"message": "Milestone deleted"}
+
+@app.get("/api/content/home")
 async def get_home_content(db=Depends(get_database)):
     content = await db["home_content"].find_one({}, {"_id": 0})
     if not content:
         raise HTTPException(status_code=404, detail="Home content not found")
     return content
+
+@app.get("/api/content/about")
+async def get_about_content(db=Depends(get_database)):
+    content = await db["about_content"].find_one({}, {"_id": 0})
+    if not content:
+        content = AboutPageContentModel().dict()
+        await db["about_content"].insert_one(content)
+        content = await db["about_content"].find_one({}, {"_id": 0})
+    return content
+
+@app.get("/api/content/contact")
+async def get_contact_content(db=Depends(get_database)):
+    content = await db["contact_content"].find_one({}, {"_id": 0})
+    if not content:
+        content = ContactPageContentModel().dict()
+        await db["contact_content"].insert_one(content)
+        content = await db["contact_content"].find_one({}, {"_id": 0})
+    return content
+
+@app.get("/api/content/journal")
+async def get_journal_content(db=Depends(get_database)):
+    content = await db["journal_content"].find_one({}, {"_id": 0})
+    if not content:
+        content = JournalPageContentModel().dict()
+        await db["journal_content"].insert_one(content)
+        content = await db["journal_content"].find_one({}, {"_id": 0})
+    return content
+
+@app.get("/api/posts")
+async def get_posts(db=Depends(get_database)):
+    return await db["posts"].find({}, {"_id": 0}).to_list(None)
+
+@app.get("/api/posts/{slug}")
+async def get_post(slug: str, db=Depends(get_database)):
+    post = await db["posts"].find_one({"slug": slug}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
 
 # -------------------------------------------------------------------
 # Auth & User Endpoints
@@ -162,30 +421,7 @@ async def get_home_content(db=Depends(get_database)):
 
 
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "sonrup_fallback_secret_key_2026")
-JWT_ALGORITHM = "HS256"
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=7)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-async def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_database)):
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    
-    user = await db["users"].find_one({"email": email})
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -252,6 +488,24 @@ async def update_my_profile(req: UserUpdate, current_user=Depends(get_current_us
         raise HTTPException(status_code=404, detail="User not found")
         
     return {"success": True}
+
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...), current_user=Depends(get_current_user)):
+    # Check if user is admin (assuming role field, defaulting to non-admin if missing)
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    upload_dir = os.path.join(os.getcwd(), "frontend", "public", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_ext = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"url": f"/uploads/{unique_filename}"}
 
 @app.post("/api/user/addresses")
 async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(get_current_user), db=Depends(get_database)):
@@ -356,3 +610,76 @@ async def subscribe_newsletter(req: NewsletterSubscribe, background_tasks: Backg
     background_tasks.add_task(send_welcome_email, req.email)
     
     return {"success": True, "message": "Subscribed successfully"}
+
+def send_custom_email(email_address: str, subject: str, body_text: str):
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = smtp_user
+    msg['To'] = email_address
+    
+    html_content = f"""
+    <html>
+    <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; padding: 20px; background-color: #faf7f2; margin: 0;">
+        <div style="max-width: 600px; margin: 40px auto; background: #fff; border: 1px solid #e5e1dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <div style="background-color: #1f1d1a; padding: 30px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -1px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: inline-block;">sonrup<span style="color: #eab308;">.</span></h1>
+            </div>
+            <div style="padding: 40px 30px; font-size: 15px; color: #333; white-space: pre-wrap;">
+{body_text}
+            </div>
+            <div style="background-color: #faf7f2; padding: 20px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e5e1dc;">
+                &copy; 2026 Sonrup Nutrition. All rights reserved.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    msg.add_alternative(html_content, subtype='html')
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Failed to send custom email to {email_address}: {e}")
+
+@app.get("/api/admin/newsletter")
+async def get_newsletter_subscribers(db=Depends(get_database), current_user=Depends(get_current_user)):
+    cursor = db["newsletter"].find({}, {"_id": 0}).sort("_id", -1)
+    return await cursor.to_list(length=1000)
+
+@app.delete("/api/admin/newsletter/{email}")
+async def delete_newsletter_subscriber(email: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["newsletter"].delete_one({"email": email})
+    return {"message": "Subscriber removed successfully"}
+
+@app.post("/api/admin/newsletter/broadcast")
+async def broadcast_email(payload: BroadcastPayload, background_tasks: BackgroundTasks, db=Depends(get_database), current_user=Depends(get_current_user)):
+    emails = []
+    if payload.target == "subscribers":
+        cursor = db["newsletter"].find({}, {"_id": 0, "email": 1})
+        emails = [doc["email"] for doc in await cursor.to_list(length=1000)]
+    elif payload.target == "inquiries":
+        cursor = db["contact_messages"].find({}, {"_id": 0, "email": 1})
+        emails = list(set([doc["email"] for doc in await cursor.to_list(length=1000)]))
+    
+    if not emails:
+        raise HTTPException(status_code=400, detail="No recipients found for this target.")
+    
+    for email in emails:
+        background_tasks.add_task(send_custom_email, email, payload.subject, payload.message)
+        
+    return {"message": f"Broadcast started for {len(emails)} recipients."}
+
+# Serve uploaded files statically
+os.makedirs("backend/uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+
+from backend.admin import router as admin_router
+app.include_router(admin_router)

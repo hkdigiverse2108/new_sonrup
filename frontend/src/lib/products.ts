@@ -10,6 +10,7 @@ export type Product = {
   tagline: string;
   description: string;
   image: string;
+  gallery?: string[];
   price: number;
   mrp: number;
   rating: number;

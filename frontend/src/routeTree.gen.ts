@@ -12,8 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BestSellersRouteImport } from './routes/best-sellers'
-import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -23,9 +23,37 @@ import { Route as NewArrivalsRouteImport } from './routes/new-arrivals'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as WishlistRouteImport } from './routes/wishlist'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminContactsRouteImport } from './routes/admin/contacts'
+import { Route as AdminContentRouteImport } from './routes/admin/content'
+import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
+import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
+import { Route as AdminProductReviewsRouteImport } from './routes/admin/product-reviews'
+import { Route as AdminProductsRouteImport } from './routes/admin/products'
+import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as PoliciesSlugRouteImport } from './routes/policies.$slug'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as AdminContentHeroRouteImport } from './routes/admin/content/hero'
+import { Route as AdminContentIngredientRouteImport } from './routes/admin/content/ingredient'
+import { Route as AdminContentTrustRouteImport } from './routes/admin/content/trust'
+import { Route as AdminContentWhyRouteImport } from './routes/admin/content/why'
+import { Route as AdminPolicySlugRouteImport } from './routes/admin/policy/$slug'
+import { Route as AdminPostSlugRouteImport } from './routes/admin/post/$slug'
+import { Route as AdminSettingsAboutRouteImport } from './routes/admin/settings/about'
+import { Route as AdminSettingsContactRouteImport } from './routes/admin/settings/contact'
+import { Route as AdminSettingsFaqsRouteImport } from './routes/admin/settings/faqs'
+import { Route as AdminSettingsFinalCtaRouteImport } from './routes/admin/settings/final-cta'
+import { Route as AdminSettingsFlavoursRouteImport } from './routes/admin/settings/flavours'
+import { Route as AdminSettingsHeroRouteImport } from './routes/admin/settings/hero'
+import { Route as AdminSettingsIngredientsRouteImport } from './routes/admin/settings/ingredients'
+import { Route as AdminSettingsJournalRouteImport } from './routes/admin/settings/journal'
+import { Route as AdminSettingsPoliciesRouteImport } from './routes/admin/settings/policies'
+import { Route as AdminSettingsReviewsRouteImport } from './routes/admin/settings/reviews'
+import { Route as AdminSettingsSocialRouteImport } from './routes/admin/settings/social'
+import { Route as AdminSettingsStoryRouteImport } from './routes/admin/settings/story'
+import { Route as AdminSettingsWhyRouteImport } from './routes/admin/settings/why'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,14 +70,14 @@ const AccountRoute = AccountRouteImport.update({
   path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BestSellersRoute = BestSellersRouteImport.update({
   id: '/best-sellers',
   path: '/best-sellers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartRoute = CartRouteImport.update({
@@ -97,10 +125,55 @@ const WishlistRoute = WishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContactsRoute = AdminContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductReviewsRoute = AdminProductReviewsRouteImport.update({
+  id: '/product-reviews',
+  path: '/product-reviews',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
+  id: '/subscribers',
+  path: '/subscribers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PoliciesSlugRoute = PoliciesSlugRouteImport.update({
   id: '/policies/$slug',
@@ -112,13 +185,109 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminContentHeroRoute = AdminContentHeroRouteImport.update({
+  id: '/hero',
+  path: '/hero',
+  getParentRoute: () => AdminContentRoute,
+} as any)
+const AdminContentIngredientRoute = AdminContentIngredientRouteImport.update({
+  id: '/ingredient',
+  path: '/ingredient',
+  getParentRoute: () => AdminContentRoute,
+} as any)
+const AdminContentTrustRoute = AdminContentTrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => AdminContentRoute,
+} as any)
+const AdminContentWhyRoute = AdminContentWhyRouteImport.update({
+  id: '/why',
+  path: '/why',
+  getParentRoute: () => AdminContentRoute,
+} as any)
+const AdminPolicySlugRoute = AdminPolicySlugRouteImport.update({
+  id: '/policy/$slug',
+  path: '/policy/$slug',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPostSlugRoute = AdminPostSlugRouteImport.update({
+  id: '/post/$slug',
+  path: '/post/$slug',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsAboutRoute = AdminSettingsAboutRouteImport.update({
+  id: '/settings/about',
+  path: '/settings/about',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsContactRoute = AdminSettingsContactRouteImport.update({
+  id: '/settings/contact',
+  path: '/settings/contact',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsFaqsRoute = AdminSettingsFaqsRouteImport.update({
+  id: '/settings/faqs',
+  path: '/settings/faqs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsFinalCtaRoute = AdminSettingsFinalCtaRouteImport.update({
+  id: '/settings/final-cta',
+  path: '/settings/final-cta',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsFlavoursRoute = AdminSettingsFlavoursRouteImport.update({
+  id: '/settings/flavours',
+  path: '/settings/flavours',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsHeroRoute = AdminSettingsHeroRouteImport.update({
+  id: '/settings/hero',
+  path: '/settings/hero',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsIngredientsRoute =
+  AdminSettingsIngredientsRouteImport.update({
+    id: '/settings/ingredients',
+    path: '/settings/ingredients',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminSettingsJournalRoute = AdminSettingsJournalRouteImport.update({
+  id: '/settings/journal',
+  path: '/settings/journal',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsPoliciesRoute = AdminSettingsPoliciesRouteImport.update({
+  id: '/settings/policies',
+  path: '/settings/policies',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsReviewsRoute = AdminSettingsReviewsRouteImport.update({
+  id: '/settings/reviews',
+  path: '/settings/reviews',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsSocialRoute = AdminSettingsSocialRouteImport.update({
+  id: '/settings/social',
+  path: '/settings/social',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsStoryRoute = AdminSettingsStoryRouteImport.update({
+  id: '/settings/story',
+  path: '/settings/story',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsWhyRoute = AdminSettingsWhyRouteImport.update({
+  id: '/settings/why',
+  path: '/settings/why',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/best-sellers': typeof BestSellersRoute
-  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -128,16 +297,43 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/product-reviews': typeof AdminProductReviewsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/ingredient': typeof AdminContentIngredientRoute
+  '/admin/content/trust': typeof AdminContentTrustRoute
+  '/admin/content/why': typeof AdminContentWhyRoute
+  '/admin/policy/$slug': typeof AdminPolicySlugRoute
+  '/admin/post/$slug': typeof AdminPostSlugRoute
+  '/admin/settings/about': typeof AdminSettingsAboutRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/faqs': typeof AdminSettingsFaqsRoute
+  '/admin/settings/final-cta': typeof AdminSettingsFinalCtaRoute
+  '/admin/settings/flavours': typeof AdminSettingsFlavoursRoute
+  '/admin/settings/hero': typeof AdminSettingsHeroRoute
+  '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
+  '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
+  '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
+  '/admin/settings/social': typeof AdminSettingsSocialRoute
+  '/admin/settings/story': typeof AdminSettingsStoryRoute
+  '/admin/settings/why': typeof AdminSettingsWhyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/best-sellers': typeof BestSellersRoute
-  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -147,17 +343,45 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/product-reviews': typeof AdminProductReviewsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin': typeof AdminIndexRoute
+  '/blog': typeof BlogIndexRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/ingredient': typeof AdminContentIngredientRoute
+  '/admin/content/trust': typeof AdminContentTrustRoute
+  '/admin/content/why': typeof AdminContentWhyRoute
+  '/admin/policy/$slug': typeof AdminPolicySlugRoute
+  '/admin/post/$slug': typeof AdminPostSlugRoute
+  '/admin/settings/about': typeof AdminSettingsAboutRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/faqs': typeof AdminSettingsFaqsRoute
+  '/admin/settings/final-cta': typeof AdminSettingsFinalCtaRoute
+  '/admin/settings/flavours': typeof AdminSettingsFlavoursRoute
+  '/admin/settings/hero': typeof AdminSettingsHeroRoute
+  '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
+  '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
+  '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
+  '/admin/settings/social': typeof AdminSettingsSocialRoute
+  '/admin/settings/story': typeof AdminSettingsStoryRoute
+  '/admin/settings/why': typeof AdminSettingsWhyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/best-sellers': typeof BestSellersRoute
-  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -167,9 +391,37 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
+  '/admin/contacts': typeof AdminContactsRoute
+  '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/orders': typeof AdminOrdersRoute
+  '/admin/product-reviews': typeof AdminProductReviewsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/ingredient': typeof AdminContentIngredientRoute
+  '/admin/content/trust': typeof AdminContentTrustRoute
+  '/admin/content/why': typeof AdminContentWhyRoute
+  '/admin/policy/$slug': typeof AdminPolicySlugRoute
+  '/admin/post/$slug': typeof AdminPostSlugRoute
+  '/admin/settings/about': typeof AdminSettingsAboutRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/faqs': typeof AdminSettingsFaqsRoute
+  '/admin/settings/final-cta': typeof AdminSettingsFinalCtaRoute
+  '/admin/settings/flavours': typeof AdminSettingsFlavoursRoute
+  '/admin/settings/hero': typeof AdminSettingsHeroRoute
+  '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
+  '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
+  '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
+  '/admin/settings/social': typeof AdminSettingsSocialRoute
+  '/admin/settings/story': typeof AdminSettingsStoryRoute
+  '/admin/settings/why': typeof AdminSettingsWhyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,8 +429,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/best-sellers'
-    | '/blog'
     | '/cart'
     | '/checkout'
     | '/contact'
@@ -188,16 +440,43 @@ export interface FileRouteTypes {
     | '/search'
     | '/shop'
     | '/wishlist'
+    | '/admin/contacts'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/orders'
+    | '/admin/product-reviews'
+    | '/admin/products'
+    | '/admin/subscribers'
     | '/blog/$slug'
     | '/policies/$slug'
     | '/product/$slug'
+    | '/admin/'
+    | '/blog/'
+    | '/admin/content/hero'
+    | '/admin/content/ingredient'
+    | '/admin/content/trust'
+    | '/admin/content/why'
+    | '/admin/policy/$slug'
+    | '/admin/post/$slug'
+    | '/admin/settings/about'
+    | '/admin/settings/contact'
+    | '/admin/settings/faqs'
+    | '/admin/settings/final-cta'
+    | '/admin/settings/flavours'
+    | '/admin/settings/hero'
+    | '/admin/settings/ingredients'
+    | '/admin/settings/journal'
+    | '/admin/settings/policies'
+    | '/admin/settings/reviews'
+    | '/admin/settings/social'
+    | '/admin/settings/story'
+    | '/admin/settings/why'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/account'
     | '/best-sellers'
-    | '/blog'
     | '/cart'
     | '/checkout'
     | '/contact'
@@ -207,16 +486,44 @@ export interface FileRouteTypes {
     | '/search'
     | '/shop'
     | '/wishlist'
+    | '/admin/contacts'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/orders'
+    | '/admin/product-reviews'
+    | '/admin/products'
+    | '/admin/subscribers'
     | '/blog/$slug'
     | '/policies/$slug'
     | '/product/$slug'
+    | '/admin'
+    | '/blog'
+    | '/admin/content/hero'
+    | '/admin/content/ingredient'
+    | '/admin/content/trust'
+    | '/admin/content/why'
+    | '/admin/policy/$slug'
+    | '/admin/post/$slug'
+    | '/admin/settings/about'
+    | '/admin/settings/contact'
+    | '/admin/settings/faqs'
+    | '/admin/settings/final-cta'
+    | '/admin/settings/flavours'
+    | '/admin/settings/hero'
+    | '/admin/settings/ingredients'
+    | '/admin/settings/journal'
+    | '/admin/settings/policies'
+    | '/admin/settings/reviews'
+    | '/admin/settings/social'
+    | '/admin/settings/story'
+    | '/admin/settings/why'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/best-sellers'
-    | '/blog'
     | '/cart'
     | '/checkout'
     | '/contact'
@@ -226,17 +533,45 @@ export interface FileRouteTypes {
     | '/search'
     | '/shop'
     | '/wishlist'
+    | '/admin/contacts'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/orders'
+    | '/admin/product-reviews'
+    | '/admin/products'
+    | '/admin/subscribers'
     | '/blog/$slug'
     | '/policies/$slug'
     | '/product/$slug'
+    | '/admin/'
+    | '/blog/'
+    | '/admin/content/hero'
+    | '/admin/content/ingredient'
+    | '/admin/content/trust'
+    | '/admin/content/why'
+    | '/admin/policy/$slug'
+    | '/admin/post/$slug'
+    | '/admin/settings/about'
+    | '/admin/settings/contact'
+    | '/admin/settings/faqs'
+    | '/admin/settings/final-cta'
+    | '/admin/settings/flavours'
+    | '/admin/settings/hero'
+    | '/admin/settings/ingredients'
+    | '/admin/settings/journal'
+    | '/admin/settings/policies'
+    | '/admin/settings/reviews'
+    | '/admin/settings/social'
+    | '/admin/settings/story'
+    | '/admin/settings/why'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BestSellersRoute: typeof BestSellersRoute
-  BlogRoute: typeof BlogRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
@@ -246,8 +581,10 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRoute
   WishlistRoute: typeof WishlistRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   PoliciesSlugRoute: typeof PoliciesSlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -273,18 +610,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/best-sellers': {
       id: '/best-sellers'
       path: '/best-sellers'
       fullPath: '/best-sellers'
       preLoaderRoute: typeof BestSellersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cart': {
@@ -350,12 +687,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WishlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contacts': {
+      id: '/admin/contacts'
+      path: '/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AdminContactsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/product-reviews': {
+      id: '/admin/product-reviews'
+      path: '/product-reviews'
+      fullPath: '/admin/product-reviews'
+      preLoaderRoute: typeof AdminProductReviewsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscribers': {
+      id: '/admin/subscribers'
+      path: '/subscribers'
+      fullPath: '/admin/subscribers'
+      preLoaderRoute: typeof AdminSubscribersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/$slug': {
       id: '/blog/$slug'
-      path: '/$slug'
+      path: '/blog/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
+      parentRoute: typeof rootRouteImport
     }
     '/policies/$slug': {
       id: '/policies/$slug'
@@ -371,25 +771,220 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/content/hero': {
+      id: '/admin/content/hero'
+      path: '/hero'
+      fullPath: '/admin/content/hero'
+      preLoaderRoute: typeof AdminContentHeroRouteImport
+      parentRoute: typeof AdminContentRoute
+    }
+    '/admin/content/ingredient': {
+      id: '/admin/content/ingredient'
+      path: '/ingredient'
+      fullPath: '/admin/content/ingredient'
+      preLoaderRoute: typeof AdminContentIngredientRouteImport
+      parentRoute: typeof AdminContentRoute
+    }
+    '/admin/content/trust': {
+      id: '/admin/content/trust'
+      path: '/trust'
+      fullPath: '/admin/content/trust'
+      preLoaderRoute: typeof AdminContentTrustRouteImport
+      parentRoute: typeof AdminContentRoute
+    }
+    '/admin/content/why': {
+      id: '/admin/content/why'
+      path: '/why'
+      fullPath: '/admin/content/why'
+      preLoaderRoute: typeof AdminContentWhyRouteImport
+      parentRoute: typeof AdminContentRoute
+    }
+    '/admin/policy/$slug': {
+      id: '/admin/policy/$slug'
+      path: '/policy/$slug'
+      fullPath: '/admin/policy/$slug'
+      preLoaderRoute: typeof AdminPolicySlugRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/post/$slug': {
+      id: '/admin/post/$slug'
+      path: '/post/$slug'
+      fullPath: '/admin/post/$slug'
+      preLoaderRoute: typeof AdminPostSlugRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/about': {
+      id: '/admin/settings/about'
+      path: '/settings/about'
+      fullPath: '/admin/settings/about'
+      preLoaderRoute: typeof AdminSettingsAboutRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/contact': {
+      id: '/admin/settings/contact'
+      path: '/settings/contact'
+      fullPath: '/admin/settings/contact'
+      preLoaderRoute: typeof AdminSettingsContactRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/faqs': {
+      id: '/admin/settings/faqs'
+      path: '/settings/faqs'
+      fullPath: '/admin/settings/faqs'
+      preLoaderRoute: typeof AdminSettingsFaqsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/final-cta': {
+      id: '/admin/settings/final-cta'
+      path: '/settings/final-cta'
+      fullPath: '/admin/settings/final-cta'
+      preLoaderRoute: typeof AdminSettingsFinalCtaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/flavours': {
+      id: '/admin/settings/flavours'
+      path: '/settings/flavours'
+      fullPath: '/admin/settings/flavours'
+      preLoaderRoute: typeof AdminSettingsFlavoursRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/hero': {
+      id: '/admin/settings/hero'
+      path: '/settings/hero'
+      fullPath: '/admin/settings/hero'
+      preLoaderRoute: typeof AdminSettingsHeroRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/ingredients': {
+      id: '/admin/settings/ingredients'
+      path: '/settings/ingredients'
+      fullPath: '/admin/settings/ingredients'
+      preLoaderRoute: typeof AdminSettingsIngredientsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/journal': {
+      id: '/admin/settings/journal'
+      path: '/settings/journal'
+      fullPath: '/admin/settings/journal'
+      preLoaderRoute: typeof AdminSettingsJournalRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/policies': {
+      id: '/admin/settings/policies'
+      path: '/settings/policies'
+      fullPath: '/admin/settings/policies'
+      preLoaderRoute: typeof AdminSettingsPoliciesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/reviews': {
+      id: '/admin/settings/reviews'
+      path: '/settings/reviews'
+      fullPath: '/admin/settings/reviews'
+      preLoaderRoute: typeof AdminSettingsReviewsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/social': {
+      id: '/admin/settings/social'
+      path: '/settings/social'
+      fullPath: '/admin/settings/social'
+      preLoaderRoute: typeof AdminSettingsSocialRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/story': {
+      id: '/admin/settings/story'
+      path: '/settings/story'
+      fullPath: '/admin/settings/story'
+      preLoaderRoute: typeof AdminSettingsStoryRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/why': {
+      id: '/admin/settings/why'
+      path: '/settings/why'
+      fullPath: '/admin/settings/why'
+      preLoaderRoute: typeof AdminSettingsWhyRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
-interface BlogRouteChildren {
-  BlogSlugRoute: typeof BlogSlugRoute
+interface AdminContentRouteChildren {
+  AdminContentHeroRoute: typeof AdminContentHeroRoute
+  AdminContentIngredientRoute: typeof AdminContentIngredientRoute
+  AdminContentTrustRoute: typeof AdminContentTrustRoute
+  AdminContentWhyRoute: typeof AdminContentWhyRoute
 }
 
-const BlogRouteChildren: BlogRouteChildren = {
-  BlogSlugRoute: BlogSlugRoute,
+const AdminContentRouteChildren: AdminContentRouteChildren = {
+  AdminContentHeroRoute: AdminContentHeroRoute,
+  AdminContentIngredientRoute: AdminContentIngredientRoute,
+  AdminContentTrustRoute: AdminContentTrustRoute,
+  AdminContentWhyRoute: AdminContentWhyRoute,
 }
 
-const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
+  AdminContentRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminContactsRoute: typeof AdminContactsRoute
+  AdminContentRoute: typeof AdminContentRouteWithChildren
+  AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminProductReviewsRoute: typeof AdminProductReviewsRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminSubscribersRoute: typeof AdminSubscribersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminPolicySlugRoute: typeof AdminPolicySlugRoute
+  AdminPostSlugRoute: typeof AdminPostSlugRoute
+  AdminSettingsAboutRoute: typeof AdminSettingsAboutRoute
+  AdminSettingsContactRoute: typeof AdminSettingsContactRoute
+  AdminSettingsFaqsRoute: typeof AdminSettingsFaqsRoute
+  AdminSettingsFinalCtaRoute: typeof AdminSettingsFinalCtaRoute
+  AdminSettingsFlavoursRoute: typeof AdminSettingsFlavoursRoute
+  AdminSettingsHeroRoute: typeof AdminSettingsHeroRoute
+  AdminSettingsIngredientsRoute: typeof AdminSettingsIngredientsRoute
+  AdminSettingsJournalRoute: typeof AdminSettingsJournalRoute
+  AdminSettingsPoliciesRoute: typeof AdminSettingsPoliciesRoute
+  AdminSettingsReviewsRoute: typeof AdminSettingsReviewsRoute
+  AdminSettingsSocialRoute: typeof AdminSettingsSocialRoute
+  AdminSettingsStoryRoute: typeof AdminSettingsStoryRoute
+  AdminSettingsWhyRoute: typeof AdminSettingsWhyRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminContactsRoute: AdminContactsRoute,
+  AdminContentRoute: AdminContentRouteWithChildren,
+  AdminCustomersRoute: AdminCustomersRoute,
+  AdminOrdersRoute: AdminOrdersRoute,
+  AdminProductReviewsRoute: AdminProductReviewsRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminSubscribersRoute: AdminSubscribersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminPolicySlugRoute: AdminPolicySlugRoute,
+  AdminPostSlugRoute: AdminPostSlugRoute,
+  AdminSettingsAboutRoute: AdminSettingsAboutRoute,
+  AdminSettingsContactRoute: AdminSettingsContactRoute,
+  AdminSettingsFaqsRoute: AdminSettingsFaqsRoute,
+  AdminSettingsFinalCtaRoute: AdminSettingsFinalCtaRoute,
+  AdminSettingsFlavoursRoute: AdminSettingsFlavoursRoute,
+  AdminSettingsHeroRoute: AdminSettingsHeroRoute,
+  AdminSettingsIngredientsRoute: AdminSettingsIngredientsRoute,
+  AdminSettingsJournalRoute: AdminSettingsJournalRoute,
+  AdminSettingsPoliciesRoute: AdminSettingsPoliciesRoute,
+  AdminSettingsReviewsRoute: AdminSettingsReviewsRoute,
+  AdminSettingsSocialRoute: AdminSettingsSocialRoute,
+  AdminSettingsStoryRoute: AdminSettingsStoryRoute,
+  AdminSettingsWhyRoute: AdminSettingsWhyRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AdminRoute: AdminRouteWithChildren,
   BestSellersRoute: BestSellersRoute,
-  BlogRoute: BlogRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
@@ -399,8 +994,10 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   ShopRoute: ShopRoute,
   WishlistRoute: WishlistRoute,
+  BlogSlugRoute: BlogSlugRoute,
   PoliciesSlugRoute: PoliciesSlugRoute,
   ProductSlugRoute: ProductSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

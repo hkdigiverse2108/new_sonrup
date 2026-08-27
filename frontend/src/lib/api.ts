@@ -6,11 +6,17 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export const TOKEN_KEY = "sonrup_token";
 
-const fetchJson = async <T,>(url: string, options?: RequestInit): Promise<T> => {
+export const fetchJson = async <T,>(url: string, options?: RequestInit, isFormData?: boolean): Promise<T> => {
   const headers = new Headers(options?.headers || {});
-  headers.set("Content-Type", "application/json");
+  
+  if (!isFormData) {
+    headers.set("Content-Type", "application/json");
+  }
 
-  const token = localStorage.getItem(TOKEN_KEY);
+  // Determine which token to use based on the endpoint
+  const isAdminEndpoint = url.startsWith("/api/admin");
+  const token = localStorage.getItem(isAdminEndpoint ? "sonrup_admin_token" : TOKEN_KEY);
+  
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -21,6 +27,14 @@ const fetchJson = async <T,>(url: string, options?: RequestInit): Promise<T> => 
   });
   
   if (!res.ok) {
+    if (res.status === 401) {
+      if (isAdminEndpoint) {
+        localStorage.removeItem("sonrup_admin_token");
+        window.location.href = "/admin";
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+      }
+    }
     const errorData = await res.json().catch(() => null);
     throw new Error(errorData?.detail || `Failed to fetch ${url}`);
   }
@@ -73,14 +87,14 @@ export const useFaqs = () => {
 export const usePosts = () => {
   return useQuery({
     queryKey: ["posts"],
-    queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; body: string[] }[]>("/api/posts"),
+    queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }[]>("/api/posts"),
   });
 };
 
 export const usePost = (slug: string) => {
   return useQuery({
     queryKey: ["posts", slug],
-    queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; body: string[] }>(`/api/posts/${slug}`),
+    queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }>(`/api/posts/${slug}`),
     enabled: !!slug,
   });
 };
@@ -88,15 +102,43 @@ export const usePost = (slug: string) => {
 export const usePolicies = () => {
   return useQuery({
     queryKey: ["policies"],
-    queryFn: () => fetchJson<{ slug: string; title: string; updated: string; intro: string; sections: { heading: string; body: string[] }[] }[]>("/api/policies"),
+    queryFn: () => fetchJson<any[]>("/api/policies"),
   });
 };
 
 export const usePolicy = (slug: string) => {
   return useQuery({
     queryKey: ["policies", slug],
-    queryFn: () => fetchJson(`/api/policies/${slug}`),
+    queryFn: () => fetchJson<any>(`/api/policies/${slug}`),
     enabled: !!slug,
+  });
+};
+
+export const useHomeContent = () => {
+  return useQuery({
+    queryKey: ["home_content"],
+    queryFn: () => fetchJson<any>("/api/content/home"),
+  });
+};
+
+export const useAboutContent = () => {
+  return useQuery({
+    queryKey: ["about_content"],
+    queryFn: () => fetchJson<any>("/api/content/about"),
+  });
+};
+
+export const useContactContent = () => {
+  return useQuery({
+    queryKey: ["contact_content"],
+    queryFn: () => fetchJson<any>("/api/content/contact"),
+  });
+};
+
+export const useJournalContent = () => {
+  return useQuery({
+    queryKey: ["journal_content"],
+    queryFn: () => fetchJson<any>("/api/content/journal"),
   });
 };
 
@@ -124,3 +166,193 @@ export const apiUpdateUser = (data: any) => fetchJson(`/api/user/profile`, { met
 export const apiSyncAddresses = (addresses: any[]) => fetchJson(`/api/user/addresses`, { method: "POST", body: JSON.stringify(addresses) });
 export const apiAddOrder = (order: any) => fetchJson(`/api/orders`, { method: "POST", body: JSON.stringify(order) });
 export const apiSubscribeNewsletter = (email: string) => fetchJson("/api/newsletter/subscribe", { method: "POST", body: JSON.stringify({ email }) });
+
+// Admin APIs
+export const apiUploadFile = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return fetchJson("/api/upload", { method: "POST", body: formData }, true);
+};
+
+export const apiAdminGetOrders = () => fetchJson("/api/admin/orders");
+export const apiAdminUpdateOrderStatus = (id: string, status: string) => fetchJson(`/api/admin/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
+
+export const apiAdminCreateProduct = (data: any) => fetchJson("/api/admin/products", { method: "POST", body: JSON.stringify(data) });
+export const apiAdminUpdateProduct = (slug: string, data: any) => fetchJson(`/api/admin/products/${slug}`, { method: "PUT", body: JSON.stringify(data) });
+export const apiAdminDeleteProduct = (slug: string) => fetchJson(`/api/admin/products/${slug}`, { method: "DELETE" });
+
+export const apiAdminUpdateHomeContent = (data: any) =>
+  fetchJson("/api/admin/content/home", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateAboutContent = (data: any) =>
+  fetchJson("/api/admin/content/about", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateContactContent = async (data: any) => {
+  return await fetchJson("/api/admin/content/contact", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiAdminUpdateJournalContent = async (data: any) => {
+  return await fetchJson("/api/admin/content/journal", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiAdminCreatePost = async (data: any) => {
+  return await fetchJson("/api/admin/posts", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiAdminUpdatePost = async (slug: string, data: any) => {
+  return await fetchJson(`/api/admin/posts/${slug}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiSubmitContact = async (data: { name: string; email: string; phone: string; message: string }) => {
+  return await fetchJson("/api/contact", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const useAdminContacts = () => {
+  return useQuery({
+    queryKey: ["admin_contacts"],
+    queryFn: () => fetchJson<any[]>("/api/admin/contacts"),
+  });
+};
+
+export const apiAdminDeleteContact = async (id: string) => {
+  return await fetchJson(`/api/admin/contacts/${id}`, {
+    method: "DELETE",
+  });
+};
+
+export const useAdminSubscribers = () => {
+  return useQuery({
+    queryKey: ["admin_subscribers"],
+    queryFn: () => fetchJson<any[]>("/api/admin/newsletter"),
+  });
+};
+
+export const apiAdminDeleteSubscriber = async (email: string) => {
+  return await fetchJson(`/api/admin/newsletter/${email}`, {
+    method: "DELETE",
+  });
+};
+
+export const apiAdminSendBroadcast = async (data: { subject: string; message: string; target: string }) => {
+  return await fetchJson("/api/admin/newsletter/broadcast", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const useAdminCustomers = () => {
+  return useQuery({
+    queryKey: ["admin_customers"],
+    queryFn: () => fetchJson<any[]>("/api/admin/customers"),
+  });
+};
+
+export const apiAdminDeleteCustomer = async (id: string) => {
+  return await fetchJson(`/api/admin/customers/${id}`, {
+    method: "DELETE",
+  });
+};
+
+export const apiAdminDeletePost = async (slug: string) => {
+  return await fetchJson(`/api/admin/posts/${slug}`, {
+    method: "DELETE",
+  });
+};
+
+export const apiAdminCreatePolicy = async (data: any) => {
+  return await fetchJson("/api/admin/policies", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiAdminUpdatePolicy = async (slug: string, data: any) => {
+  return await fetchJson(`/api/admin/policies/${slug}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const apiAdminDeletePolicy = async (slug: string) => {
+  return await fetchJson(`/api/admin/policies/${slug}`, {
+    method: "DELETE",
+  });
+};
+
+export const apiAdminCreateBrandValue = (data: any) =>
+  fetchJson("/api/admin/brand-values", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateBrandValue = (title: string, data: any) =>
+  fetchJson(`/api/admin/brand-values/${encodeURIComponent(title)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminDeleteBrandValue = (title: string) =>
+  fetchJson(`/api/admin/brand-values/${encodeURIComponent(title)}`, {
+    method: "DELETE",
+  });
+
+export const apiAdminCreateMilestone = (data: any) =>
+  fetchJson("/api/admin/milestones", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateMilestone = (year: string, data: any) =>
+  fetchJson(`/api/admin/milestones/${encodeURIComponent(year)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminDeleteMilestone = (year: string) =>
+  fetchJson(`/api/admin/milestones/${encodeURIComponent(year)}`, {
+    method: "DELETE",
+  });
+
+export const apiAdminCreateFlavour = (data: any) => fetchJson("/api/admin/flavours", { method: "POST", body: JSON.stringify(data) });
+export const apiAdminUpdateFlavour = (token: string, data: any) => fetchJson(`/api/admin/flavours/${token}`, { method: "PUT", body: JSON.stringify(data) });
+export const apiAdminDeleteFlavour = (token: string) => fetchJson(`/api/admin/flavours/${token}`, { method: "DELETE" });
+
+export const apiAdminCreateReview = (data: any) => fetchJson("/api/admin/reviews", { method: "POST", body: JSON.stringify(data) });
+export const apiAdminUpdateReview = (name: string, data: any) => fetchJson(`/api/admin/reviews/${name}`, { method: "PUT", body: JSON.stringify(data) });
+export const apiAdminDeleteReview = (name: string) => fetchJson(`/api/admin/reviews/${name}`, { method: "DELETE" });
+
+export const useProductReviews = () => {
+  return useQuery({
+    queryKey: ["product_reviews"],
+    queryFn: () => fetchJson<any[]>("/api/product-reviews"),
+  });
+};
+export const apiAdminCreateProductReview = (data: any) => fetchJson("/api/admin/product-reviews", { method: "POST", body: JSON.stringify(data) });
+export const apiAdminUpdateProductReview = (id: string, data: any) => fetchJson(`/api/admin/product-reviews/${id}`, { method: "PUT", body: JSON.stringify(data) });
+export const apiAdminDeleteProductReview = (id: string) => fetchJson(`/api/admin/product-reviews/${id}`, { method: "DELETE" });
+
+export const apiAdminCreateFaq = (data: any) => fetchJson("/api/admin/faqs", { method: "POST", body: JSON.stringify(data) });
+export const apiAdminUpdateFaq = (q: string, data: any) => fetchJson(`/api/admin/faqs/${encodeURIComponent(q)}`, { method: "PUT", body: JSON.stringify(data) });
+export const apiAdminDeleteFaq = (q: string) => fetchJson(`/api/admin/faqs/${encodeURIComponent(q)}`, { method: "DELETE" });
+
