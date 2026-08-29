@@ -78,28 +78,28 @@ export function Header() {
         className={cn(
           "border-b border-transparent transition-all duration-500",
           scrolled
-            ? "border-border/70 bg-background/80 py-2 shadow-[var(--shadow-soft)] backdrop-blur-xl"
-            : "bg-background py-3 lg:py-4",
+            ? "border-border/70 bg-background/80 py-1 shadow-[var(--shadow-soft)] backdrop-blur-xl"
+            : "bg-background py-1 lg:py-2",
         )}
       >
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 lg:px-10">
-          <Link to="/" className="flex shrink-0 items-center gap-1">
-            <span className="font-display text-2xl font-extrabold lowercase tracking-[-0.06em]">
-              sonrup<span className="text-gradient-gold">.</span>
-            </span>
+        <div className="mx-auto flex max-w-[1400px] flex-nowrap items-center justify-between gap-x-2 px-4 lg:gap-x-6 lg:px-10">
+          <Link to="/" className="flex shrink-0 items-center pl-10 lg:pl-0">
+            <img 
+              src="/logo.png" 
+              alt="Sonrup" 
+              className="h-12 w-auto object-contain object-left lg:h-15" 
+              style={{ marginLeft: "-44px", filter: "drop-shadow(0px 1px 3px rgba(0,0,0,0.4)) drop-shadow(0px 2px 8px rgba(0,0,0,0.2))" }} 
+            />
           </Link>
 
-          <nav className={cn(
-            "order-3 w-full lg:order-2 lg:flex lg:w-auto lg:flex-1 items-center justify-center gap-4 sm:gap-7",
-            mobileMenuOpen ? "flex flex-col py-6 border-t border-border mt-3 lg:border-none lg:py-0 lg:mt-0 lg:flex-row" : "hidden lg:flex"
-          )}>
+          {/* Desktop nav - always visible inline on lg+ */}
+          <nav className="order-2 hidden lg:flex lg:flex-1 items-center justify-center gap-7">
             {NAV.map((item) => (
               <Link
                 key={item.label}
                 to={item.to}
-                onClick={() => setMobileMenuOpen(false)}
                 {...("search" in item ? { search: item.search as never } : {})}
-                className="group relative text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground sm:text-[12px]"
+                className="group relative text-[12px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground"
               >
                 {item.label}
                 <span className="absolute -bottom-1.5 left-0 h-[2px] w-0 rounded-full bg-[image:var(--gradient-gold)] transition-all duration-300 group-hover:w-full" />
@@ -107,7 +107,7 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="order-2 ml-auto flex items-center gap-1 lg:order-3">
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-0.5 lg:order-3 lg:gap-1">
             <button
               aria-label="Search"
               onClick={() => setSearchOpen((s) => !s)}
@@ -153,6 +153,25 @@ export function Header() {
             </button>
           </div>
         </div>
+
+        {/* Mobile nav dropdown panel */}
+        {mobileMenuOpen && (
+          <div className="border-t border-border bg-background px-5 py-5 lg:hidden">
+            <nav className="flex flex-col gap-5">
+              {NAV.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  {...("search" in item ? { search: item.search as never } : {})}
+                  className="text-[13px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
 
         {searchOpen && (
           <div className="mx-auto max-w-[1400px] px-5 pb-3 pt-3 lg:px-10 relative">

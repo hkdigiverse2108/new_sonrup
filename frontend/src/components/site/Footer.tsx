@@ -52,11 +52,14 @@ export function Footer() {
       <div className="relative mx-auto max-w-[1400px] px-5 py-20 lg:px-10">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>
-            <div className="flex items-center gap-1">
-              <span className="font-display text-3xl font-extrabold lowercase tracking-[-0.06em] text-cream">
-                sonrup<span className="text-primary">.</span>
-              </span>
-            </div>
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="Sonrup" 
+                className="h-15 w-auto object-contain object-left" 
+                style={{ marginLeft: "-44px" }} 
+              />
+            </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-cream/65">
               Delicious daily gummies made with real fruit flavours and actives that actually earn their place.
             </p>

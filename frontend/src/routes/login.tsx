@@ -63,8 +63,13 @@ function LoginPage() {
 
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between">
-            <Link to="/" className="font-display text-2xl font-extrabold lowercase tracking-[-0.06em]">
-              sonrup<span className="text-gradient-gold">.</span>
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="Sonrup" 
+                className="h-15 w-auto object-contain object-left" 
+                style={{ marginLeft: "-44px" }} 
+              />
             </Link>
             <Link
               to="/"

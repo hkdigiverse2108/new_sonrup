@@ -82,10 +82,17 @@ function AdminLayout() {
     <div className="flex min-h-screen bg-background font-sans text-foreground">
       {/* Sidebar */}
       <aside className="hidden w-64 border-r border-border bg-card p-4 lg:flex flex-col">
-        <div className="mb-6 px-2">
-          <p className="font-display text-2xl font-extrabold tracking-tight text-primary">
-            sonrup<span className="text-secondary">.</span>
-          </p>
+        <div className="mb-6 flex flex-col gap-2">
+          <div>
+            <Link to="/admin" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="Sonrup" 
+                className="h-15 w-auto object-contain object-left" 
+                style={{ marginLeft: "-44px", filter: "drop-shadow(0px 1px 0px rgba(0,0,0,0.55)) drop-shadow(0px 2px 6px rgba(0,0,0,0.35))" }} 
+              />
+            </Link>
+          </div>
           <p className="mt-0.5 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Admin Panel</p>
         </div>
 
@@ -461,10 +468,8 @@ function AdminLoginPage({ onLogin }: { onLogin: () => void }) {
 
       <div className="relative w-full max-w-lg">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <p className="font-display text-5xl font-extrabold tracking-tight text-cream">
-            sonrup<span className="text-primary">.</span>
-          </p>
+        <div className="mb-8 text-center flex flex-col items-center gap-3">
+          <img src="/logo.png" alt="Sonrup" className="h-28 w-auto object-contain" />
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.35em] text-cream/40">Admin Panel</p>
         </div>
 
