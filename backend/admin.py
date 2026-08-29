@@ -208,19 +208,20 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
     }
 
     headers = {
-        "Authorization": f"Token {token}",
-        "Content-Type": "application/json"
+        "Authorization": f"Token {token}"
     }
 
     try:
         async with httpx.AsyncClient() as client:
-            # We must serialize "data" to a JSON string because Delhivery expects the data field to be a JSON string inside the main JSON payload
             import json
-            payload["data"] = json.dumps(payload["data"])
+            form_data = {
+                "format": "json",
+                "data": json.dumps(payload["data"])
+            }
             
             response = await client.post(
                 "https://track.delhivery.com/api/cmu/create.json", 
-                json=payload, 
+                data=form_data, 
                 headers=headers,
                 timeout=15.0
             )
@@ -228,13 +229,18 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
             res_data = response.json()
             
             # Check for Delhivery specific errors
-            if not res_data.get("success") and res_data.get("packages"):
-                # Sometimes it succeeds partially, let's extract waybill
-                waybill = res_data["packages"][0].get("waybill")
-                if waybill:
+            if not res_data.get("success"):
+                if res_data.get("packages") and res_data["packages"][0].get("waybill"):
+                    # Partially succeeded, we have a waybill
                     pass
                 else:
-                    raise Exception(str(res_data))
+                    # Try to extract a meaningful error message from remarks
+                    error_msg = res_data.get("rmk") or res_data.get("error") or "Unknown error"
+                    if res_data.get("packages") and len(res_data["packages"]) > 0:
+                        remarks = res_data["packages"][0].get("remarks")
+                        if remarks and len(remarks) > 0:
+                            error_msg = remarks[0]
+                    raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_msg}")
             
             # The structure of successful response usually contains 'packages' list with 'waybill'
             packages = res_data.get("packages", [])
@@ -254,9 +260,14 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
                 {"$set": {"delhivery_awb": waybill, "delhivery_status": "Manifested", "status": "Shipped"}}
             )
             return {"success": True, "awb": waybill}
+    except HTTPException:
+        raise
     except httpx.HTTPStatusError as e:
+        print("[DELHIVERY HTTP ERROR]", e.response.text)
         raise HTTPException(status_code=400, detail=f"Delhivery API Error: {e.response.text}")
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to create shipment: {str(e)}")
 
 @router.post("/orders/{order_id}/pickup")

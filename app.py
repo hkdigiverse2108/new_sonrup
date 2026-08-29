@@ -48,7 +48,7 @@ def main():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=os.path.join(os.getcwd(), "frontend"),
-        shell=True  # Required on Windows to run npm/cmd scripts
+        shell=(os.name == 'nt')  # Required on Windows to run npm/cmd scripts
     )
     
     # Spawn threads to capture stdout and stderr from both processes
