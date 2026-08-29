@@ -3,7 +3,7 @@ import { Clock, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { apiSubmitContact } from "@/lib/api";
+import { apiSubmitContact, useContactContent } from "@/lib/api";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
 

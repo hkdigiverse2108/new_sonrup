@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel
+from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel
 from backend.main import get_current_user
 from typing import Any, Dict
 import os
 import uuid
 import shutil
+import random
+import httpx
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -24,7 +27,8 @@ async def upload_file(file: UploadFile = File(...), admin=Depends(require_admin)
     filepath = os.path.join("backend/uploads", filename)
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    return {"url": f"http://localhost:8000/uploads/{filename}"}
+    api_url = os.getenv("VITE_API_URL", "http://localhost:8000")
+    return {"url": f"{api_url}/uploads/{filename}"}
 
 # ---------------------------------------------------------
 # Products CRUD
@@ -118,6 +122,224 @@ async def update_order_status(order_id: str, payload: Dict[str, str], admin=Depe
     await db["orders"].update_one({"id": order_id}, {"$set": {"status": status}})
     return {"success": True}
 
+@router.post("/orders/{order_id}/ship")
+async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    order = await db["orders"].find_one({"id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    integrations = await db["integrations"].find_one({}) or {}
+    token = integrations.get("delhivery_api_token")
+    warehouse = integrations.get("delhivery_warehouse_name")
+    
+    if not token or not warehouse:
+        raise HTTPException(status_code=400, detail="Delhivery credentials not configured in Integrations settings")
+
+    # Assuming pre-paid and default 500g for gummy tubes
+    payload = {
+        "format": "json",
+        "data": {
+            "shipments": [
+                {
+                    "name": order.get("customer_name", "Customer"),
+                    "add": order.get("shipping_address", {}).get("address", ""),
+                    "pin": order.get("shipping_address", {}).get("pincode", ""),
+                    "city": order.get("shipping_address", {}).get("city", ""),
+                    "state": order.get("shipping_address", {}).get("state", ""),
+                    "country": "India",
+                    "phone": order.get("customer_phone", ""),
+                    "order": order.get("id"),
+                    "payment_mode": "Pre-paid",
+                    "return_add": "",
+                    "return_pin": "",
+                    "return_city": "",
+                    "return_state": "",
+                    "return_country": "",
+                    "products_desc": "SonRup Gummy Tubes",
+                    "hsn_code": "",
+                    "cod_amount": 0,
+                    "order_date": datetime.now().isoformat(),
+                    "total_amount": order.get("total", 0),
+                    "seller_add": "",
+                    "seller_name": "SonRup",
+                    "seller_inv": "",
+                    "quantity": sum(item.get("quantity", 1) for item in order.get("items", [])),
+                    "weight": 500
+                }
+            ],
+            "pickup_location": {
+                "name": warehouse
+            }
+        }
+    }
+
+    headers = {
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # We must serialize "data" to a JSON string because Delhivery expects the data field to be a JSON string inside the main JSON payload
+            import json
+            payload["data"] = json.dumps(payload["data"])
+            
+            response = await client.post(
+                "https://track.delhivery.com/api/cmu/create.json", 
+                json=payload, 
+                headers=headers,
+                timeout=15.0
+            )
+            response.raise_for_status()
+            res_data = response.json()
+            
+            # Check for Delhivery specific errors
+            if not res_data.get("success") and res_data.get("packages"):
+                # Sometimes it succeeds partially, let's extract waybill
+                waybill = res_data["packages"][0].get("waybill")
+                if waybill:
+                    pass
+                else:
+                    raise Exception(str(res_data))
+            
+            # The structure of successful response usually contains 'packages' list with 'waybill'
+            packages = res_data.get("packages", [])
+            if not packages:
+                # If they already returned a waybill in another field
+                if "waybill" in res_data:
+                    waybill = res_data["waybill"]
+                else:
+                    raise Exception(f"No packages returned: {res_data}")
+            else:
+                waybill = packages[0].get("waybill")
+                if not waybill:
+                    raise Exception(f"Failed to generate AWB: {res_data}")
+            
+            await db["orders"].update_one(
+                {"id": order_id},
+                {"$set": {"delhivery_awb": waybill, "delhivery_status": "Manifested", "status": "Shipped"}}
+            )
+            return {"success": True, "awb": waybill}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=400, detail=f"Delhivery API Error: {e.response.text}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create shipment: {str(e)}")
+
+@router.post("/orders/{order_id}/pickup")
+async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    integrations = await db["integrations"].find_one({}) or {}
+    token = integrations.get("delhivery_api_token")
+    warehouse = integrations.get("delhivery_warehouse_name")
+    
+    if not token or not warehouse:
+        raise HTTPException(status_code=400, detail="Delhivery credentials not configured")
+
+    # Pickup date is tomorrow
+    pickup_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    payload = {
+        "pickup_time": "15:00:00",
+        "pickup_date": pickup_date,
+        "pickup_location": warehouse,
+        "expected_package_count": "1"
+    }
+
+    headers = {
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://track.delhivery.com/fm/request/pb/generate", 
+                json=payload, 
+                headers=headers,
+                timeout=15.0
+            )
+            # Delhivery sometimes returns 200 with { "prq": true } or errors
+            res_data = response.json() if response.text else {}
+            
+            if response.status_code >= 400:
+                raise Exception(f"API Error: {response.text}")
+                
+            await db["orders"].update_one(
+                {"id": order_id},
+                {"$set": {"delhivery_status": "Pickup Scheduled"}}
+            )
+            return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to schedule pickup: {str(e)}")
+
+@router.post("/orders/{order_id}/cancel-shipment")
+async def cancel_shipment(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    order = await db["orders"].find_one({"id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    awb = order.get("delhivery_awb")
+    if awb:
+        integrations = await db["integrations"].find_one({}) or {}
+        token = integrations.get("delhivery_api_token")
+        
+        if token:
+            payload = {
+                "waybill": awb,
+                "cancellation": "true"
+            }
+            headers = {
+                "Authorization": f"Token {token}",
+                "Content-Type": "application/json"
+            }
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "https://track.delhivery.com/api/p/edit", 
+                        json=payload, 
+                        headers=headers,
+                        timeout=15.0
+                    )
+                    # Even if it errors, we proceed to clean up locally, but we could log it
+            except Exception as e:
+                print("Failed to cancel on Delhivery:", str(e))
+
+    await db["orders"].update_one(
+        {"id": order_id},
+        {"$set": {"delhivery_awb": None, "delhivery_status": None, "status": "Processing"}}
+    )
+    return {"success": True}
+
+@router.delete("/orders/{order_id}")
+async def delete_order(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    order = await db["orders"].find_one({"id": order_id})
+    if order and order.get("delhivery_awb"):
+        # Cancel the shipment on Delhivery if it exists
+        awb = order.get("delhivery_awb")
+        integrations = await db["integrations"].find_one({}) or {}
+        token = integrations.get("delhivery_api_token")
+        if token:
+            payload = {
+                "waybill": awb,
+                "cancellation": "true"
+            }
+            headers = {
+                "Authorization": f"Token {token}",
+                "Content-Type": "application/json"
+            }
+            try:
+                async with httpx.AsyncClient() as client:
+                    await client.post(
+                        "https://track.delhivery.com/api/p/edit", 
+                        json=payload, 
+                        headers=headers,
+                        timeout=15.0
+                    )
+            except Exception:
+                pass
+
+    await db["orders"].delete_one({"id": order_id})
+    return {"success": True}
+
 # ---------------------------------------------------------
 # Home Page Content
 # ---------------------------------------------------------
@@ -143,4 +365,18 @@ async def update_flavour(token: str, flavour: FlavourModel, admin=Depends(requir
 @router.delete("/flavours/{token}")
 async def delete_flavour(token: str, admin=Depends(require_admin), db=Depends(get_database)):
     await db["flavours"].delete_one({"token": token})
+    return {"success": True}
+
+# ---------------------------------------------------------
+# Integrations Settings
+# ---------------------------------------------------------
+@router.put("/settings/integrations")
+async def update_integrations_settings(content: IntegrationsModel, admin=Depends(require_admin), db=Depends(get_database)):
+    existing = await db["integrations"].find_one({}) or {}
+    new_data = content.model_dump()
+    if new_data.get("delhivery_api_token") == "***":
+        new_data["delhivery_api_token"] = existing.get("delhivery_api_token", "")
+    if new_data.get("razorpay_key_secret") == "***":
+        new_data["razorpay_key_secret"] = existing.get("razorpay_key_secret", "")
+    await db["integrations"].replace_one({}, new_data, upsert=True)
     return {"success": True}

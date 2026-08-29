@@ -115,7 +115,7 @@ function HeroSettingsPage() {
   const setStats = (s: any[]) => set({ stats: s });
 
   return (
-    <div className="max-w-6xl space-y-3 pb-20">
+    <div className="w-full space-y-3 pb-20">
       <div>
         <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight text-[#3E332A]">SITE SETTINGS</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">Customize storefront content.</p>

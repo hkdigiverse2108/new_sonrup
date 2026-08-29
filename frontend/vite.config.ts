@@ -14,5 +14,10 @@ export default defineConfig({
   },
   vite: {
     envDir: "../",
+    server: {
+      watch: {
+        ignored: ['**/public/uploads/**']
+      }
+    }
   },
 });

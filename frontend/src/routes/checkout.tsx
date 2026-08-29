@@ -4,10 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton } from "@/components/site/Primitives";
-import { FREE_SHIPPING_THRESHOLD, inr } from "@/lib/products";
+import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { useAuth, type Order } from "@/lib/auth";
-import { apiAddOrder } from "@/lib/api";
+import { apiAddOrder, useIntegrationsSettings } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/checkout")({
@@ -24,9 +24,7 @@ export const Route = createFileRoute("/checkout")({
 });
 
 const PAYMENTS = [
-  { id: "upi", label: "UPI", note: "GPay, PhonePe, Paytm" },
-  { id: "card", label: "Card", note: "Credit & debit" },
-  { id: "netbanking", label: "Net banking", note: "All major banks" },
+  { id: "online", label: "Pay Online", note: "UPI, Cards, Net banking (via Razorpay)" },
   { id: "cod", label: "Cash on delivery", note: "Orders under ₹2,000" },
 ];
 
@@ -37,9 +35,22 @@ function Checkout() {
   const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(defaultAddress?.id || "new");
   const [step, setStep] = useState(1);
-  const [pay, setPay] = useState("upi");
+  const [pay, setPay] = useState("online");
   const [done, setDone] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { data: settings } = useIntegrationsSettings();
+  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 59;
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   if (done) {
     return (
@@ -152,25 +163,96 @@ function Checkout() {
                 payment_method: pay,
               };
 
-              if (user) {
-                addOrderLocal(newOrder as any);
+              if (pay === "online") {
+                setIsProcessing(true);
+                const res = await loadRazorpay();
+                if (!res) {
+                  toast.error("Razorpay SDK failed to load. Are you online?");
+                  setIsProcessing(false);
+                  return;
+                }
+                
+                try {
+                  const orderRes = await fetch("http://localhost:8000/api/razorpay/create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount: Number(subtotal + shipping) })
+                  }).then(r => r.json());
+                  
+                  if (!orderRes.order_id) throw new Error("Failed to create Razorpay order");
+                  
+                  const options = {
+                    key: settings?.razorpay_key_id,
+                    amount: (subtotal + shipping) * 100,
+                    currency: "INR",
+                    name: "Sonrup Nutrition",
+                    description: "Order Payment",
+                    order_id: orderRes.order_id,
+                    handler: async function (response: any) {
+                      try {
+                        const verifyRes = await fetch("http://localhost:8000/api/razorpay/verify", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature
+                          })
+                        }).then(r => r.json());
+                        
+                        if (verifyRes.success) {
+                           if (user) { addOrderLocal(newOrder as any); }
+                           apiAddOrder(newOrder).catch(console.error);
+                           clear();
+                           setDone(id);
+                           toast.success("Order placed successfully");
+                        } else {
+                           toast.error("Payment verification failed");
+                        }
+                      } catch (err) {
+                        toast.error("Error verifying payment");
+                      }
+                      setIsProcessing(false);
+                    },
+                    prefill: {
+                      name: customerName,
+                      email: customerEmail,
+                      contact: customerPhone
+                    },
+                    theme: { color: "#cc5f39" },
+                    modal: {
+                      ondismiss: function() {
+                        setIsProcessing(false);
+                      }
+                    }
+                  };
+                  const rzp1 = new (window as any).Razorpay(options);
+                  rzp1.open();
+                } catch (err) {
+                  toast.error("Could not initiate Razorpay");
+                  setIsProcessing(false);
+                }
+              } else {
+                if (user) {
+                  addOrderLocal(newOrder as any);
+                }
+                apiAddOrder(newOrder).catch(console.error);
+  
+                clear();
+                setDone(id);
+                toast.success("Order placed successfully");
               }
-              apiAddOrder(newOrder).catch(console.error);
-
-              clear();
-              setDone(id);
-              toast.success("Order placed successfully");
             }}
             className="surface-card grid gap-6 p-6 sm:p-8"
           >
-            {step === 1 && (
+            <div className={step === 1 ? "grid gap-12" : "hidden"}>
               <div className="grid gap-12">
                 <Section title="Contact details">
                   <Grid>
-                    <Field label="Full name" name="customer_name" placeholder="Janvi Vasani" defaultValue={user?.name} />
-                    <Field label="Phone" name="customer_phone" placeholder="98200 00000" defaultValue={user?.phone} />
+                    <Field label="Full name" name="customer_name" placeholder="John Doe" defaultValue={user?.name} />
+                    <Field label="Phone" name="customer_phone" placeholder="9876543210" defaultValue={user?.phone} />
                   </Grid>
-                  <Field label="Email" name="customer_email" type="email" placeholder="you@email.com" defaultValue={user?.email} />
+                  <Field label="Email" name="customer_email" type="email" placeholder="john.doe@example.com" defaultValue={user?.email} />
                 </Section>
                 <Section title="Shipping address">
                 {addresses.length > 0 && (
@@ -214,13 +296,13 @@ function Checkout() {
                 )}
 
                 <div key={selectedAddressId} className="grid gap-5">
-                  <Field label="Address line" name="line1" placeholder="Flat / house, street" defaultValue={addresses.find(a => a.id === selectedAddressId)?.line1} />
+                  <Field label="Address line" name="line1" placeholder="123 Main St" defaultValue={addresses.find(a => a.id === selectedAddressId)?.line1} />
                   <Grid>
-                    <Field label="City" name="city" placeholder="Mumbai" defaultValue={addresses.find(a => a.id === selectedAddressId)?.city} />
-                    <Field label="State" name="state" placeholder="Maharashtra" defaultValue={addresses.find(a => a.id === selectedAddressId)?.state} />
+                    <Field label="City" name="city" placeholder="City Name" defaultValue={addresses.find(a => a.id === selectedAddressId)?.city} />
+                    <Field label="State" name="state" placeholder="State Name" defaultValue={addresses.find(a => a.id === selectedAddressId)?.state} />
                   </Grid>
                   <Grid>
-                    <Field label="Pincode" name="pincode" placeholder="400069" defaultValue={addresses.find(a => a.id === selectedAddressId)?.pincode} />
+                    <Field label="Pincode" name="pincode" placeholder="123456" defaultValue={addresses.find(a => a.id === selectedAddressId)?.pincode} />
                     <Field label="Landmark (optional)" name="landmark" required={false} placeholder="Near the park" defaultValue={addresses.find(a => a.id === selectedAddressId)?.landmark} />
                   </Grid>
                 </div>
@@ -230,7 +312,7 @@ function Checkout() {
                 </p>
               </Section>
               </div>
-            )}
+            </div>
 
             {step === 2 && (
               <Section title="Payment method">
@@ -264,9 +346,9 @@ function Checkout() {
                   Back
                 </BrandButton>
               )}
-              <BrandButton type="submit" variant="solid" size="lg">
-                {step < 2 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
-                {step === 2 && <CreditCard className="h-4 w-4" />}
+              <BrandButton type="submit" variant="solid" disabled={isProcessing}>
+                {isProcessing ? "Processing..." : step < 2 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
+                {step === 2 && !isProcessing && <CreditCard className="h-4 w-4" />}
               </BrandButton>
             </div>
           </form>

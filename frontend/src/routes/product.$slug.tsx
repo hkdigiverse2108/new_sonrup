@@ -52,9 +52,11 @@ function ProductPage() {
   const { data: allProducts = [] } = useProducts();
   const { data: productReviewsAll = [] } = useProductReviews();
 
-  const gallery = product.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
+  const gallery = Array.from(new Set([product.image, ...(product.gallery || [])].filter(Boolean)));
   const wished = wishlist.includes(product.slug);
-  const related = allProducts.filter((p) => p.slug !== product.slug);
+  const related = (product.related_products && product.related_products.length > 0)
+    ? allProducts.filter((p) => product.related_products!.includes(p.slug))
+    : allProducts.filter((p) => p.slug !== product.slug).slice(0, 3);
 
   const productReviews = productReviewsAll.filter((r: any) => r.product_slug === product.slug);
   const reviewsCount = productReviews.length;
@@ -62,8 +64,12 @@ function ProductPage() {
     ? (productReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewsCount).toFixed(1)
     : "5.0";
 
-  const bundle = related.slice(0, 2);
-  const bundleTotal = [product, ...bundle].reduce((s, p) => s + p.price, 0);
+  const bundle = (product.frequently_bought_together && product.frequently_bought_together.length > 0)
+    ? product.frequently_bought_together.map((slug: string) => allProducts.find((p) => p.slug === slug)).filter(Boolean)
+    : related.slice(0, 2);
+  const bundleTotal = product.bundle_price && product.bundle_price > 0
+    ? product.bundle_price
+    : [product, ...bundle].reduce((s, p) => s + p.price, 0);
 
   return (
     <main>
@@ -257,7 +263,7 @@ function ProductPage() {
                   toast.success("Bundle added to bag");
                 }}
               >
-                Add all three
+                {bundle.length === 1 ? "Add both" : bundle.length === 2 ? "Add all three" : bundle.length === 3 ? "Add all four" : "Add all to bag"}
               </BrandButton>
             </div>
           </div>

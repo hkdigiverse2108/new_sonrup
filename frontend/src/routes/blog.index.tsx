@@ -3,7 +3,7 @@ import { ArrowUpRight, BookOpen, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Container, RouteError } from "@/components/site/Page";
 import { BrandButton, Eyebrow, Reveal } from "@/components/site/Primitives";
-import { usePosts } from "@/lib/api";
+import { usePosts, useJournalContent } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -157,7 +157,7 @@ function JournalPage() {
                 {cta.title}
               </h3>
             </div>
-            <Link to={cta.cta_link} search={{ q: "", goal: "", sort: "featured", max: 1500 }} className="ml-auto">
+            <Link to={cta.cta_link} search={{ q: "", goal: "", sort: "featured", max: 99999 }} className="ml-auto">
               <BrandButton variant="gold" size="lg">
                 <Sparkles className="h-4 w-4" /> {cta.cta_text}
               </BrandButton>

@@ -9,6 +9,21 @@ class Nutrition(BaseModel):
     label: str
     value: str
 
+class IntegrationsModel(BaseModel):
+    free_shipping_amount: float = 499.0
+    max_filter_price: float = 1500.0
+    delhivery_api_token: Optional[str] = ""
+    delhivery_warehouse_name: str = ""
+    razorpay_key_id: Optional[str] = ""
+    razorpay_key_secret: Optional[str] = ""
+    razorpay_mode: str = "test"
+    announcement_bar_items: List[str] = [
+        "FREE SHIPPING ON ORDERS ABOVE ₹499",
+        "60 GUMMIES PER TUBE",
+        "MADE WITH REAL FRUIT FLAVOURS",
+        "VEGETARIAN · PECTIN BASED"
+    ]
+
 class ProductModel(BaseModel):
     slug: str
     name: str
@@ -16,6 +31,9 @@ class ProductModel(BaseModel):
     description: str
     image: str
     gallery: Optional[List[str]] = []
+    related_products: Optional[List[str]] = []
+    frequently_bought_together: Optional[List[str]] = []
+    bundle_price: Optional[float] = None
     price: float
     mrp: float
     rating: float
@@ -129,6 +147,8 @@ class OrderModel(BaseModel):
     customer_phone: str
     shipping_address: ShippingAddress
     payment_method: str
+    delhivery_awb: Optional[str] = None
+    delhivery_status: Optional[str] = None
 
 class UserModel(BaseModel):
     email: str

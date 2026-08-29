@@ -234,7 +234,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
           src={product.image}
           alt={product.name}
           loading="lazy"
-          className="relative aspect-4/5 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+          className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
         />
       </Link>
 

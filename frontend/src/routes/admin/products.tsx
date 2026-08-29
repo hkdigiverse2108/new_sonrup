@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, X, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ArrowLeft, ArrowRight, Star } from "lucide-react";
 import { apiAdminCreateProduct, apiAdminUpdateProduct, apiAdminDeleteProduct, apiUploadFile } from "@/lib/api";
 import { Product } from "@/lib/products";
 import { BrandButton } from "@/components/site/Primitives";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProducts,
@@ -60,6 +61,7 @@ function AdminProducts() {
           product={editing} 
           onClose={() => setEditing(null)} 
           onSave={(data) => saveMutation.mutate(data)} 
+          allProducts={products}
         />
       ) : (
         <>
@@ -114,27 +116,85 @@ function AdminProducts() {
   );
 }
 
-function ProductForm({ product, onClose, onSave }: { product: Partial<Product>, onClose: () => void, onSave: (data: any) => void }) {
+function ProductForm({ product, onClose, onSave, allProducts }: { product: Partial<Product>, onClose: () => void, onSave: (data: any) => void, allProducts: Product[] }) {
   const [formData, setFormData] = useState<any>(product);
   const [uploading, setUploading] = useState(false);
+  const [imagesList, setImagesList] = useState<string[]>(() => {
+    const list = [product.image, ...(product.gallery || [])].filter(Boolean) as string[];
+    return Array.from(new Set(list));
+  });
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleUploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const res = await apiUploadFile(file);
-      setFormData({ ...formData, image: res.url });
+      const urls: string[] = [];
+      await Promise.all(
+        files.map(async (file) => {
+          try {
+            const res = await apiUploadFile(file);
+            if (res.url) {
+              urls.push(res.url);
+            }
+          } catch (err) {
+            console.error("Failed to upload file:", file.name, err);
+          }
+        })
+      );
+      if (urls.length > 0) {
+        setImagesList((prev) => [...prev, ...urls]);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error during batch upload:", err);
     } finally {
       setUploading(false);
     }
   };
 
+  const moveImageLeft = (idx: number) => {
+    if (idx === 0) return;
+    setImagesList((prev) => {
+      const next = [...prev];
+      const temp = next[idx];
+      next[idx] = next[idx - 1];
+      next[idx - 1] = temp;
+      return next;
+    });
+  };
+
+  const moveImageRight = (idx: number) => {
+    setImagesList((prev) => {
+      if (idx === prev.length - 1) return prev;
+      const next = [...prev];
+      const temp = next[idx];
+      next[idx] = next[idx + 1];
+      next[idx + 1] = temp;
+      return next;
+    });
+  };
+
+  const makeCoverImage = (idx: number) => {
+    if (idx === 0) return;
+    setImagesList((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(idx, 1);
+      next.unshift(item);
+      return next;
+    });
+  };
+
+  const removeImage = (idx: number) => {
+    setImagesList((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      image: imagesList[0] || "",
+      gallery: imagesList.slice(1)
+    });
   };
 
   const addIngredient = () => setFormData({ ...formData, ingredients: [...(formData.ingredients || []), { name: '', note: '' }] });
@@ -225,52 +285,97 @@ function ProductForm({ product, onClose, onSave }: { product: Partial<Product>, 
           </div>
         </FieldGroup>
 
-        <FieldGroup title="Images">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="grid gap-1">
-              <Label>Main Image</Label>
-              <div className="flex items-center gap-3">
-                {formData.image && <img src={formData.image} className="h-12 w-12 rounded-lg object-cover" />}
-                <label className="cursor-pointer flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs hover:bg-muted transition-colors">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{uploading ? 'Uploading...' : 'Upload'}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-                </label>
-              </div>
-            </div>
+        <FieldGroup title="Product Images">
+          <div className="grid gap-3">
+            <div className="flex flex-wrap gap-3 items-start">
+              {imagesList.map((imgUrl, i) => (
+                <div key={i} className={cn(
+                  "relative group flex flex-col items-center gap-1 p-1 rounded-lg border transition-all bg-card shadow-sm",
+                  i === 0 ? "border-primary ring-2 ring-primary/10" : "border-border hover:border-muted-foreground/30"
+                )}>
+                  {/* Image Display */}
+                  <div className="relative h-16 w-16 rounded-md overflow-hidden border border-border">
+                    <img src={imgUrl} className="h-full w-full object-cover" />
+                    
+                    {/* Cover badge overlay */}
+                    {i === 0 && (
+                      <span className="absolute bottom-0.5 left-0.5 right-0.5 text-center bg-primary/95 text-primary-foreground text-[8px] font-bold py-0.5 rounded uppercase tracking-wider shadow">
+                        Cover
+                      </span>
+                    )}
 
-            <div className="grid gap-1">
-              <div className="flex items-center justify-between">
-                <Label>Gallery</Label>
-                <label className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
-                  + Add
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    setUploading(true);
-                    try {
-                      const res = await apiUploadFile(file);
-                      setFormData({ ...formData, gallery: [...(formData.gallery || []), res.url] });
-                    } catch (err) {
-                      console.error(err);
-                    } finally {
-                      setUploading(false);
-                    }
-                  }} disabled={uploading} />
-                </label>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(formData.gallery || []).map((imgUrl: string, i: number) => (
-                  <div key={i} className="relative group border border-border rounded-lg">
-                    <img src={imgUrl} className="h-12 w-12 rounded-lg object-cover" />
-                    <button type="button" onClick={() => setFormData({ ...formData, gallery: formData.gallery.filter((_: any, idx: number) => idx !== i) })} className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Delete button (Top Right) */}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-0.5 right-0.5 bg-destructive text-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-destructive/90"
+                      title="Delete Image"
+                    >
                       <X className="h-2.5 w-2.5" />
                     </button>
                   </div>
-                ))}
-                {uploading && <div className="h-12 w-12 rounded-lg bg-muted animate-pulse" />}
-                {!(formData.gallery || []).length && !uploading && <div className="h-12 w-12 rounded-lg border border-dashed border-border flex items-center justify-center text-[10px] text-muted-foreground">None</div>}
-              </div>
+
+                  {/* Reordering Controls */}
+                  <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    {/* Move Left */}
+                    <button
+                      type="button"
+                      onClick={() => moveImageLeft(i)}
+                      disabled={i === 0}
+                      className={cn(
+                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      )}
+                      title="Move Left"
+                    >
+                      <ArrowLeft className="h-2.5 w-2.5" />
+                    </button>
+
+                    {/* Make Cover Button (Star) */}
+                    {i > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => makeCoverImage(i)}
+                        className="p-0.5 rounded hover:bg-muted text-yellow-500 hover:text-yellow-600 transition-colors"
+                        title="Make Cover Image"
+                      >
+                        <Star className="h-2.5 w-2.5 fill-current" />
+                      </button>
+                    )}
+
+                    {/* Move Right */}
+                    <button
+                      type="button"
+                      onClick={() => moveImageRight(i)}
+                      disabled={i === imagesList.length - 1}
+                      className={cn(
+                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      )}
+                      title="Move Right"
+                    >
+                      <ArrowRight className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {uploading && (
+                <div className="flex flex-col items-center gap-1 p-1 rounded-lg border border-dashed border-border bg-card">
+                  <div className="h-16 w-16 rounded-md bg-muted animate-pulse flex items-center justify-center text-[10px] text-muted-foreground">
+                    Uploading...
+                  </div>
+                  <div className="h-4" />
+                </div>
+              )}
+
+              {/* Upload Input Card */}
+              <label className={cn(
+                "h-20 w-20 cursor-pointer rounded-lg border border-dashed border-border flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-all shadow-sm",
+                uploading && "pointer-events-none opacity-50"
+              )}>
+                <Plus className="h-5 w-5" />
+                <span className="text-[9px] font-bold uppercase tracking-wider">Add Images</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleUploadImages} disabled={uploading} />
+              </label>
             </div>
           </div>
         </FieldGroup>
@@ -285,10 +390,10 @@ function ProductForm({ product, onClose, onSave }: { product: Partial<Product>, 
               <Label>Badges</Label>
               <select
                 value={
-                  (formData.badges || []).includes('Best Sellers')
-                    ? 'Best Sellers'
-                    : (formData.badges || []).includes('New Arrivals')
-                    ? 'New Arrivals'
+                  (formData.badges || []).some(b => b === 'Best Sellers' || b === 'Best Seller')
+                    ? 'Best Seller'
+                    : (formData.badges || []).some(b => b === 'New Arrivals' || b === 'New Arrival')
+                    ? 'New Arrival'
                     : ''
                 }
                 onChange={e => {
@@ -298,8 +403,8 @@ function ProductForm({ product, onClose, onSave }: { product: Partial<Product>, 
                 className="field"
               >
                 <option value="">— None —</option>
-                <option value="Best Sellers">Best Sellers</option>
-                <option value="New Arrivals">New Arrivals</option>
+                <option value="Best Seller">Best Sellers</option>
+                <option value="New Arrival">New Arrivals</option>
               </select>
             </label>
             <label className="grid gap-1">
@@ -348,6 +453,58 @@ function ProductForm({ product, onClose, onSave }: { product: Partial<Product>, 
             </button>
           </div>
         </FieldGroup>
+
+        <FieldGroup title="Related Products (You may also like)">
+          <div className="grid gap-3">
+            <select
+              className="field"
+              value=""
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const rp = formData.related_products || [];
+                if (!rp.includes(val)) {
+                  setFormData({ ...formData, related_products: [...rp, val] });
+                }
+              }}
+            >
+              <option value="">+ Add a related product...</option>
+              {allProducts
+                .filter(p => p.slug !== product.slug)
+                .filter(p => !(formData.related_products || []).includes(p.slug))
+                .map(p => (
+                  <option key={p.slug} value={p.slug}>{p.name}</option>
+                ))}
+            </select>
+            
+            <div className="flex flex-wrap gap-2">
+              {(formData.related_products || []).map((slug: string) => {
+                const p = allProducts.find(prod => prod.slug === slug);
+                if (!p) return null;
+                return (
+                  <div key={slug} className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2.5 pr-1.5 shadow-sm">
+                    {p.image && <img src={p.image} className="h-5 w-5 rounded-full object-cover shrink-0" />}
+                    <span className="text-sm font-semibold">{p.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const rp = formData.related_products || [];
+                        setFormData({ ...formData, related_products: rp.filter((s: string) => s !== slug) });
+                      }}
+                      className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+              {!(formData.related_products || []).length && (
+                <div className="text-xs text-muted-foreground">No related products selected.</div>
+              )}
+            </div>
+          </div>
+        </FieldGroup>
+
 
         <div className="sticky bottom-3 flex justify-end gap-2 rounded-xl bg-card border border-border px-4 py-3 shadow-lg">
           <button type="button" onClick={onClose} className="rounded-lg px-5 py-2 text-sm font-bold text-muted-foreground hover:bg-muted transition-colors">Cancel</button>

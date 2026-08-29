@@ -5,13 +5,14 @@ import { z } from "zod";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, ProductCard, Reveal } from "@/components/site/Primitives";
 import { Product } from "@/lib/products";
-import { useProducts } from "@/lib/api";
+import { useProducts, useIntegrationsSettings } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const shopSearchSchema = z.object({
   q: z.string().default(""),
   sort: z.string().default("featured"),
-  max: z.preprocess((v) => (Number(v) > 0 ? Number(v) : 1500), z.number()).default(1500),
+  max: z.preprocess((v) => (Number(v) > 0 ? Number(v) : 99999), z.number()).default(99999),
+  badge: z.string().default(""),
 });
 
 type ShopSearch = z.infer<typeof shopSearchSchema>;
@@ -39,9 +40,31 @@ export const Route = createFileRoute("/shop")({
   errorComponent: RouteError,
 });
 
-export function useShopFilters(search: ShopSearch, products: Product[]) {
+export function normalizeBadge(b: string): string {
+  if (b === "Best Sellers" || b === "Best Seller") return "Best Seller";
+  if (b === "New Arrivals" || b === "New Arrival") return "New Arrival";
+  return b;
+}
+
+export function useShopFilters(search: ShopSearch, products: Product[], maxPriceLimit: number) {
   return useMemo(() => {
-    let list = products.filter((p) => p.price <= search.max);
+    const limit = search.max === 99999 ? maxPriceLimit : search.max;
+    let list = products.filter((p) => p.price <= limit);
+    if (search.badge) {
+      list = list.filter((p) =>
+        (p.badges || []).map(normalizeBadge).includes(normalizeBadge(search.badge))
+      );
+    }
+    if (search.sort === "bestsellers") {
+      list = list.filter((p) =>
+        (p.badges || []).map(normalizeBadge).includes("Best Seller")
+      );
+    }
+    if (search.sort === "new") {
+      list = list.filter((p) =>
+        (p.badges || []).map(normalizeBadge).includes("New Arrival")
+      );
+    }
     if (search.q.trim()) {
       const q = search.q.trim().toLowerCase();
       list = list.filter((p) =>
@@ -55,12 +78,11 @@ export function useShopFilters(search: ShopSearch, products: Product[]) {
     if (search.sort === "price-asc") sorted.sort((a, b) => a.price - b.price);
     if (search.sort === "price-desc") sorted.sort((a, b) => b.price - a.price);
     if (search.sort === "rating") sorted.sort((a, b) => b.rating - a.rating);
-    if (search.sort === "bestsellers")
-      sorted.sort((a, b) => Number(b.badges.includes("Best Seller")) - Number(a.badges.includes("Best Seller")) || b.reviews - a.reviews);
-    if (search.sort === "new")
-      sorted.sort((a, b) => Number(b.badges.includes("New Arrival")) - Number(a.badges.includes("New Arrival")));
+    if (search.sort === "bestsellers") {
+      sorted.sort((a, b) => b.reviews - a.reviews);
+    }
     return sorted;
-  }, [search]);
+  }, [search, products, maxPriceLimit]);
 }
 
 function ShopPage() {
@@ -68,13 +90,15 @@ function ShopPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+  const { data: settings } = useIntegrationsSettings();
+  const maxPriceLimit = settings?.max_filter_price ?? 1500;
   
-  const results = useShopFilters(search, products);
+  const results = useShopFilters(search, products, maxPriceLimit);
 
   const set = (patch: Partial<ShopSearch>) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }) });
 
-  const active = Boolean(search.q || search.max !== 1500 || search.sort !== "featured");
+  const active = Boolean(search.q || search.badge || (search.max !== 99999 && search.max !== maxPriceLimit) || search.sort !== "featured");
 
   return (
     <main>
@@ -88,69 +112,31 @@ function ShopPage() {
         <Container className="py-24 text-center">Loading gummies...</Container>
       ) : (
       <Container className="py-12 lg:py-16">
-        <div className="flex flex-col gap-8 lg:flex-row">
-          {/* Filters */}
-          <aside
-            className={cn(
-              "lg:w-72 lg:shrink-0",
-              filtersOpen
-                ? "fixed inset-0 z-70 overflow-y-auto bg-background p-6 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0"
-                : "hidden lg:block",
-            )}
-          >
-            <div className="mb-6 flex items-center justify-between lg:hidden">
-              <h2 className="font-display text-xl font-extrabold">Filters</h2>
-              <button aria-label="Close filters" onClick={() => setFiltersOpen(false)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-8">
-              <FilterBlock title="Search">
-                <input
-                  value={search.q}
-                  onChange={(e) => set({ q: e.target.value })}
-                  placeholder="Search gummies…"
-                  className="w-full rounded-full border border-border bg-card px-4 py-2.5 text-sm outline-none focus:border-primary"
-                />
-              </FilterBlock>
-
-              <FilterBlock title={`Max price: ₹${search.max}`}>
-                <input
-                  type="range"
-                  min={299}
-                  max={1500}
-                  step={50}
-                  value={search.max}
-                  onChange={(e) => set({ max: Number(e.target.value) })}
-                  className="w-full accent-[var(--secondary)]"
-                />
-              </FilterBlock>
-
-              {active && (
-                <BrandButton variant="outline" size="sm" onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 1500 } })}>
-                  Clear all filters
-                </BrandButton>
-              )}
-            </div>
-
-            {filtersOpen && (
-              <BrandButton className="mt-8 w-full lg:hidden" onClick={() => setFiltersOpen(false)}>
-                Show {results.length} products
-              </BrandButton>
-            )}
-          </aside>
-
+        <div className="flex flex-col gap-8">
           {/* Results */}
           <div className="flex-1">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6">
               <p className="text-sm text-muted-foreground">
                 <span className="font-bold text-foreground">{results.length}</span> product{results.length === 1 ? "" : "s"}
               </p>
-              <div className="flex items-center gap-2">
-                <BrandButton variant="outline" size="sm" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
-                  <SlidersHorizontal className="h-4 w-4" /> Filters
-                </BrandButton>
+              
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                {/* Max Price Filter moved here */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                    Max: ₹{search.max === 99999 ? maxPriceLimit : search.max}
+                  </span>
+                  <input
+                    type="range"
+                    min={299}
+                    max={maxPriceLimit}
+                    step={50}
+                    value={search.max === 99999 ? maxPriceLimit : search.max}
+                    onChange={(e) => set({ max: Number(e.target.value) })}
+                    className="w-32 accent-[var(--secondary)] sm:w-48"
+                  />
+                </div>
+
                 <select
                   aria-label="Sort products"
                   value={search.sort}
@@ -163,7 +149,31 @@ function ShopPage() {
                     </option>
                   ))}
                 </select>
+
+                {active && (
+                  <button 
+                    onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 99999, badge: "" } })}
+                    className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
+            </div>
+
+            {/* Badges Filter Chips */}
+            <div className="mb-8 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mr-2">Filter:</span>
+              <Chip active={search.badge === ""} onClick={() => set({ badge: "" })}>All</Chip>
+              {Array.from(new Set(products.flatMap((p) => (p.badges || []).map(normalizeBadge)).filter(Boolean))).map((badgeName) => (
+                <Chip
+                  key={badgeName}
+                  active={normalizeBadge(search.badge) === badgeName}
+                  onClick={() => set({ badge: normalizeBadge(search.badge) === badgeName ? "" : badgeName })}
+                >
+                  {badgeName === "Best Seller" ? "Best Sellers" : badgeName === "New Arrival" ? "New Arrivals" : badgeName}
+                </Chip>
+              ))}
             </div>
 
             {results.length === 0 ? (
@@ -172,7 +182,7 @@ function ShopPage() {
                 title="No gummies match that"
                 body="Try loosening a filter or clearing your search — our range is small and mighty."
                 action={
-                  <BrandButton onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 1500 } })}>
+                  <BrandButton onClick={() => navigate({ to: ".", search: { q: "", sort: "featured", max: 99999, badge: "" } })}>
                     Clear filters
                   </BrandButton>
                 }

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/best-sellers")({
 
 function BestSellers() {
   const { data: products = [] } = useProducts();
-  const list = products.filter((p) => p.badges.includes("Best Seller") || p.rating >= 4.8).concat(products.filter((p) => !p.badges.includes("Best Seller") && p.rating < 4.8));
+  const list = products.filter((p) => (p.badges || []).some(b => b === "Best Seller" || b === "Best Sellers") || p.rating >= 4.8).concat(products.filter((p) => !(p.badges || []).some(b => b === "Best Seller" || b === "Best Sellers") && p.rating < 4.8));
 
   return (
     <main>

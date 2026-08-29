@@ -15,7 +15,8 @@ export const fetchJson = async <T,>(url: string, options?: RequestInit, isFormDa
 
   // Determine which token to use based on the endpoint
   const isAdminEndpoint = url.startsWith("/api/admin");
-  const token = localStorage.getItem(isAdminEndpoint ? "sonrup_admin_token" : TOKEN_KEY);
+  const isServer = typeof window === "undefined";
+  const token = !isServer ? localStorage.getItem(isAdminEndpoint ? "sonrup_admin_token" : TOKEN_KEY) : null;
   
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -27,7 +28,7 @@ export const fetchJson = async <T,>(url: string, options?: RequestInit, isFormDa
   });
   
   if (!res.ok) {
-    if (res.status === 401) {
+    if (res.status === 401 && !isServer) {
       if (isAdminEndpoint) {
         localStorage.removeItem("sonrup_admin_token");
         window.location.href = "/admin";
@@ -171,11 +172,15 @@ export const apiSubscribeNewsletter = (email: string) => fetchJson("/api/newslet
 export const apiUploadFile = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
-  return fetchJson("/api/upload", { method: "POST", body: formData }, true);
+  return fetchJson("/api/admin/upload", { method: "POST", body: formData }, true);
 };
 
 export const apiAdminGetOrders = () => fetchJson("/api/admin/orders");
 export const apiAdminUpdateOrderStatus = (id: string, status: string) => fetchJson(`/api/admin/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
+export const apiAdminShipOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/ship`, { method: "POST" });
+export const apiAdminPickupOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/pickup`, { method: "POST" });
+export const apiAdminCancelShipment = (id: string) => fetchJson(`/api/admin/orders/${id}/cancel-shipment`, { method: "POST" });
+export const apiAdminDeleteOrder = (id: string) => fetchJson(`/api/admin/orders/${id}`, { method: "DELETE" });
 
 export const apiAdminCreateProduct = (data: any) => fetchJson("/api/admin/products", { method: "POST", body: JSON.stringify(data) });
 export const apiAdminUpdateProduct = (slug: string, data: any) => fetchJson(`/api/admin/products/${slug}`, { method: "PUT", body: JSON.stringify(data) });
@@ -245,6 +250,20 @@ export const useAdminSubscribers = () => {
   return useQuery({
     queryKey: ["admin_subscribers"],
     queryFn: () => fetchJson<any[]>("/api/admin/newsletter"),
+  });
+};
+
+export const useIntegrationsSettings = () => {
+  return useQuery({
+    queryKey: ["integrations_settings"],
+    queryFn: () => fetchJson<any>("/api/settings/integrations"),
+  });
+};
+
+export const apiAdminUpdateIntegrationsSettings = async (data: any) => {
+  return await fetchJson("/api/admin/settings/integrations", {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
 };
 

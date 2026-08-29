@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FREE_SHIPPING_THRESHOLD, inr } from "@/lib/products";
+import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
+import { useIntegrationsSettings } from "@/lib/api";
 import { BrandButton, FreeShipBar, QtyStepper } from "./Primitives";
 
 export function CartDrawer() {
   const { cartOpen, setCartOpen, lines, subtotal, setQty, remove } = useStore();
+  const { data: settings } = useIntegrationsSettings();
+  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
 
   return (
     <div className={cn("fixed inset-0 z-70", cartOpen ? "pointer-events-auto" : "pointer-events-none")}>

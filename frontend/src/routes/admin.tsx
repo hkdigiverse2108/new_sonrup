@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Package, ShoppingCart, FileText,
   LogOut, Eye, EyeOff, Lock, User,
-  ChevronDown, Home, Star, Layers, CheckCircle, Settings, MessageCircle, Users
+  ChevronDown, Home, Star, Layers, CheckCircle, Settings, MessageCircle, Users, Plug
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "sonrup_admin_token";
@@ -44,13 +44,18 @@ function AdminLayout() {
     setIsSettingsOpen(location.pathname.includes("/admin/settings"));
   }, [location.pathname]);
 
-  // Use useEffect to read auth state only on the client side, avoiding SSR mismatch
   useEffect(() => {
     setMounted(true);
     setLoggedIn(isAdminLoggedIn());
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#3E332A]/30 border-t-[#3E332A]" />
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
@@ -97,6 +102,16 @@ function AdminLayout() {
 
           {/* Collapsible Site Settings */}
           <div>
+            <Link
+              to="/admin/integrations"
+              activeProps={{ className: "bg-primary/10 text-primary font-bold" }}
+              inactiveProps={{ className: "text-muted-foreground hover:bg-muted hover:text-foreground" }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors"
+            >
+              <Plug className="h-4 w-4 shrink-0" />
+              Integrations
+            </Link>
+
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/new-arrivals")({
 function NewArrivals() {
   const { data: products = [] } = useProducts();
   const { data: flavours = [] } = useFlavours();
-  const fresh = products.filter((p) => p.badges.includes("New Arrival"));
+  const fresh = products.filter((p) => (p.badges || []).some(b => b === "New Arrival" || b === "New Arrivals"));
   const list = fresh.length ? fresh : products;
 
   return (

@@ -141,7 +141,7 @@ function ArticlePage() {
             >
               <ArrowLeft className="h-3.5 w-3.5" /> All stories
             </Link>
-            <Link to="/shop" search={{ q: "", goal: "", sort: "featured", max: 1500 }}>
+            <Link to="/shop" search={{ q: "", goal: "", sort: "featured", max: 99999 }}>
               <BrandButton variant="solid" size="sm">
                 Shop gummies
               </BrandButton>

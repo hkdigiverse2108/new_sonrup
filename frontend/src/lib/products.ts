@@ -11,6 +11,9 @@ export type Product = {
   description: string;
   image: string;
   gallery?: string[];
+  related_products?: string[];
+  frequently_bought_together?: string[];
+  bundle_price?: number;
   price: number;
   mrp: number;
   rating: number;
@@ -29,6 +32,4 @@ export type Product = {
 };
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-
-export const FREE_SHIPPING_THRESHOLD = 499;
 

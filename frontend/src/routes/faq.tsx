@@ -3,7 +3,7 @@ import { ChevronDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { useFaqs } from "@/lib/api";
+import { useFaqs, useHomeContent } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/faq")({

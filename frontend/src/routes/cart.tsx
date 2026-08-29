@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShoppingBag, Trash2 } from "lucide-react";
 import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton, FreeShipBar, QtyStepper } from "@/components/site/Primitives";
-import { FREE_SHIPPING_THRESHOLD, inr } from "@/lib/products";
+import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
+import { useIntegrationsSettings } from "@/lib/api";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const { lines, setQty, remove, subtotal } = useStore();
+  const { data: settings } = useIntegrationsSettings();
+  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 59;
 
   return (

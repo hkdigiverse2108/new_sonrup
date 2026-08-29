@@ -9,13 +9,14 @@ import uuid
 from email.message import EmailMessage
 from typing import List
 import jwt
+import razorpay
 from datetime import datetime, timedelta
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.database import connect_to_mongo, close_mongo_connection, get_database
 from backend.models import (
     UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
-    HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload
+    HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload, IntegrationsModel
 )
 
 @asynccontextmanager
@@ -404,6 +405,18 @@ async def get_journal_content(db=Depends(get_database)):
         content = await db["journal_content"].find_one({}, {"_id": 0})
     return content
 
+@app.get("/api/settings/integrations")
+async def get_integrations_settings(db=Depends(get_database)):
+    content = await db["integrations"].find_one({}, {"_id": 0})
+    if not content:
+        content = IntegrationsModel().model_dump()
+        await db["integrations"].insert_one(content)
+        content = await db["integrations"].find_one({}, {"_id": 0})
+    dump = IntegrationsModel(**content).model_dump()
+    dump["delhivery_api_token"] = "***" if dump.get("delhivery_api_token") else ""
+    dump["razorpay_key_secret"] = "***" if dump.get("razorpay_key_secret") else ""
+    return dump
+
 @app.get("/api/posts")
 async def get_posts(db=Depends(get_database)):
     return await db["posts"].find({}, {"_id": 0}).to_list(None)
@@ -495,7 +508,7 @@ async def upload_file(file: UploadFile = File(...), current_user=Depends(get_cur
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
         
-    upload_dir = os.path.join(os.getcwd(), "frontend", "public", "uploads")
+    upload_dir = os.path.join(os.getcwd(), "backend", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     
     file_ext = os.path.splitext(file.filename)[1]
@@ -505,7 +518,8 @@ async def upload_file(file: UploadFile = File(...), current_user=Depends(get_cur
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    return {"url": f"/uploads/{unique_filename}"}
+    api_url = os.getenv("VITE_API_URL", "http://localhost:8000")
+    return {"url": f"{api_url}/uploads/{unique_filename}"}
 
 @app.post("/api/user/addresses")
 async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(get_current_user), db=Depends(get_database)):
@@ -521,6 +535,58 @@ async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(
 async def create_order(order: OrderModel, db=Depends(get_database)):
     await db["orders"].insert_one(order.model_dump())
     return {"success": True, "order_id": order.id}
+
+from pydantic import BaseModel
+
+class RazorpayCreateOrderRequest(BaseModel):
+    amount: float
+    currency: str = "INR"
+
+@app.post("/api/razorpay/create-order")
+async def create_razorpay_order(data: RazorpayCreateOrderRequest, db=Depends(get_database)):
+    integrations = await db["integrations"].find_one({}) or {}
+    key_id = integrations.get("razorpay_key_id")
+    key_secret = integrations.get("razorpay_key_secret")
+
+    if not key_id or not key_secret:
+        raise HTTPException(status_code=400, detail="Razorpay credentials not configured")
+
+    client = razorpay.Client(auth=(key_id, key_secret))
+    try:
+        order = client.order.create({
+            "amount": int(data.amount * 100), # Amount in paise
+            "currency": data.currency,
+            "payment_capture": "1"
+        })
+        return {"order_id": order["id"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RazorpayVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+@app.post("/api/razorpay/verify")
+async def verify_razorpay_payment(data: RazorpayVerifyRequest, db=Depends(get_database)):
+    integrations = await db["integrations"].find_one({}) or {}
+    key_id = integrations.get("razorpay_key_id")
+    key_secret = integrations.get("razorpay_key_secret")
+
+    if not key_id or not key_secret:
+        raise HTTPException(status_code=400, detail="Razorpay credentials not configured")
+
+    client = razorpay.Client(auth=(key_id, key_secret))
+    try:
+        client.utility.verify_payment_signature({
+            "razorpay_order_id": data.razorpay_order_id,
+            "razorpay_payment_id": data.razorpay_payment_id,
+            "razorpay_signature": data.razorpay_signature
+        })
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
 
 # -------------------------------------------------------------------
 # Newsletter Endpoint

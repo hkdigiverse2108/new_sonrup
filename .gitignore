@@ -40,6 +40,5 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Package files
-package.json
-package-lock.json
+# Uploads
+backend/uploads/

@@ -3,7 +3,7 @@ import { Leaf, ShieldCheck, Sparkles, CheckCircle } from "lucide-react";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal, SectionTitle } from "@/components/site/Primitives";
 import { IMG } from "@/lib/products";
-import { useBrandValues, useMilestones } from "@/lib/api";
+import { useBrandValues, useMilestones, useAboutContent } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/about")({

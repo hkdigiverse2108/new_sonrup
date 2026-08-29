@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { useProducts } from "@/lib/api";
+import { useProducts, useIntegrationsSettings } from "@/lib/api";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
@@ -14,19 +14,23 @@ const NAV = [
 ] as const;
 
 export function AnnouncementBar() {
-  const items = [
-    "FREE SHIPPING ON ORDERS ABOVE ₹499",
-    "60 GUMMIES PER TUBE",
-    "MADE WITH REAL FRUIT FLAVOURS",
-    "VEGETARIAN · PECTIN BASED",
-  ];
+  const { data: settings } = useIntegrationsSettings();
+  const items = settings?.announcement_bar_items?.length 
+    ? settings.announcement_bar_items 
+    : [
+        "FREE SHIPPING ON ORDERS ABOVE ₹499",
+        "60 GUMMIES PER TUBE",
+        "MADE WITH REAL FRUIT FLAVOURS",
+        "VEGETARIAN · PECTIN BASED",
+      ];
+      
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">
       <div className="marquee-track flex w-max gap-10 whitespace-nowrap">
         {[0, 1].map((k) => (
           <div key={k} className="flex gap-10">
-            {items.map((t) => (
-              <span key={t} className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/80">
+            {items.map((t, idx) => (
+              <span key={idx} className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/80">
                 {t} <span className="ml-10 text-primary">✦</span>
               </span>
             ))}

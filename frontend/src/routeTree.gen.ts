@@ -27,6 +27,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminContactsRouteImport } from './routes/admin/contacts'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
+import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminProductReviewsRouteImport } from './routes/admin/product-reviews'
 import { Route as AdminProductsRouteImport } from './routes/admin/products'
@@ -143,6 +144,11 @@ const AdminContentRoute = AdminContentRouteImport.update({
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
@@ -300,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/product-reviews': typeof AdminProductReviewsRoute
   '/admin/products': typeof AdminProductsRoute
@@ -346,6 +353,7 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/product-reviews': typeof AdminProductReviewsRoute
   '/admin/products': typeof AdminProductsRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
+  '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/product-reviews': typeof AdminProductReviewsRoute
   '/admin/products': typeof AdminProductsRoute
@@ -443,6 +452,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/customers'
+    | '/admin/integrations'
     | '/admin/orders'
     | '/admin/product-reviews'
     | '/admin/products'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/customers'
+    | '/admin/integrations'
     | '/admin/orders'
     | '/admin/product-reviews'
     | '/admin/products'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/customers'
+    | '/admin/integrations'
     | '/admin/orders'
     | '/admin/product-reviews'
     | '/admin/products'
@@ -713,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/admin/customers'
       preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/integrations': {
+      id: '/admin/integrations'
+      path: '/integrations'
+      fullPath: '/admin/integrations'
+      preLoaderRoute: typeof AdminIntegrationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/orders': {
@@ -929,6 +948,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminContentRoute: typeof AdminContentRouteWithChildren
   AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductReviewsRoute: typeof AdminProductReviewsRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -955,6 +975,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminContentRoute: AdminContentRouteWithChildren,
   AdminCustomersRoute: AdminCustomersRoute,
+  AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminProductReviewsRoute: AdminProductReviewsRoute,
   AdminProductsRoute: AdminProductsRoute,

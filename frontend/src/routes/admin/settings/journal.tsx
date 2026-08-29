@@ -83,7 +83,7 @@ function JournalSettingsPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl">
+      <div className="w-full">
         <div className="rounded-xl border border-[#e5e1dc] bg-white p-4 shadow-sm">
           <h2 className="mb-4 font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">PAGE HERO (HEADER)</h2>
           <div className="space-y-3">
@@ -97,7 +97,7 @@ function JournalSettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl">
+      <div className="w-full">
         <div className="rounded-xl border border-[#e5e1dc] bg-white p-4 shadow-sm">
           <h2 className="mb-4 font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">BOTTOM CTA</h2>
           <div className="space-y-3">

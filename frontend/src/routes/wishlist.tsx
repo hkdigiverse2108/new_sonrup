@@ -56,7 +56,7 @@ function WishlistPage() {
             title="Your wishlist is empty"
             body="Tap the heart on any gummy and it will wait for you right here."
             action={
-              <Link to="/shop" search={{ q: "", goal: "", sort: "featured", max: 1500 }}>
+              <Link to="/shop" search={{ q: "", goal: "", sort: "featured", max: 99999 }}>
                 <BrandButton variant="solid">
                   <Sparkles className="h-4 w-4" /> Browse gummies
                 </BrandButton>
