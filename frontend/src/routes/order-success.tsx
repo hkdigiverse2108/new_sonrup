@@ -34,8 +34,8 @@ function OrderSuccessPage() {
             Thank you for your order! Your order ID is <span className="font-bold text-foreground">{orderId || "SNR-XXXXXX"}</span>. We are packing your gummies, and you will receive a tracking link via email and SMS once dispatched.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-3 w-full">
-            <Link to="/account" className="w-full sm:w-auto">
-              <BrandButton variant="solid" className="w-full sm:w-auto">View Orders</BrandButton>
+            <Link to="/track-order" search={{ query: orderId }} className="w-full sm:w-auto">
+              <BrandButton variant="solid" className="w-full sm:w-auto">Track Order</BrandButton>
             </Link>
             <Link to="/shop" className="w-full sm:w-auto">
               <BrandButton variant="outline" className="w-full sm:w-auto">Keep Shopping</BrandButton>

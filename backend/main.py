@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, UploadFile, File, Query
 from fastapi.security import OAuth2PasswordBearer
 import hashlib
 import os
@@ -551,7 +551,7 @@ async def reset_password(req: ResetPasswordOtpRequest, db=Depends(get_database))
 
 @app.get("/api/auth/me")
 async def get_my_profile(current_user=Depends(get_current_user), db=Depends(get_database)):
-    orders_cursor = db["orders"].find({"customer_email": current_user["email"]}, {"_id": 0})
+    orders_cursor = db["orders"].find({"customer_email": current_user["email"]}, {"_id": 0}).sort("_id", -1)
     user_orders = await orders_cursor.to_list(length=100)
     return {
         "email": current_user["email"],
@@ -616,7 +616,23 @@ async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(
 @app.post("/api/orders")
 async def create_order(order: OrderModel, db=Depends(get_database)):
     await db["orders"].insert_one(order.model_dump())
-    return {"success": True, "order_id": order.id}
+    
+    # Generate a token so the user can immediately view their orders without needing an OTP
+    access_token_expires = timedelta(days=30)
+    token = create_access_token(data={"sub": order.customer_email}, expires_delta=access_token_expires)
+    
+    return {"success": True, "order_id": order.id, "token": token}
+
+@app.get("/api/track-order")
+async def track_order(query: str = Query(...), db=Depends(get_database)):
+    # Search by Order ID or AWB
+    order = await db["orders"].find_one(
+        {"$or": [{"id": query}, {"delhivery_awb": query}]}, 
+        {"_id": 0}
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found. Please check your ID or AWB.")
+    return order
 
 from pydantic import BaseModel
 

@@ -176,11 +176,19 @@ function Checkout() {
                           })
                         }).then(r => r.json());
                         
-                         if (verifyRes.success) {
-                            if (user) { addOrderLocal(newOrder as any); }
-                            apiAddOrder(newOrder).catch(console.error);
-                            clear();
-                            navigate({ to: "/order-success", search: { orderId: id } });
+                        if (verifyRes.success) {
+                             if (user) { addOrderLocal(newOrder as any); }
+                             apiAddOrder(newOrder).then((res) => {
+                              if (res?.token) {
+                                localStorage.setItem("sonrup_token", res.token);
+                              }
+                              clear();
+                              window.location.href = `/order-success?orderId=${id}`;
+                            }).catch((err) => {
+                              console.error(err);
+                              clear();
+                              window.location.href = `/order-success?orderId=${id}`;
+                            });
                             toast.success("Order placed successfully");
                          } else {
                            toast.error("Payment verification failed");
@@ -212,10 +220,17 @@ function Checkout() {
                 if (user) {
                   addOrderLocal(newOrder as any);
                 }
-                apiAddOrder(newOrder).catch(console.error);
-  
-                clear();
-                navigate({ to: "/order-success", search: { orderId: id } });
+                apiAddOrder(newOrder).then((res) => {
+                  if (res?.token) {
+                    localStorage.setItem("sonrup_token", res.token);
+                  }
+                  clear();
+                  window.location.href = `/order-success?orderId=${id}`;
+                }).catch((err) => {
+                  console.error(err);
+                  clear();
+                  window.location.href = `/order-success?orderId=${id}`;
+                });
                 toast.success("Order placed successfully");
               }
             }}

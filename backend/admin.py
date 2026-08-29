@@ -110,7 +110,7 @@ async def delete_faq(q: str, admin=Depends(require_admin), db=Depends(get_databa
 # ---------------------------------------------------------
 @router.get("/orders")
 async def get_all_orders(admin=Depends(require_admin), db=Depends(get_database)):
-    cursor = db["orders"].find({}, {"_id": 0}).sort("date", -1)
+    cursor = db["orders"].find({}, {"_id": 0}).sort("_id", -1)
     orders = await cursor.to_list(length=1000)
     return orders
 

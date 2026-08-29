@@ -23,6 +23,7 @@ import { Route as NewArrivalsRouteImport } from './routes/new-arrivals'
 import { Route as OrderSuccessRouteImport } from './routes/order-success'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as TrackOrderRouteImport } from './routes/track-order'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminContactsRouteImport } from './routes/admin/contacts'
@@ -126,6 +127,11 @@ const SearchRoute = SearchRouteImport.update({
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackOrderRoute = TrackOrderRouteImport.update({
+  id: '/track-order',
+  path: '/track-order',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WishlistRoute = WishlistRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -364,6 +371,7 @@ export interface FileRoutesByTo {
   '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/track-order': typeof TrackOrderRoute
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
@@ -467,6 +476,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/search'
     | '/shop'
+    | '/track-order'
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
@@ -516,6 +526,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/search'
     | '/shop'
+    | '/track-order'
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/order-success'
     | '/search'
     | '/shop'
+    | '/track-order'
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
@@ -617,6 +629,7 @@ export interface RootRouteChildren {
   OrderSuccessRoute: typeof OrderSuccessRoute
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRoute
+  TrackOrderRoute: typeof TrackOrderRoute
   WishlistRoute: typeof WishlistRoute
   BlogSlugRoute: typeof BlogSlugRoute
   PoliciesSlugRoute: typeof PoliciesSlugRoute
@@ -722,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/shop'
       fullPath: '/shop'
       preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track-order': {
+      id: '/track-order'
+      path: '/track-order'
+      fullPath: '/track-order'
+      preLoaderRoute: typeof TrackOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wishlist': {
@@ -1056,6 +1076,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderSuccessRoute: OrderSuccessRoute,
   SearchRoute: SearchRoute,
   ShopRoute: ShopRoute,
+  TrackOrderRoute: TrackOrderRoute,
   WishlistRoute: WishlistRoute,
   BlogSlugRoute: BlogSlugRoute,
   PoliciesSlugRoute: PoliciesSlugRoute,

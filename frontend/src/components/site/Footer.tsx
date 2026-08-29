@@ -90,6 +90,7 @@ export function Footer() {
               { label: "All Gummies", to: "/shop" },
               { label: "Best Sellers", to: "/shop", search: { sort: "bestsellers" } },
               { label: "New Releases", to: "/shop", search: { sort: "new" } },
+              { label: "Track Order", to: "/track-order" },
               { label: "Wishlist", to: "/wishlist" },
             ]}
           />
