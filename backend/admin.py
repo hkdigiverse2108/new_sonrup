@@ -302,19 +302,67 @@ async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(g
                 headers=headers,
                 timeout=15.0
             )
-            # Delhivery sometimes returns 200 with { "prq": true } or errors
+            
             res_data = response.json() if response.text else {}
             
             if response.status_code >= 400:
-                raise Exception(f"API Error: {response.text}")
+                error_msg = res_data.get("error") or res_data.get("message") or response.text
+                raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_msg}")
+                
+            if res_data.get("error"):
+                raise HTTPException(status_code=400, detail=f"Delhivery Error: {res_data['error']}")
                 
             await db["orders"].update_one(
                 {"id": order_id},
                 {"$set": {"delhivery_status": "Pickup Scheduled"}}
             )
             return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to schedule pickup: {str(e)}")
+
+@router.get("/orders/{order_id}/label")
+async def get_shipping_label(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    order = await db["orders"].find_one({"id": order_id})
+    if not order or not order.get("delhivery_awb"):
+        raise HTTPException(status_code=400, detail="Order does not have a valid Delhivery AWB")
+
+    integrations = await db["integrations"].find_one({}) or {}
+    token = integrations.get("delhivery_api_token")
+    if not token:
+        raise HTTPException(status_code=400, detail="Delhivery credentials not configured")
+
+    awb = order.get("delhivery_awb")
+    headers = {
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://track.delhivery.com/api/p/packing_slip?wbns={awb}",
+                headers=headers,
+                timeout=15.0
+            )
+            res_data = response.json() if response.text else {}
+            
+            if response.status_code >= 400:
+                error_msg = res_data.get("error") or res_data.get("message") or response.text
+                raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_msg}")
+
+            packages = res_data.get("packages", [])
+            if not packages:
+                raise HTTPException(status_code=400, detail="Failed to fetch label details from Delhivery")
+            
+            return {"success": True, "label_data": packages[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch label: {str(e)}")
 
 @router.post("/orders/{order_id}/cancel-shipment")
 async def cancel_shipment(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):

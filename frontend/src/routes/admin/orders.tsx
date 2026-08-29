@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiAdminGetOrders, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder } from "@/lib/api";
+import { apiAdminGetOrders, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel } from "@/lib/api";
 import { CheckCircle, Clock, Truck, Package, Printer, Trash2 } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
 
@@ -19,26 +19,31 @@ function AdminOrders() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => apiAdminUpdateOrderStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+    onError: (err: any) => alert(err.message || "Failed to update status"),
   });
 
   const shipMutation = useMutation({
     mutationFn: (id: string) => apiAdminShipOrder(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+    onError: (err: any) => alert(err.message || "Failed to ship order"),
   });
 
   const pickupMutation = useMutation({
     mutationFn: (id: string) => apiAdminPickupOrder(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+    onError: (err: any) => alert(err.message || "Failed to schedule pickup"),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => apiAdminCancelShipment(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+    onError: (err: any) => alert(err.message || "Failed to cancel shipment"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiAdminDeleteOrder(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
+    onError: (err: any) => alert(err.message || "Failed to delete order"),
   });
 
   return (
@@ -105,7 +110,301 @@ function AdminOrders() {
                           >
                             PICKUP
                           </button>
-                          <button className="inline-flex h-7 items-center gap-1.5 rounded-full border border-[#d1bfae] bg-white px-3.5 text-[11px] font-bold tracking-wide text-[#b36340] hover:bg-stone-50">
+                          <button 
+                            onClick={async () => {
+                              // Open window synchronously to prevent browser popup blockers from blocking it
+                              const printWindow = window.open("about:blank", "_blank");
+                              if (!printWindow) {
+                                alert("Please allow popups in your browser to view and print the shipping label.");
+                                return;
+                              }
+
+                              try {
+                                const res = await apiAdminGetOrderLabel(order.id);
+                                if (!res.label_data) {
+                                  printWindow.close();
+                                  throw new Error("No label details returned from Delhivery");
+                                }
+                                const data = res.label_data;
+                                
+                                const formatDate = (dateStr: string) => {
+                                  if (!dateStr) return "";
+                                  const d = new Date(dateStr);
+                                  const year = d.getFullYear();
+                                  const month = d.getMonth() + 1;
+                                  const day = d.getDate();
+                                  const hours = String(d.getHours()).padStart(2, '0');
+                                  const minutes = String(d.getMinutes()).padStart(2, '0');
+                                  const seconds = String(d.getSeconds()).padStart(2, '0');
+                                  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                                };
+
+                                printWindow.document.write(`
+                                  <!DOCTYPE html>
+                                  <html>
+                                  <head>
+                                    <title>Shipping Label - ${data.wbn}</title>
+                                    <style>
+                                      body {
+                                        font-family: 'Times New Roman', Times, serif;
+                                        margin: 0;
+                                        padding: 0;
+                                        background: #fff;
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: flex-start;
+                                      }
+                                      .label-container {
+                                        width: 380px; /* standard 4x6 print width */
+                                        border: 1.5px solid #000;
+                                        padding: 0;
+                                        box-sizing: border-box;
+                                        margin-top: 10px;
+                                      }
+                                      .flex-row {
+                                        display: flex;
+                                        width: 100%;
+                                      }
+                                      .header-col-left {
+                                        width: 25%;
+                                        height: 48px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-size: 15px;
+                                        font-weight: bold;
+                                        border-right: 1.5px solid #000;
+                                        box-sizing: border-box;
+                                      }
+                                      .header-col-right {
+                                        width: 75%;
+                                        height: 48px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-sizing: border-box;
+                                      }
+                                      .delhivery-logo {
+                                        height: 30px;
+                                        display: block;
+                                      }
+                                      .barcode-container {
+                                        text-align: center;
+                                        padding: 8px 0;
+                                        border-bottom: 1.5px solid #000;
+                                        box-sizing: border-box;
+                                      }
+                                      .barcode-img {
+                                        max-width: 90%;
+                                        height: 60px;
+                                        display: inline-block;
+                                      }
+                                      .awb-text {
+                                        font-size: 13px;
+                                        font-weight: bold;
+                                        margin-top: 2px;
+                                        letter-spacing: 1px;
+                                      }
+                                      .routing-container {
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        border-bottom: 1.5px solid #000;
+                                        padding: 3px 8px;
+                                        box-sizing: border-box;
+                                      }
+                                      .routing-pincode {
+                                        font-size: 16px;
+                                        font-weight: bold;
+                                        font-family: Arial, sans-serif;
+                                      }
+                                      .routing-code {
+                                        font-size: 16px;
+                                        font-weight: bold;
+                                        font-family: Arial, sans-serif;
+                                      }
+                                      .shipto-container {
+                                        display: flex;
+                                        border-bottom: 1.5px solid #000;
+                                      }
+                                      .shipto-left {
+                                        width: 68%;
+                                        padding: 6px 8px;
+                                        font-size: 11px;
+                                        border-right: 1.5px solid #000;
+                                        box-sizing: border-box;
+                                        line-height: 1.3;
+                                      }
+                                      .shipto-right {
+                                        width: 32%;
+                                        padding: 6px 8px;
+                                        font-size: 11px;
+                                        text-align: center;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        box-sizing: border-box;
+                                      }
+                                      .seller-container {
+                                        display: flex;
+                                        border-bottom: 1.5px solid #000;
+                                      }
+                                      .seller-left {
+                                        width: 65%;
+                                        padding: 6px 8px;
+                                        font-size: 10px;
+                                        border-right: 1.5px solid #000;
+                                        box-sizing: border-box;
+                                        line-height: 1.25;
+                                      }
+                                      .seller-right {
+                                        width: 35%;
+                                        padding: 6px 8px;
+                                        font-size: 10px;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        box-sizing: border-box;
+                                      }
+                                      .items-table {
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        border-bottom: 1.5px solid #000;
+                                      }
+                                      .items-table th, .items-table td {
+                                        border-right: 1.5px solid #000;
+                                        padding: 4px 8px;
+                                        font-size: 11px;
+                                        text-align: left;
+                                      }
+                                      .items-table th:last-child, .items-table td:last-child {
+                                        border-right: none;
+                                      }
+                                      .items-table th {
+                                        border-bottom: 1.5px solid #000;
+                                        font-weight: normal;
+                                      }
+                                      .bottom-barcode-container {
+                                        text-align: center;
+                                        padding: 8px 0 4px 0;
+                                        box-sizing: border-box;
+                                      }
+                                      .bottom-return-container {
+                                        border-top: 1.5px solid #000;
+                                        padding: 6px 8px;
+                                        font-size: 9px;
+                                        line-height: 1.3;
+                                        box-sizing: border-box;
+                                      }
+                                      @media print {
+                                        body { margin: 0; }
+                                        .label-container { margin: 0; border: 1.5px solid #000; }
+                                      }
+                                    </style>
+                                  </head>
+                                  <body>
+                                    <div class="label-container">
+                                      <!-- Header -->
+                                      <div class="flex-row" style="border-bottom: 1.5px solid #000;">
+                                        <div class="header-col-left">
+                                          ${data.snm}
+                                        </div>
+                                        <div class="header-col-right">
+                                          <img class="delhivery-logo" src="https://track.delhivery.com/static/images/new_logo.png" alt="DELHIVERY" />
+                                        </div>
+                                      </div>
+                                      
+                                      <!-- Barcode -->
+                                      <div class="barcode-container">
+                                        <img class="barcode-img" src="${data.barcode}" />
+                                        <div class="awb-text">${data.wbn}</div>
+                                      </div>
+                                      
+                                      <!-- Routing -->
+                                      <div class="routing-container">
+                                        <div class="routing-pincode">${data.pin}</div>
+                                        <div class="routing-code">${data.sort_code}</div>
+                                      </div>
+                                      
+                                      <!-- Ship To -->
+                                      <div class="shipto-container">
+                                        <div class="shipto-left">
+                                          Ship To:<br/>
+                                          <span style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${data.name}</span><br/>
+                                          <span style="font-size: 11px; display: block; margin-top: 1px; color: #333;">${data.name}</span>
+                                          ${data.address}<br/>
+                                          ${data.destination_city} (${data.st})<br/>
+                                          PIN:${data.pin}
+                                        </div>
+                                        <div class="shipto-right">
+                                          <div style="font-weight: bold;">${data.pt}</div>
+                                          <div style="font-size: 10px; margin: 1px 0;">Surface</div>
+                                          <div style="font-size: 13px; margin-top: 12px; font-weight: bold;">INR ${Math.round(data.cod || data.rs)}</div>
+                                        </div>
+                                      </div>
+                                      
+                                      <!-- Seller & Date -->
+                                      <div class="seller-container">
+                                        <div class="seller-left">
+                                          Seller: ${data.snm}<br/>
+                                          Address: ${data.sadd}<br/>
+                                          GST: ${data.client_gst_tin || '24-UR'}
+                                        </div>
+                                        <div class="seller-right">
+                                          Date: ${formatDate(data.cd)}
+                                        </div>
+                                      </div>
+                                      
+                                      <!-- Items Table -->
+                                      <table class="items-table">
+                                        <thead>
+                                          <tr>
+                                            <th style="width: 65%;">Product(Qty)</th>
+                                            <th style="width: 17.5%;">Price</th>
+                                            <th style="width: 17.5%;">Total</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          <tr>
+                                            <td>${data.prd}</td>
+                                            <td>INR ${Math.round(data.rs)}</td>
+                                            <td>INR ${Math.round(data.rs)}</td>
+                                          </tr>
+                                          <tr style="border-top: 1.5px solid #000; font-weight: bold;">
+                                            <td>Total</td>
+                                            <td>INR ${Math.round(data.rs)}</td>
+                                            <td>INR ${Math.round(data.rs)}</td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                      
+                                      <!-- Bottom Section Barcode -->
+                                      <div class="bottom-barcode-container">
+                                        <img style="height: 35px; max-width: 90%;" src="${data.oid_barcode}" /><br/>
+                                        <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">${data.oid}</span>
+                                      </div>
+
+                                      <!-- Return Address -->
+                                      <div class="bottom-return-container">
+                                        Return Address: ${data.radd}
+                                      </div>
+                                    </div>
+                                    <script>
+                                      window.onload = function() {
+                                        window.print();
+                                      }
+                                    </script>
+                                  </body>
+                                  </html>
+                                `);
+                                printWindow.document.close();
+                              } catch (err: any) {
+                                printWindow.close();
+                                alert(err.message || "Failed to fetch label");
+                              }
+                            }}
+                            className="inline-flex h-7 items-center gap-1.5 rounded-full border border-[#d1bfae] bg-white px-3.5 text-[11px] font-bold tracking-wide text-[#b36340] hover:bg-stone-50"
+                          >
                             <Printer className="h-3 w-3" /> LABEL
                           </button>
                           <div className="flex items-center gap-2">

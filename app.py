@@ -3,7 +3,7 @@ import sys
 import os
 import time
 from threading import Thread
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 
 # Load variables from root-level .env file
 load_dotenv()

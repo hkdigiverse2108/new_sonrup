@@ -187,8 +187,9 @@ export const apiAdminGetOrders = () => fetchJson("/api/admin/orders");
 export const apiAdminUpdateOrderStatus = (id: string, status: string) => fetchJson(`/api/admin/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
 export const apiAdminShipOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/ship`, { method: "POST" });
 export const apiAdminPickupOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/pickup`, { method: "POST" });
-export const apiAdminCancelShipment = (id: string) => fetchJson(`/api/admin/orders/${id}/cancel-shipment`, { method: "POST" });
-export const apiAdminDeleteOrder = (id: string) => fetchJson(`/api/admin/orders/${id}`, { method: "DELETE" });
+export const apiAdminCancelShipment = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}/cancel-shipment`, { method: "POST" });
+export const apiAdminGetOrderLabel = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}/label`);
+export const apiAdminDeleteOrder = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}`, { method: "DELETE" });
 
 export const apiAdminCreateProduct = (data: any) => fetchJson("/api/admin/products", { method: "POST", body: JSON.stringify(data) });
 export const apiAdminUpdateProduct = (slug: string, data: any) => fetchJson(`/api/admin/products/${slug}`, { method: "PUT", body: JSON.stringify(data) });
