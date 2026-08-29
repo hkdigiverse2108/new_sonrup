@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useHomeContent, apiAdminUpdateHomeContent, apiAdminCreateFlavour, apiAdminUpdateFlavour, apiAdminDeleteFlavour, useFlavours } from "@/lib/api";
-import { Plus, Trash2, GripVertical, CheckCircle2 } from "lucide-react";
+import { useHomeContent, apiAdminUpdateHomeContent, apiAdminCreateFlavour, apiAdminUpdateFlavour, apiAdminDeleteFlavour, useFlavours, apiUploadFile } from "@/lib/api";
+import { Plus, Trash2, GripVertical, CheckCircle2, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings/flavours")({
   component: FlavoursSettingsPage,
@@ -203,6 +203,43 @@ function FlavoursSettingsPage() {
                         onChange={(e) => { const n = [...flavoursList]; n[i].note = e.target.value; setFlavoursList(n); }} 
                       />
                     </label>
+                    <div className="grid gap-1 sm:col-span-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">FLAVOUR IMAGE</span>
+                      <div className="flex items-center gap-4 mt-1">
+                        <div className="h-16 w-16 shrink-0 rounded-xl border border-[#e5e1dc] bg-white overflow-hidden flex items-center justify-center shadow-sm">
+                          {flavour.image ? (
+                            <img src={flavour.image} alt={flavour.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-medium">No Image</span>
+                          )}
+                        </div>
+                        <div>
+                          <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-xs font-bold text-[#3E332A] border border-[#e5e1dc] transition shadow-sm hover:bg-[#faf9f8] hover:border-[#3E332A]/30">
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>Select Image</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  try {
+                                    const res = await apiUploadFile(file);
+                                    const n = [...flavoursList];
+                                    n[i].image = res.url;
+                                    setFlavoursList(n);
+                                  } catch (err) {
+                                    alert("Failed to upload image: " + err);
+                                  }
+                                }
+                              }}
+                            />
+                          </label>
+                          <p className="mt-2 text-[10px] font-medium text-muted-foreground/70">Upload a beautiful, high-quality image.</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

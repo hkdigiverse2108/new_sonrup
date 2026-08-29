@@ -107,6 +107,7 @@ class FlavourModel(BaseModel):
     name: str
     token: str
     note: str
+    image: Optional[str] = ""
 
 class GoalModel(BaseModel):
     name: str
@@ -254,6 +255,7 @@ class FlavourModel(BaseModel):
     name: str
     token: str
     note: str
+    image: Optional[str] = ""
 
 class FlavourSectionContent(BaseModel):
     eyebrow: str

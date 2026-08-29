@@ -342,16 +342,8 @@ function BestSellers() {
 
 /* ---------------- FLAVOURS ---------------- */
 
-const flavourBg: Record<string, string> = {
-  berry: "bg-berry/12",
-  citrus: "bg-citrus/15",
-  grape: "bg-grape/12",
-  primary: "bg-primary/20",
-  leaf: "bg-leaf/15",
-};
-
 function FlavourExperience() {
-  const [active, setActive] = useState(1);
+  const [active, setActive] = useState<number | null>(null);
   const { data: flavours = [] } = useFlavours();
   const { data: homeContent } = useHomeContent();
 
@@ -372,44 +364,87 @@ function FlavourExperience() {
           </h2>
         </Reveal>
 
-        <div className="mt-14 flex h-[420px] gap-3 max-lg:flex-col max-lg:h-auto">
-          {flavours.map((f, i) => (
-            <button
-              key={f.name}
-              onMouseEnter={() => setActive(i)}
-              onFocus={() => setActive(i)}
-              onClick={() => setActive(i)}
-              className={cn(
-                "group relative overflow-hidden rounded-[2rem] border border-cream/10 text-left transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] max-lg:h-28",
-                f.token?.startsWith('#') ? "" : flavourBg[f.token],
-                active === i ? "lg:flex-[3.2]" : "lg:flex-[1]",
-              )}
-              style={f.token?.startsWith('#') ? { backgroundColor: f.token } : {}}
-            >
-              <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-40" />
-              <div className="relative flex h-full flex-col justify-between p-6">
-                <span className="font-display text-5xl font-extrabold text-cream/25">0{i + 1}</span>
-                <div>
-                  <h3
-                    className={cn(
-                      "display-xl text-2xl transition-all duration-500 lg:text-3xl",
-                      active === i ? "text-cream" : "text-cream/70",
+        <div 
+          onMouseLeave={() => setActive(null)}
+          className="mt-14 flex h-[400px] gap-4 max-lg:flex-col max-lg:h-auto w-full"
+        >
+          {flavours.map((f, i) => {
+            const isActive = active === i;
+
+            return (
+              <div
+                key={f.name}
+                onMouseEnter={() => setActive(i)}
+                className={cn(
+                  "relative overflow-hidden rounded-[2rem] border border-cream/10 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] h-full cursor-pointer group shadow-[0_10px_30px_rgba(0,0,0,0.3)]",
+                  isActive ? "lg:flex-[3.5]" : "lg:flex-[1]",
+                  "max-lg:h-36 max-lg:w-full"
+                )}
+              >
+                {/* Background Image with Brightness Effect */}
+                <img
+                  src={f.image}
+                  alt={f.name}
+                  className={cn(
+                    "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
+                    isActive ? "scale-105 contrast-100 brightness-[0.7]" : "scale-100 contrast-95 brightness-[0.35] group-hover:brightness-[0.4]"
+                  )}
+                />
+                
+                {/* Gradient overlay for text legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-ink/40" />
+
+                {/* Content */}
+                <div className="relative flex h-full w-full flex-col justify-between p-6 z-10 box-border">
+                  
+                  {/* Top spacing to push middle down */}
+                  <div className="h-8"></div>
+                  
+                  {/* Middle Title and rotated title */}
+                  <div className="flex flex-col h-full justify-center">
+                    {/* Collapsed State: Vertically rotated text */}
+                    {!isActive && (
+                      <div className="hidden lg:flex items-center justify-center absolute inset-0 select-none">
+                        <span className="font-display text-xl font-extrabold text-cream/70 tracking-[0.15em] uppercase rotate-[-90deg] whitespace-nowrap origin-center">
+                          {f.name}
+                        </span>
+                      </div>
                     )}
-                  >
-                    {f.name}
-                  </h3>
-                  <p
-                    className={cn(
-                      "mt-2 max-w-xs text-sm text-cream/70 transition-all duration-500",
-                      active === i ? "opacity-100" : "lg:opacity-0",
-                    )}
-                  >
-                    {f.note}
-                  </p>
+
+                    {/* Expanded State: Normal Title and Description */}
+                    <div className={cn(
+                      "transition-all duration-500",
+                      isActive ? "opacity-100 translate-x-0" : "lg:opacity-0 lg:translate-x-4 max-lg:block"
+                    )}>
+                      <h3 className="font-display text-2xl lg:text-3xl font-extrabold text-cream tracking-tight uppercase">
+                        {f.name}
+                      </h3>
+                      <p className="mt-2 max-w-sm text-xs lg:text-sm leading-relaxed text-cream/80 font-medium">
+                        {f.note}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Bottom Actions */}
+                  <div className="flex items-end justify-between w-full">
+                    {/* Expanded Shop Button */}
+                    <div className={cn(
+                      "transition-all duration-500",
+                      isActive ? "opacity-100 translate-y-0" : "lg:opacity-0 lg:translate-y-2"
+                    )}>
+                      <Link to="/shop">
+                        <BrandButton variant="gold" size="sm" className="group">
+                          Shop Now
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                        </BrandButton>
+                      </Link>
+                    </div>
+                  </div>
+
                 </div>
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
