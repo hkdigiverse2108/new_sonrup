@@ -8,6 +8,7 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     mutationCache: new MutationCache({
       onSuccess: () => {
+        queryClient.invalidateQueries();
         if (router) {
           router.invalidate();
         }

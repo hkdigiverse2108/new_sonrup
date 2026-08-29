@@ -92,8 +92,8 @@ function AdminSubscribersPage() {
               <p className="text-muted-foreground text-sm">No subscribers yet.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm max-h-[500px] overflow-y-auto">
-              <table className="w-full border-collapse text-left text-sm">
+            <div className="overflow-x-auto rounded-xl border border-border bg-white shadow-sm max-h-[500px] overflow-y-auto">
+              <table className="w-full min-w-[500px] border-collapse text-left text-sm">
                 <thead className="bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b sticky top-0 z-10">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Email Address</th>

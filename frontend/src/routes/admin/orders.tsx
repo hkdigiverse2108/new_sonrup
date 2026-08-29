@@ -51,8 +51,8 @@ function AdminOrders() {
       {isLoading ? (
         <div>Loading orders...</div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="px-6 py-4 font-medium">Order ID</th>

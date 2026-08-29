@@ -9,6 +9,14 @@ class Nutrition(BaseModel):
     label: str
     value: str
 
+class AccordionItem(BaseModel):
+    title: str
+    content: str
+
+class TrustBadge(BaseModel):
+    icon: str
+    text: str
+
 class IntegrationsModel(BaseModel):
     free_shipping_amount: float = 499.0
     max_filter_price: float = 1500.0
@@ -27,28 +35,33 @@ class IntegrationsModel(BaseModel):
 class ProductModel(BaseModel):
     slug: str
     name: str
-    tagline: str
-    description: str
-    image: str
+    tagline: Optional[str] = ""
+    description: Optional[str] = ""
+    image: Optional[str] = ""
     gallery: Optional[List[str]] = []
     related_products: Optional[List[str]] = []
     frequently_bought_together: Optional[List[str]] = []
     bundle_price: Optional[float] = None
     price: float
     mrp: float
-    rating: float
-    reviews: int
-    flavour: str
-    flavourToken: str
-    categories: List[str]
-    benefits: List[str]
-    goals: List[str]
-    badges: List[str]
-    ingredients: List[Ingredient]
-    nutrition: List[Nutrition]
-    howToUse: str
-    storage: str
-    count: str
+    rating: Optional[float] = 5.0
+    reviews: Optional[int] = 0
+    flavour: Optional[str] = ""
+    flavourToken: Optional[str] = ""
+    categories: Optional[List[str]] = []
+    benefits: Optional[List[str]] = []
+    goals: Optional[List[str]] = []
+    badges: Optional[List[str]] = []
+    ingredients: Optional[List[Ingredient]] = []
+    nutrition: Optional[List[Nutrition]] = []
+    howToUse: Optional[str] = ""
+    storage: Optional[str] = ""
+    count: Optional[str] = ""
+    format: Optional[str] = "Pectin Gummy"
+    shipping_info: Optional[str] = "Dispatched within 24 working hours. Metro cities in 2-3 days, rest of India in 4-6 days. Free above ₹499."
+    returns_info: Optional[str] = "Unopened tubes can be returned within 7 days of delivery. Refunds are processed within 5-7 working days."
+    accordions: Optional[List[AccordionItem]] = []
+    trust_badges: Optional[List[TrustBadge]] = []
 
 class ReviewModel(BaseModel):
     name: str
@@ -356,6 +369,10 @@ class ContactChannelContent(BaseModel):
     value: str
     note: str
 
+class SocialLink(BaseModel):
+    platform: str
+    url: str
+
 class ContactSupportHoursContent(BaseModel):
     text: Optional[str] = "Support hours: Monday to Saturday, 10am – 7pm IST."
 
@@ -372,6 +389,12 @@ class ContactPageContentModel(BaseModel):
     ]
     support_hours: ContactSupportHoursContent = ContactSupportHoursContent()
     form: ContactFormContent = ContactFormContent()
+    socials: Optional[List[SocialLink]] = [
+        SocialLink(platform="Instagram", url="https://instagram.com/sonrup"),
+        SocialLink(platform="Facebook", url="https://facebook.com/sonrup"),
+        SocialLink(platform="YouTube", url="https://youtube.com/sonrup"),
+        SocialLink(platform="WhatsApp", url="https://wa.me/919820000000"),
+    ]
 
 
 # -------------------------------------------------------------------

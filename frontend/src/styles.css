@@ -162,6 +162,23 @@
   border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 }
 
+@utility field {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-foreground);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+}
+
 @utility blob {
   border-radius: 62% 38% 44% 56% / 52% 47% 53% 48%;
 }

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/checkout")({
 
 const PAYMENTS = [
   { id: "online", label: "Pay Online", note: "UPI, Cards, Net banking (via Razorpay)" },
-  { id: "cod", label: "Cash on delivery", note: "Orders under ₹2,000" },
+  { id: "cod", label: "Cash on delivery", note: "Pay with cash or UPI on delivery" },
 ];
 
 function Checkout() {
@@ -36,7 +36,6 @@ function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(defaultAddress?.id || "new");
   const [step, setStep] = useState(1);
   const [pay, setPay] = useState("online");
-  const [done, setDone] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { data: settings } = useIntegrationsSettings();
   const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
@@ -52,32 +51,7 @@ function Checkout() {
     });
   };
 
-  if (done) {
-    return (
-      <main>
-        <Container className="py-20">
-          <div className="surface-card mx-auto flex max-w-xl flex-col items-center gap-5 px-6 py-16 text-center">
-            <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-gold)]">
-              <CheckCircle2 className="h-9 w-9 text-ink" />
-            </div>
-            <h1 className="display-xl text-4xl">Order confirmed</h1>
-            <p className="text-sm text-muted-foreground">
-              Order <span className="font-bold text-foreground">{done}</span> is being packed. You'll get a
-              tracking link by SMS and email at dispatch.
-            </p>
-            <div className="mt-2 flex flex-wrap justify-center gap-3">
-              <Link to="/account">
-                <BrandButton variant="solid">View orders</BrandButton>
-              </Link>
-              <Link to="/shop">
-                <BrandButton variant="outline">Keep shopping</BrandButton>
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </main>
-    );
-  }
+
 
   if (lines.length === 0) {
     return (
@@ -200,13 +174,13 @@ function Checkout() {
                           })
                         }).then(r => r.json());
                         
-                        if (verifyRes.success) {
-                           if (user) { addOrderLocal(newOrder as any); }
-                           apiAddOrder(newOrder).catch(console.error);
-                           clear();
-                           setDone(id);
-                           toast.success("Order placed successfully");
-                        } else {
+                         if (verifyRes.success) {
+                            if (user) { addOrderLocal(newOrder as any); }
+                            apiAddOrder(newOrder).catch(console.error);
+                            clear();
+                            navigate({ to: "/order-success", search: { orderId: id } });
+                            toast.success("Order placed successfully");
+                         } else {
                            toast.error("Payment verification failed");
                         }
                       } catch (err) {
@@ -239,7 +213,7 @@ function Checkout() {
                 apiAddOrder(newOrder).catch(console.error);
   
                 clear();
-                setDone(id);
+                navigate({ to: "/order-success", search: { orderId: id } });
                 toast.success("Order placed successfully");
               }
             }}
@@ -316,39 +290,72 @@ function Checkout() {
 
             {step === 2 && (
               <Section title="Payment method">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {PAYMENTS.map((p) => (
-                    <button
-                      type="button"
-                      key={p.id}
-                      onClick={() => setPay(p.id)}
-                      className={cn(
-                        "rounded-2xl border p-4 text-left transition-all",
-                        pay === p.id
-                          ? "border-secondary bg-secondary/8 shadow-[var(--shadow-soft)]"
-                          : "border-border hover:border-ink/30",
-                      )}
-                    >
-                      <p className="font-display text-lg font-extrabold">{p.label}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{p.note}</p>
-                    </button>
-                  ))}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {PAYMENTS.map((p) => {
+                    const isSelected = pay === p.id;
+                    const Icon = p.id === "online" ? CreditCard : Truck;
+                    return (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => setPay(p.id)}
+                        className={cn(
+                          "group relative flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-300",
+                          isSelected
+                            ? "border-ink bg-sand/30 shadow-[var(--shadow-soft)] scale-[1.01] ring-1 ring-ink/5"
+                            : "border-border bg-card hover:border-ink/40 hover:bg-sand/10 hover:shadow-sm"
+                        )}
+                      >
+                        {/* Radio indicator */}
+                        <div className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-ink/30 transition-colors group-hover:border-ink">
+                          {isSelected && (
+                            <div className="h-2 w-2 rounded-full bg-ink animate-in fade-in zoom-in duration-200" />
+                          )}
+                        </div>
+
+                        {/* Text details & Icon */}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-display text-base font-extrabold tracking-tight text-ink">
+                              {p.label}
+                            </span>
+                            <Icon className={cn("h-5 w-5 transition-transform duration-300 group-hover:scale-110", isSelected ? "text-ink" : "text-muted-foreground")} />
+                          </div>
+                          {p.note && (
+                            <p className="text-xs text-muted-foreground leading-relaxed pr-4">
+                              {p.note}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Lock className="h-4 w-4 text-leaf" /> Payments are encrypted end to end.
-                </p>
               </Section>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               {step > 1 && (
-                <BrandButton type="button" variant="outline" onClick={() => setStep(step - 1)}>
+                <BrandButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(step - 1)}
+                  className="min-w-[120px] py-3.5"
+                >
                   Back
                 </BrandButton>
               )}
-              <BrandButton type="submit" variant="solid" disabled={isProcessing}>
+              <BrandButton
+                type="submit"
+                variant="solid"
+                disabled={isProcessing}
+                className={cn(
+                  "min-w-[180px] py-3.5 shadow-md hover:shadow-lg transition-all",
+                  step === 2 && "bg-secondary hover:bg-secondary/90"
+                )}
+              >
                 {isProcessing ? "Processing..." : step < 2 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
-                {step === 2 && !isProcessing && <CreditCard className="h-4 w-4" />}
+                {step === 2 && !isProcessing && <CreditCard className="h-4 w-4 shrink-0" />}
               </BrandButton>
             </div>
           </form>

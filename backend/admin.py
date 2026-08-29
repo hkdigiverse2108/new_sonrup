@@ -135,21 +135,25 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
     if not token or not warehouse:
         raise HTTPException(status_code=400, detail="Delhivery credentials not configured in Integrations settings")
 
-    # Assuming pre-paid and default 500g for gummy tubes
+    is_cod = order.get("payment_method") == "cod"
+    payment_mode = "COD" if is_cod else "Pre-paid"
+    cod_amount = order.get("total", 0) if is_cod else 0
+
+    # Assuming default 500g for gummy tubes
     payload = {
         "format": "json",
         "data": {
             "shipments": [
                 {
                     "name": order.get("customer_name", "Customer"),
-                    "add": order.get("shipping_address", {}).get("address", ""),
+                    "add": order.get("shipping_address", {}).get("line1") or order.get("shipping_address", {}).get("address") or "",
                     "pin": order.get("shipping_address", {}).get("pincode", ""),
                     "city": order.get("shipping_address", {}).get("city", ""),
                     "state": order.get("shipping_address", {}).get("state", ""),
                     "country": "India",
                     "phone": order.get("customer_phone", ""),
                     "order": order.get("id"),
-                    "payment_mode": "Pre-paid",
+                    "payment_mode": payment_mode,
                     "return_add": "",
                     "return_pin": "",
                     "return_city": "",
@@ -157,13 +161,13 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
                     "return_country": "",
                     "products_desc": "SonRup Gummy Tubes",
                     "hsn_code": "",
-                    "cod_amount": 0,
+                    "cod_amount": cod_amount,
                     "order_date": datetime.now().isoformat(),
                     "total_amount": order.get("total", 0),
                     "seller_add": "",
                     "seller_name": "SonRup",
                     "seller_inv": "",
-                    "quantity": sum(item.get("quantity", 1) for item in order.get("items", [])),
+                    "quantity": sum(item.get("qty") or item.get("quantity") or 1 for item in order.get("items", [])),
                     "weight": 500
                 }
             ],

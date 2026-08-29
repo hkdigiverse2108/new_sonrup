@@ -77,7 +77,7 @@ function AdminContactsPage() {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-white shadow-sm">
-          <table className="w-full border-collapse text-left text-sm">
+          <table className="w-full min-w-[800px] border-collapse text-left text-sm">
             <thead className="bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b">
               <tr>
                 <th className="py-3.5 px-4 font-semibold">Date & Time</th>

@@ -394,6 +394,9 @@ async def get_contact_content(db=Depends(get_database)):
         content = ContactPageContentModel().dict()
         await db["contact_content"].insert_one(content)
         content = await db["contact_content"].find_one({}, {"_id": 0})
+    else:
+        # Repopulate default fields (like socials) if they expand in schema
+        content = ContactPageContentModel(**content).dict()
     return content
 
 @app.get("/api/content/journal")

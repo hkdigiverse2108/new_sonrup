@@ -20,6 +20,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NewArrivalsRouteImport } from './routes/new-arrivals'
+import { Route as OrderSuccessRouteImport } from './routes/order-success'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as WishlistRouteImport } from './routes/wishlist'
@@ -109,6 +110,11 @@ const LoginRoute = LoginRouteImport.update({
 const NewArrivalsRoute = NewArrivalsRouteImport.update({
   id: '/new-arrivals',
   path: '/new-arrivals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderSuccessRoute = OrderSuccessRouteImport.update({
+  id: '/order-success',
+  path: '/order-success',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -300,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/new-arrivals': typeof NewArrivalsRoute
+  '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/new-arrivals': typeof NewArrivalsRoute
+  '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/new-arrivals': typeof NewArrivalsRoute
+  '/order-success': typeof OrderSuccessRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/wishlist': typeof WishlistRoute
@@ -446,6 +455,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/new-arrivals'
+    | '/order-success'
     | '/search'
     | '/shop'
     | '/wishlist'
@@ -493,6 +503,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/new-arrivals'
+    | '/order-success'
     | '/search'
     | '/shop'
     | '/wishlist'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/new-arrivals'
+    | '/order-success'
     | '/search'
     | '/shop'
     | '/wishlist'
@@ -590,6 +602,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   NewArrivalsRoute: typeof NewArrivalsRoute
+  OrderSuccessRoute: typeof OrderSuccessRoute
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRoute
   WishlistRoute: typeof WishlistRoute
@@ -676,6 +689,13 @@ declare module '@tanstack/react-router' {
       path: '/new-arrivals'
       fullPath: '/new-arrivals'
       preLoaderRoute: typeof NewArrivalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-success': {
+      id: '/order-success'
+      path: '/order-success'
+      fullPath: '/order-success'
+      preLoaderRoute: typeof OrderSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -1012,6 +1032,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   NewArrivalsRoute: NewArrivalsRoute,
+  OrderSuccessRoute: OrderSuccessRoute,
   SearchRoute: SearchRoute,
   ShopRoute: ShopRoute,
   WishlistRoute: WishlistRoute,

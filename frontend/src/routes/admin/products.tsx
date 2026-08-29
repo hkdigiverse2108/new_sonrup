@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ArrowLeft, ArrowRight, Star, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "lucide-react";
 import { apiAdminCreateProduct, apiAdminUpdateProduct, apiAdminDeleteProduct, apiUploadFile } from "@/lib/api";
 import { Product } from "@/lib/products";
 import { BrandButton } from "@/components/site/Primitives";
@@ -67,7 +67,28 @@ function AdminProducts() {
         <>
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-display font-extrabold tracking-tight">Products</h1>
-            <BrandButton onClick={() => setEditing({ categories: [], benefits: [], goals: [], badges: [], ingredients: [], nutrition: [] })}>
+            <BrandButton onClick={() => setEditing({
+              categories: [],
+              benefits: [],
+              goals: [],
+              badges: [],
+              ingredients: [],
+              nutrition: [],
+              accordions: [
+                { title: "Benefits", content: "" },
+                { title: "Ingredients", content: "" },
+                { title: "Nutritional Information", content: "" },
+                { title: "How to use", content: "" },
+                { title: "Storage", content: "" },
+                { title: "Shipping", content: "" },
+                { title: "Returns", content: "" },
+              ],
+              trust_badges: [
+                { icon: "Truck", text: "Free shipping above ₹499" },
+                { icon: "ShieldCheck", text: "Lab tested every batch" },
+                { icon: "Undo2", text: "7-day easy returns" },
+              ]
+            })}>
               <Plus className="mr-2 h-4 w-4" /> Add Product
             </BrandButton>
           </div>
@@ -75,8 +96,8 @@ function AdminProducts() {
           {isLoading ? (
             <div>Loading products...</div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
+              <table className="w-full min-w-[600px] text-left text-sm">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 font-medium">Product</th>
@@ -117,8 +138,61 @@ function AdminProducts() {
 }
 
 function ProductForm({ product, onClose, onSave, allProducts }: { product: Partial<Product>, onClose: () => void, onSave: (data: any) => void, allProducts: Product[] }) {
-  const [formData, setFormData] = useState<any>(product);
+  const [formData, setFormData] = useState<any>(() => {
+    const data = { ...product };
+    if (!data.accordions || data.accordions.length === 0) {
+      const accs = [];
+      if (data.benefits && data.benefits.length > 0) {
+        accs.push({
+          title: "Benefits",
+          content: data.benefits.map((b: string) => `+ ${b}`).join("\n")
+        });
+      }
+      if (data.ingredients && data.ingredients.length > 0) {
+        accs.push({
+          title: "Ingredients",
+          content: data.ingredients.map((i: any) => `${i.name} — ${i.note}`).join("\n")
+        });
+      }
+      if (data.nutrition && data.nutrition.length > 0) {
+        accs.push({
+          title: "Nutritional Information",
+          content: data.nutrition.map((n: any) => `${n.label}: ${n.value}`).join("\n")
+        });
+      }
+      if (data.howToUse) {
+        accs.push({ title: "How to use", content: data.howToUse });
+      }
+      if (data.storage) {
+        accs.push({ title: "Storage", content: data.storage });
+      }
+      if (data.shipping_info) {
+        accs.push({ title: "Shipping", content: data.shipping_info });
+      }
+      if (data.returns_info) {
+        accs.push({ title: "Returns", content: data.returns_info });
+      }
+      data.accordions = accs.length > 0 ? accs : [
+        { title: "Benefits", content: "" },
+        { title: "Ingredients", content: "" },
+        { title: "Nutritional Information", content: "" },
+        { title: "How to use", content: "" },
+        { title: "Storage", content: "" },
+        { title: "Shipping", content: "" },
+        { title: "Returns", content: "" },
+      ];
+    }
+    if (!data.trust_badges || data.trust_badges.length === 0) {
+      data.trust_badges = [
+        { icon: "Truck", text: "Free shipping above ₹499" },
+        { icon: "ShieldCheck", text: "Lab tested every batch" },
+        { icon: "Undo2", text: "7-day easy returns" },
+      ];
+    }
+    return data;
+  });
   const [uploading, setUploading] = useState(false);
+  const [expandedTab, setExpandedTab] = useState<number | null>(0);
   const [imagesList, setImagesList] = useState<string[]>(() => {
     const list = [product.image, ...(product.gallery || [])].filter(Boolean) as string[];
     return Array.from(new Set(list));
@@ -197,20 +271,38 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
     });
   };
 
-  const addIngredient = () => setFormData({ ...formData, ingredients: [...(formData.ingredients || []), { name: '', note: '' }] });
-  const removeIngredient = (idx: number) => setFormData({ ...formData, ingredients: (formData.ingredients || []).filter((_: any, i: number) => i !== idx) });
-  const updateIngredient = (idx: number, field: string, val: string) => {
-    const newIngredients = [...(formData.ingredients || [])];
-    newIngredients[idx] = { ...newIngredients[idx], [field]: val };
-    setFormData({ ...formData, ingredients: newIngredients });
+
+
+  const addAccordionTab = () => setFormData({ ...formData, accordions: [...(formData.accordions || []), { title: '', content: '' }] });
+  const removeAccordionTab = (idx: number) => setFormData({ ...formData, accordions: (formData.accordions || []).filter((_: any, i: number) => i !== idx) });
+  const updateAccordionTab = (idx: number, field: string, val: string) => {
+    const newAccordions = [...(formData.accordions || [])];
+    newAccordions[idx] = { ...newAccordions[idx], [field]: val };
+    setFormData({ ...formData, accordions: newAccordions });
   };
 
-  const addNutrition = () => setFormData({ ...formData, nutrition: [...(formData.nutrition || []), { label: '', value: '' }] });
-  const removeNutrition = (idx: number) => setFormData({ ...formData, nutrition: (formData.nutrition || []).filter((_: any, i: number) => i !== idx) });
-  const updateNutrition = (idx: number, field: string, val: string) => {
-    const newNutrition = [...(formData.nutrition || [])];
-    newNutrition[idx] = { ...newNutrition[idx], [field]: val };
-    setFormData({ ...formData, nutrition: newNutrition });
+  const moveAccordionTabUp = (idx: number) => {
+    if (idx === 0) return;
+    setFormData((prev: any) => {
+      const next = [...(prev.accordions || [])];
+      const temp = next[idx];
+      next[idx] = next[idx - 1];
+      next[idx - 1] = temp;
+      return { ...prev, accordions: next };
+    });
+    setExpandedTab(idx - 1);
+  };
+
+  const moveAccordionTabDown = (idx: number) => {
+    setFormData((prev: any) => {
+      const next = [...(prev.accordions || [])];
+      if (idx === next.length - 1) return prev;
+      const temp = next[idx];
+      next[idx] = next[idx + 1];
+      next[idx + 1] = temp;
+      return { ...prev, accordions: next };
+    });
+    setExpandedTab(idx + 1);
   };
 
   return (
@@ -226,168 +318,23 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <FieldGroup title="Basic Info">
+        {/* 1. Basic Info & Tags */}
+        <FieldGroup title="Basic Info & Tags (Headline, Tags, Badges)">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1">
               <Label>Name</Label>
-              <input className="field" required value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
+              <input className="field font-semibold" required value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
             </label>
             <label className="grid gap-1">
-              <Label>Slug</Label>
-              <input className="field" required value={formData.slug || ''} onChange={e => setFormData({...formData, slug: e.target.value})} disabled={!!product.slug} />
-            </label>
-            <label className="grid gap-1 sm:col-span-2">
               <Label>Tagline</Label>
               <input className="field" required value={formData.tagline || ''} onChange={e => setFormData({...formData, tagline: e.target.value})} />
             </label>
-            <label className="grid gap-1 sm:col-span-2">
-              <Label>Description</Label>
-              <textarea className="field min-h-[72px]" required value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
-            </label>
-          </div>
-        </FieldGroup>
-
-        <FieldGroup title="Pricing & Variant">
-          <div className="grid gap-3 sm:grid-cols-3">
             <label className="grid gap-1">
-              <Label>Price (₹)</Label>
-              <input type="number" className="field" required value={formData.price || ''} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
-            </label>
-            <label className="grid gap-1">
-              <Label>MRP (₹)</Label>
-              <input type="number" className="field" required value={formData.mrp || ''} onChange={e => setFormData({...formData, mrp: Number(e.target.value)})} />
-            </label>
-            <label className="grid gap-1">
-              <Label>Count</Label>
-              <input className="field" required value={formData.count || ''} onChange={e => setFormData({...formData, count: e.target.value})} />
-            </label>
-            <label className="grid gap-1">
-              <Label>Flavour</Label>
-              <input className="field" required value={formData.flavour || ''} onChange={e => setFormData({...formData, flavour: e.target.value})} />
-            </label>
-            <label className="grid gap-1 sm:col-span-2">
-              <Label>Flavour Token (Color)</Label>
-              <input className="field" required value={formData.flavourToken || ''} onChange={e => setFormData({...formData, flavourToken: e.target.value})} />
-            </label>
-          </div>
-        </FieldGroup>
-
-        <FieldGroup title="Usage & Storage">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1">
-              <Label>How To Use</Label>
-              <textarea className="field min-h-[60px]" value={formData.howToUse || ''} onChange={e => setFormData({...formData, howToUse: e.target.value})} />
-            </label>
-            <label className="grid gap-1">
-              <Label>Storage</Label>
-              <textarea className="field min-h-[60px]" value={formData.storage || ''} onChange={e => setFormData({...formData, storage: e.target.value})} />
-            </label>
-          </div>
-        </FieldGroup>
-
-        <FieldGroup title="Product Images">
-          <div className="grid gap-3">
-            <div className="flex flex-wrap gap-3 items-start">
-              {imagesList.map((imgUrl, i) => (
-                <div key={i} className={cn(
-                  "relative group flex flex-col items-center gap-1 p-1 rounded-lg border transition-all bg-card shadow-sm",
-                  i === 0 ? "border-primary ring-2 ring-primary/10" : "border-border hover:border-muted-foreground/30"
-                )}>
-                  {/* Image Display */}
-                  <div className="relative h-16 w-16 rounded-md overflow-hidden border border-border">
-                    <img src={imgUrl} className="h-full w-full object-cover" />
-                    
-                    {/* Cover badge overlay */}
-                    {i === 0 && (
-                      <span className="absolute bottom-0.5 left-0.5 right-0.5 text-center bg-primary/95 text-primary-foreground text-[8px] font-bold py-0.5 rounded uppercase tracking-wider shadow">
-                        Cover
-                      </span>
-                    )}
-
-                    {/* Delete button (Top Right) */}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute top-0.5 right-0.5 bg-destructive text-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-destructive/90"
-                      title="Delete Image"
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
-
-                  {/* Reordering Controls */}
-                  <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                    {/* Move Left */}
-                    <button
-                      type="button"
-                      onClick={() => moveImageLeft(i)}
-                      disabled={i === 0}
-                      className={cn(
-                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                      )}
-                      title="Move Left"
-                    >
-                      <ArrowLeft className="h-2.5 w-2.5" />
-                    </button>
-
-                    {/* Make Cover Button (Star) */}
-                    {i > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => makeCoverImage(i)}
-                        className="p-0.5 rounded hover:bg-muted text-yellow-500 hover:text-yellow-600 transition-colors"
-                        title="Make Cover Image"
-                      >
-                        <Star className="h-2.5 w-2.5 fill-current" />
-                      </button>
-                    )}
-
-                    {/* Move Right */}
-                    <button
-                      type="button"
-                      onClick={() => moveImageRight(i)}
-                      disabled={i === imagesList.length - 1}
-                      className={cn(
-                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                      )}
-                      title="Move Right"
-                    >
-                      <ArrowRight className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {uploading && (
-                <div className="flex flex-col items-center gap-1 p-1 rounded-lg border border-dashed border-border bg-card">
-                  <div className="h-16 w-16 rounded-md bg-muted animate-pulse flex items-center justify-center text-[10px] text-muted-foreground">
-                    Uploading...
-                  </div>
-                  <div className="h-4" />
-                </div>
-              )}
-
-              {/* Upload Input Card */}
-              <label className={cn(
-                "h-20 w-20 cursor-pointer rounded-lg border border-dashed border-border flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-all shadow-sm",
-                uploading && "pointer-events-none opacity-50"
-              )}>
-                <Plus className="h-5 w-5" />
-                <span className="text-[9px] font-bold uppercase tracking-wider">Add Images</span>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleUploadImages} disabled={uploading} />
-              </label>
-            </div>
-          </div>
-        </FieldGroup>
-
-        <FieldGroup title="Tags & Badges">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1">
-              <Label>Categories</Label>
+              <Label>Categories (Top Headline Tags)</Label>
               <input className="field" placeholder="e.g. Immunity, Wellness" value={(formData.categories || []).join(', ')} onChange={e => setFormData({...formData, categories: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
             </label>
             <label className="grid gap-1">
-              <Label>Badges</Label>
+              <Label>Badges (Best Seller / New Arrival)</Label>
               <select
                 value={
                   (formData.badges || []).some(b => b === 'Best Sellers' || b === 'Best Seller')
@@ -408,52 +355,269 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
               </select>
             </label>
             <label className="grid gap-1">
-              <Label>Benefits</Label>
-              <input className="field" placeholder="e.g. Boosts energy, Improves focus" value={(formData.benefits || []).join(', ')} onChange={e => setFormData({...formData, benefits: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
-            </label>
-            <label className="grid gap-1">
               <Label>Goals</Label>
               <input className="field" placeholder="e.g. Sleep, Immunity" value={(formData.goals || []).join(', ')} onChange={e => setFormData({...formData, goals: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
             </label>
+            <label className="grid gap-1">
+              <Label>URL Slug</Label>
+              <input className="field text-muted-foreground" required value={formData.slug || ''} onChange={e => setFormData({...formData, slug: e.target.value})} disabled={!!product.slug} />
+            </label>
           </div>
         </FieldGroup>
 
-        <FieldGroup title="Ingredients">
-          <div className="space-y-2">
-            {(formData.ingredients || []).map((ing: any, i: number) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg border border-border p-2 bg-muted/20">
-                <span className="text-[10px] font-bold text-muted-foreground w-5 text-center shrink-0">{i + 1}</span>
-                <input className="field flex-1 min-w-0" placeholder="Name" value={ing.name || ''} onChange={e => updateIngredient(i, 'name', e.target.value)} />
-                <input className="field flex-1 min-w-0" placeholder="Note" value={ing.note || ''} onChange={e => updateIngredient(i, 'note', e.target.value)} />
-                <button type="button" onClick={() => removeIngredient(i)} className="p-1 text-muted-foreground hover:text-destructive shrink-0">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+        {/* 2. Product Images */}
+        <FieldGroup title="Product Images & Gallery (Displays on Left)">
+          <div className="grid gap-3">
+            <div className="flex flex-wrap gap-3 items-start">
+              {imagesList.map((imgUrl, i) => (
+                <div key={i} className={cn(
+                  "relative group flex flex-col items-center gap-1 p-1 rounded-lg border transition-all bg-card shadow-sm",
+                  i === 0 ? "border-primary ring-2 ring-primary/10" : "border-border hover:border-muted-foreground/30"
+                )}>
+                  <div className="relative h-16 w-16 rounded-md overflow-hidden border border-border">
+                    <img src={imgUrl} className="h-full w-full object-cover" />
+                    {i === 0 && (
+                      <span className="absolute bottom-0.5 left-0.5 right-0.5 text-center bg-primary/95 text-primary-foreground text-[8px] font-bold py-0.5 rounded uppercase tracking-wider shadow">
+                        Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-0.5 right-0.5 bg-destructive text-white rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-destructive/90"
+                      title="Delete Image"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => moveImageLeft(i)}
+                      disabled={i === 0}
+                      className={cn(
+                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      )}
+                      title="Move Left"
+                    >
+                      <ArrowLeft className="h-2.5 w-2.5" />
+                    </button>
+                    {i > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => makeCoverImage(i)}
+                        className="p-0.5 rounded hover:bg-muted text-yellow-500 hover:text-yellow-600 transition-colors"
+                        title="Make Cover Image"
+                      >
+                        <Star className="h-2.5 w-2.5 fill-current" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => moveImageRight(i)}
+                      disabled={i === imagesList.length - 1}
+                      className={cn(
+                        "p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                      )}
+                      title="Move Right"
+                    >
+                      <ArrowRight className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <label className={cn(
+                "h-20 w-20 cursor-pointer rounded-lg border border-dashed border-border flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:bg-muted hover:text-primary transition-all shadow-sm",
+                uploading && "pointer-events-none opacity-50"
+              )}>
+                <Plus className="h-5 w-5" />
+                <span className="text-[9px] font-bold uppercase tracking-wider">Add Images</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleUploadImages} disabled={uploading} />
+              </label>
+            </div>
+          </div>
+        </FieldGroup>
+
+        {/* 3. Pricing & Specs */}
+        <FieldGroup title="Pricing & Variant Specs (Price, Pack Size, Flavour, etc.)">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="grid gap-1">
+              <Label>Price (₹)</Label>
+              <input type="number" className="field" required value={formData.price || ''} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
+            </label>
+            <label className="grid gap-1">
+              <Label>MRP (₹)</Label>
+              <input type="number" className="field" required value={formData.mrp || ''} onChange={e => setFormData({...formData, mrp: Number(e.target.value)})} />
+            </label>
+            <label className="grid gap-1">
+              <Label>Pack Size (e.g. 60 Gummies)</Label>
+              <input className="field" required value={formData.count || ''} onChange={e => setFormData({...formData, count: e.target.value})} />
+            </label>
+            <label className="grid gap-1">
+              <Label>Flavour</Label>
+              <input className="field" required value={formData.flavour || ''} onChange={e => setFormData({...formData, flavour: e.target.value})} />
+            </label>
+            <label className="grid gap-1">
+              <Label>Format</Label>
+              <input className="field" value={formData.format || ''} placeholder="e.g. Pectin Gummy" onChange={e => setFormData({...formData, format: e.target.value})} />
+            </label>
+            <label className="grid gap-1">
+              <Label>Flavour Token (Color Indicator)</Label>
+              <input className="field" required value={formData.flavourToken || ''} onChange={e => setFormData({...formData, flavourToken: e.target.value})} />
+            </label>
+          </div>
+        </FieldGroup>
+
+        {/* Trust Badges */}
+        <FieldGroup title="Trust Badges (Displays under pricing)">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(formData.trust_badges || []).map((badge: any, i: number) => (
+              <div key={i} className="rounded-lg border border-border p-3 bg-muted/20 space-y-2 relative">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-display">Badge {i + 1}</span>
+                <label className="grid gap-1">
+                  <span className="text-[9px] font-bold uppercase text-muted-foreground">Icon</span>
+                  <select
+                    className="field font-sans"
+                    value={badge.icon || "ShieldCheck"}
+                    onChange={e => {
+                      const next = [...(formData.trust_badges || [])];
+                      next[i] = { ...next[i], icon: e.target.value };
+                      setFormData({ ...formData, trust_badges: next });
+                    }}
+                  >
+                    <option value="Truck">Truck (Delivery)</option>
+                    <option value="ShieldCheck">Shield Check (Tested)</option>
+                    <option value="Undo2">Undo Arrow (Returns)</option>
+                    <option value="Heart">Heart</option>
+                    <option value="ShoppingBag">Shopping Bag</option>
+                  </select>
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[9px] font-bold uppercase text-muted-foreground font-sans">Text</span>
+                  <input
+                    className="field"
+                    value={badge.text || ""}
+                    onChange={e => {
+                      const next = [...(formData.trust_badges || [])];
+                      next[i] = { ...next[i], text: e.target.value };
+                      setFormData({ ...formData, trust_badges: next });
+                    }}
+                    placeholder="e.g. Free shipping above ₹499"
+                  />
+                </label>
               </div>
             ))}
-            <button type="button" onClick={addIngredient} className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/20 transition-colors">
-              <Plus className="h-3.5 w-3.5 shrink-0" /> Add Ingredient
+          </div>
+        </FieldGroup>
+
+        {/* 4. Description */}
+        <FieldGroup title="Product Description">
+          <label className="grid gap-1">
+            <Label>Main Description Text</Label>
+            <textarea className="field min-h-[100px]" required value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
+          </label>
+        </FieldGroup>
+
+        {/* 5. Accordion Tabs */}
+        <FieldGroup title="Accordion Tabs (Details)">
+          <div className="space-y-3">
+            {(formData.accordions || []).map((acc: any, i: number) => {
+              const isExpanded = expandedTab === i;
+              return (
+                <div key={i} className="rounded-xl border border-border bg-card overflow-hidden transition-all shadow-sm">
+                  {/* Collapsible Header */}
+                  <div className="flex items-center justify-between bg-muted/30 px-4 py-3 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedTab(isExpanded ? null : i)}
+                      className="flex items-center gap-3 text-left font-display text-sm font-bold text-ink hover:opacity-80 transition-opacity"
+                    >
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+                      <span>{acc.title || `Untitled Tab ${i + 1}`}</span>
+                    </button>
+                    
+                    <div className="flex items-center gap-1">
+                      {/* Move Up */}
+                      <button
+                        type="button"
+                        onClick={() => moveAccordionTabUp(i)}
+                        disabled={i === 0}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                        title="Move Up"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+
+                      {/* Move Down */}
+                      <button
+                        type="button"
+                        onClick={() => moveAccordionTabDown(i)}
+                        disabled={i === (formData.accordions || []).length - 1}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                        title="Move Down"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={() => removeAccordionTab(i)}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors ml-1"
+                        title="Delete Tab"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Body */}
+                  {isExpanded && (
+                    <div className="p-4 border-t border-border bg-muted/10 space-y-3 animate-in fade-in duration-200">
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <label className="grid gap-1 sm:col-span-1">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Tab Title</span>
+                          <input
+                            className="field font-bold text-ink"
+                            placeholder="e.g. Warnings"
+                            value={acc.title || ''}
+                            onChange={e => updateAccordionTab(i, 'title', e.target.value)}
+                          />
+                        </label>
+                        <label className="grid gap-1 sm:col-span-2">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Tab Content</span>
+                          <textarea
+                            className="field min-h-[120px]"
+                            placeholder="Type tab content here (supports line breaks)..."
+                            value={acc.content || ''}
+                            onChange={e => updateAccordionTab(i, 'content', e.target.value)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
+            {!(formData.accordions || []).length && (
+              <div className="text-xs text-muted-foreground py-2">No accordion tabs added yet. Click below to add one.</div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                addAccordionTab();
+                setExpandedTab((formData.accordions || []).length);
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-primary/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/20 transition-all active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4 shrink-0" /> Add Accordion Tab
             </button>
           </div>
         </FieldGroup>
 
-        <FieldGroup title="Nutrition Facts">
-          <div className="space-y-2">
-            {(formData.nutrition || []).map((nut: any, i: number) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg border border-border p-2 bg-muted/20">
-                <span className="text-[10px] font-bold text-muted-foreground w-5 text-center shrink-0">{i + 1}</span>
-                <input className="field flex-1 min-w-0" placeholder="Label (e.g. Energy)" value={nut.label || ''} onChange={e => updateNutrition(i, 'label', e.target.value)} />
-                <input className="field flex-1 min-w-0" placeholder="Value (e.g. 26 kcal)" value={nut.value || ''} onChange={e => updateNutrition(i, 'value', e.target.value)} />
-                <button type="button" onClick={() => removeNutrition(i)} className="p-1 text-muted-foreground hover:text-destructive shrink-0">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-            <button type="button" onClick={addNutrition} className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/20 transition-colors">
-              <Plus className="h-3.5 w-3.5 shrink-0" /> Add Nutrition Fact
-            </button>
-          </div>
-        </FieldGroup>
-
+        {/* 6. Related Products */}
         <FieldGroup title="Related Products (You may also like)">
           <div className="grid gap-3">
             <select

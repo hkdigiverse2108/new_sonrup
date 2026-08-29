@@ -36,7 +36,24 @@ function ContactSettingsPage() {
   const updateChannel = (idx: number, field: string, val: string) => {
     const newChannels = [...form.channels];
     newChannels[idx] = { ...newChannels[idx], [field]: val };
-    setForm({ ...form, channels: newChannels });
+    
+    let nextSocials = [...(form.socials || [])];
+    const chan = newChannels[idx];
+    const isWhatsAppChannel = chan.icon?.toLowerCase() === "messagecircle" || chan.label?.toLowerCase()?.includes("whatsapp");
+    if (isWhatsAppChannel) {
+      const digits = chan.value.replace(/\D/g, "");
+      if (digits) {
+        const waUrl = `https://wa.me/${digits}`;
+        const waSocialIdx = nextSocials.findIndex((s: any) => s.platform?.toLowerCase() === "whatsapp");
+        if (waSocialIdx > -1) {
+          nextSocials[waSocialIdx] = { ...nextSocials[waSocialIdx], url: waUrl };
+        } else {
+          nextSocials.push({ platform: "WhatsApp", url: waUrl });
+        }
+      }
+    }
+    
+    setForm({ ...form, channels: newChannels, socials: nextSocials });
   };
   
   const addChannel = () => {
@@ -47,6 +64,22 @@ function ContactSettingsPage() {
     const newChannels = [...form.channels];
     newChannels.splice(idx, 1);
     setForm({ ...form, channels: newChannels });
+  };
+
+  const updateSocial = (idx: number, field: string, val: string) => {
+    const newSocials = [...(form.socials || [])];
+    newSocials[idx] = { ...newSocials[idx], [field]: val };
+    setForm({ ...form, socials: newSocials });
+  };
+  
+  const addSocial = () => {
+    setForm({ ...form, socials: [...(form.socials || []), { platform: "Instagram", url: "" }] });
+  };
+  
+  const deleteSocial = (idx: number) => {
+    const newSocials = [...(form.socials || [])];
+    newSocials.splice(idx, 1);
+    setForm({ ...form, socials: newSocials });
   };
 
   return (
@@ -119,6 +152,55 @@ function ContactSettingsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* SOCIALS */}
+      <div className="rounded-xl border border-[#e5e1dc] bg-white p-4 shadow-sm">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">SOCIAL MEDIA LINKS</h2>
+            <p className="text-[10px] text-muted-foreground mt-1">Manage global links for Instagram, Facebook, YouTube, etc.</p>
+          </div>
+          <button onClick={addSocial} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary/20"><Plus className="w-3 h-3" /> ADD SOCIAL LINK</button>
+        </div>
+        
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(form.socials || []).map((s: any, i: number) => (
+            <div key={i} className="relative p-4 border rounded-xl bg-muted/20 space-y-3">
+              <button onClick={() => deleteSocial(i)} className="absolute right-3 top-3 p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3" /></button>
+              
+              <div className="grid gap-3 mr-6">
+                <div className="flex gap-2">
+                  <label className="w-1/3 grid gap-1">
+                    <span className="text-[9px] font-bold uppercase">Platform</span>
+                    <select
+                      className="w-full rounded-md border px-2 py-1 text-xs"
+                      value={s.platform || "Instagram"}
+                      onChange={(e) => updateSocial(i, "platform", e.target.value)}
+                    >
+                      <option value="Instagram">Instagram</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="YouTube">YouTube</option>
+                      <option value="WhatsApp">WhatsApp</option>
+                    </select>
+                  </label>
+                  <label className="flex-1 grid gap-1">
+                    <span className="text-[9px] font-bold uppercase">Profile URL</span>
+                    <input
+                      className="w-full rounded-md border px-2 py-1 text-xs font-bold"
+                      value={s.url || ""}
+                      onChange={(e) => updateSocial(i, "url", e.target.value)}
+                      placeholder="e.g. https://instagram.com/sonrup"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!(form.socials || []).length && (
+            <div className="text-xs text-muted-foreground col-span-2 py-2">No social media links added.</div>
+          )}
         </div>
       </div>
     </div>

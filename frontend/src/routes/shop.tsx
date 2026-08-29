@@ -161,21 +161,6 @@ function ShopPage() {
               </div>
             </div>
 
-            {/* Badges Filter Chips */}
-            <div className="mb-8 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mr-2">Filter:</span>
-              <Chip active={search.badge === ""} onClick={() => set({ badge: "" })}>All</Chip>
-              {Array.from(new Set(products.flatMap((p) => (p.badges || []).map(normalizeBadge)).filter(Boolean))).map((badgeName) => (
-                <Chip
-                  key={badgeName}
-                  active={normalizeBadge(search.badge) === badgeName}
-                  onClick={() => set({ badge: normalizeBadge(search.badge) === badgeName ? "" : badgeName })}
-                >
-                  {badgeName === "Best Seller" ? "Best Sellers" : badgeName === "New Arrival" ? "New Arrivals" : badgeName}
-                </Chip>
-              ))}
-            </div>
-
             {results.length === 0 ? (
               <EmptyState
                 icon={<SlidersHorizontal className="h-8 w-8" />}

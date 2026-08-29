@@ -11,6 +11,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/product/$slug")({
+  shouldReload: true,
   loader: async ({ params }) => {
     try {
       const product = await fetchJson<any>(`/api/products/${params.slug}`);
@@ -41,6 +42,17 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 
+function getTrustIcon(iconName: string) {
+  switch (iconName) {
+    case "Truck": return <Truck className="h-4 w-4" />;
+    case "ShieldCheck": return <ShieldCheck className="h-4 w-4" />;
+    case "Undo2": return <Undo2 className="h-4 w-4" />;
+    case "Heart": return <Heart className="h-4 w-4" />;
+    case "ShoppingBag": return <ShoppingBag className="h-4 w-4" />;
+    default: return <ShieldCheck className="h-4 w-4" />;
+  }
+}
+
 function ProductPage() {
   const { product } = Route.useLoaderData();
   const { add, wishlist, toggleWish, setCartOpen } = useStore();
@@ -64,12 +76,7 @@ function ProductPage() {
     ? (productReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewsCount).toFixed(1)
     : "5.0";
 
-  const bundle = (product.frequently_bought_together && product.frequently_bought_together.length > 0)
-    ? product.frequently_bought_together.map((slug: string) => allProducts.find((p) => p.slug === slug)).filter(Boolean)
-    : related.slice(0, 2);
-  const bundleTotal = product.bundle_price && product.bundle_price > 0
-    ? product.bundle_price
-    : [product, ...bundle].reduce((s, p) => s + p.price, 0);
+
 
   return (
     <main>
@@ -146,7 +153,7 @@ function ProductPage() {
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Spec label="Flavour" value={product.flavour} />
             <Spec label="Pack size" value={product.count} />
-            <Spec label="Format" value="Pectin gummy" />
+            <Spec label="Format" value={product.format || "Pectin Gummy"} />
           </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -186,9 +193,17 @@ function ProductPage() {
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <Trust icon={<Truck className="h-4 w-4" />} text="Free shipping above ₹499" />
-            <Trust icon={<ShieldCheck className="h-4 w-4" />} text="Lab tested every batch" />
-            <Trust icon={<Undo2 className="h-4 w-4" />} text="7-day easy returns" />
+            {product.trust_badges && product.trust_badges.length > 0 ? (
+              product.trust_badges.map((badge: any, i: number) => (
+                <Trust key={i} icon={getTrustIcon(badge.icon)} text={badge.text} />
+              ))
+            ) : (
+              <>
+                <Trust icon={<Truck className="h-4 w-4" />} text="Free shipping above ₹499" />
+                <Trust icon={<ShieldCheck className="h-4 w-4" />} text="Lab tested every batch" />
+                <Trust icon={<Undo2 className="h-4 w-4" />} text="7-day easy returns" />
+              </>
+            )}
           </div>
 
           <Accordion type="single" collapsible className="mt-10" defaultValue="benefits">
@@ -220,55 +235,33 @@ function ProductPage() {
                 ))}
               </dl>
             </Acc>
-            <Acc value="how" title="How to use">
-              {product.howToUse}
-            </Acc>
-            <Acc value="storage" title="Storage">
-              {product.storage}
-            </Acc>
-            <Acc value="shipping" title="Shipping">
-              Dispatched within 24 working hours. Metro cities in 2-3 days, rest of India in 4-6 days. Free above ₹499.
-            </Acc>
-            <Acc value="returns" title="Returns">
-              Unopened tubes can be returned within 7 days of delivery. Refunds are processed within 5-7 working days.
-            </Acc>
+            {product.accordions && product.accordions.length > 0 ? (
+              product.accordions.map((acc: any, i: number) => (
+                <Acc key={i} value={`tab-${i}`} title={acc.title}>
+                  <div className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{acc.content}</div>
+                </Acc>
+              ))
+            ) : (
+              <>
+                <Acc value="how" title="How to use">
+                  {product.howToUse}
+                </Acc>
+                <Acc value="storage" title="Storage">
+                  {product.storage}
+                </Acc>
+                <Acc value="shipping" title="Shipping">
+                  {product.shipping_info || "Dispatched within 24 working hours. Metro cities in 2-3 days, rest of India in 4-6 days. Free above ₹499."}
+                </Acc>
+                <Acc value="returns" title="Returns">
+                  {product.returns_info || "Unopened tubes can be returned within 7 days of delivery. Refunds are processed within 5-7 working days."}
+                </Acc>
+              </>
+            )}
           </Accordion>
         </div>
       </Container>
 
-      {/* Frequently bought together */}
-      <Container className="py-10">
-        <div className="surface-card p-6 sm:p-10">
-          <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight">Frequently bought together</h2>
-          <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center">
-            <div className="flex flex-1 flex-wrap items-center gap-4">
-              {[product, ...bundle].map((p, i) => (
-                <div key={p.slug} className="flex items-center gap-4">
-                  {i > 0 && <span className="font-display text-2xl text-muted-foreground">+</span>}
-                  <div className="w-28">
-                    <img src={p.image} alt={p.name} loading="lazy" className="h-32 w-28 rounded-xl object-cover" />
-                    <p className="mt-2 text-xs font-bold leading-tight">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{inr(p.price)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="lg:w-64">
-              <p className="text-sm text-muted-foreground">Bundle total</p>
-              <p className="font-display text-3xl font-extrabold">{inr(bundleTotal)}</p>
-              <BrandButton
-                className="mt-4 w-full"
-                onClick={() => {
-                  [product, ...bundle].forEach((p) => add(p.slug, 1));
-                  toast.success("Bundle added to bag");
-                }}
-              >
-                {bundle.length === 1 ? "Add both" : bundle.length === 2 ? "Add all three" : bundle.length === 3 ? "Add all four" : "Add all to bag"}
-              </BrandButton>
-            </div>
-          </div>
-        </div>
-      </Container>
+
 
       {/* Reviews */}
       <Container id="reviews" className="py-14">

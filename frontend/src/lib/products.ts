@@ -29,6 +29,11 @@ export type Product = {
   howToUse: string;
   storage: string;
   count: string;
+  format?: string;
+  shipping_info?: string;
+  returns_info?: string;
+  accordions?: { title: string; content: string }[];
+  trust_badges?: { icon: string; text: string }[];
 };
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;

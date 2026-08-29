@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Package, ShoppingCart, FileText,
   LogOut, Eye, EyeOff, Lock, User,
-  ChevronDown, Home, Star, Layers, CheckCircle, Settings, MessageCircle, Users, Plug
+  ChevronDown, Home, Star, Layers, CheckCircle, Settings, MessageCircle, Users, Plug,
+  Menu, X
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "sonrup_admin_token";
@@ -39,6 +40,7 @@ function AdminLayout() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(() => 
     location.pathname.includes("/admin/settings")
   );
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setIsSettingsOpen(location.pathname.includes("/admin/settings"));
@@ -215,30 +217,194 @@ function AdminLayout() {
 
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
-        <p className="font-display text-xl font-extrabold tracking-tight text-primary">
-          sonrup<span className="text-secondary">.</span>
-          <span className="ml-2 text-xs font-normal text-muted-foreground uppercase tracking-widest">Admin</span>
-        </p>
-        <div className="flex items-center gap-1">
-          {topLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              activeOptions={{ exact: link.exact }}
-              className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
-            >
-              <link.icon className="h-5 w-5" />
-            </Link>
-          ))}
-
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleLogout}
-            className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setMobileOpen(true)}
+            className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <LogOut className="h-5 w-5" />
+            <Menu className="h-5 w-5" />
           </button>
+          <p className="font-display text-xl font-extrabold tracking-tight text-primary">
+            sonrup<span className="text-secondary">.</span>
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground uppercase tracking-widest">Admin</span>
+          </p>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 z-40 bg-black/45 backdrop-blur-sm lg:hidden transition-opacity"
+          />
+
+          {/* Drawer Sidebar */}
+          <aside className="fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border p-4 flex flex-col shadow-2xl lg:hidden">
+            <div className="flex items-center justify-between mb-6 px-2">
+              <div>
+                <p className="font-display text-2xl font-extrabold tracking-tight text-primary">
+                  sonrup<span className="text-secondary">.</span>
+                </p>
+                <p className="mt-0.5 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Admin Panel</p>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+              {topLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  activeOptions={{ exact: link.exact }}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                >
+                  <link.icon className="h-4 w-4 shrink-0" />
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Collapsible Site Settings */}
+              <div className="pt-2 border-t border-border/50">
+                <Link
+                  to="/admin/integrations"
+                  onClick={() => setMobileOpen(false)}
+                  activeProps={{ className: "bg-primary/10 text-primary font-bold" }}
+                  inactiveProps={{ className: "text-muted-foreground hover:bg-muted hover:text-foreground" }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors"
+                >
+                  <Plug className="h-4 w-4 shrink-0" />
+                  Integrations
+                </Link>
+
+                <button
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings className="h-4 w-4 shrink-0" />
+                    Site Settings
+                  </div>
+                  <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isSettingsOpen ? "rotate-180" : ""}`} />
+                </button>
+                
+                {isSettingsOpen && (
+                  <div className="mt-1 space-y-1 pl-10">
+                    <Link
+                      to="/admin/settings/hero"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Hero Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/flavours"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Flavours Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/why"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Why Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/ingredients"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Ingredients Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/story"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Our Story Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/reviews"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Reviews Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/social"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Social Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/faqs"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      FAQs Settings
+                    </Link>
+                    <Link
+                      to="/admin/settings/about"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      About Page
+                    </Link>
+                    <Link
+                      to="/admin/settings/contact"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Contact Page
+                    </Link>
+                    <Link
+                      to="/admin/settings/journal"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Journal Page
+                    </Link>
+                    <Link
+                      to="/admin/settings/policies"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Legal Policies
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            <div className="mt-auto pt-4 border-t border-border">
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                Logout
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
