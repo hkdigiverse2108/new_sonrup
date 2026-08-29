@@ -19,6 +19,7 @@ import { Footer } from "../components/site/Footer";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { Toaster } from "../components/ui/sonner";
 import { ConfirmProvider } from "../components/ui/confirm";
+import { useIntegrationsSettings, useHomeContent, useProducts, useFlavours } from "../lib/api";
 
 
 function NotFoundComponent() {
@@ -129,24 +130,54 @@ const BARE_ROUTES = ["/login", "/register"];
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const bare = BARE_ROUTES.includes(pathname) || pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <StoreProvider>
           <ConfirmProvider>
-            {!bare && <Header />}
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            {!bare && <Footer />}
-            <CartDrawer />
-            <Toaster position="bottom-right" />
+            <AppContent />
           </ConfirmProvider>
         </StoreProvider>
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppContent() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const bare = BARE_ROUTES.includes(pathname) || pathname.startsWith("/admin");
+
+  const { isLoading: isSettingsLoading } = useIntegrationsSettings();
+  const isHomepage = pathname === "/";
+  const { isLoading: isHomeLoading } = useHomeContent();
+  const { isLoading: isProductsLoading } = useProducts();
+  const { isLoading: isFlavoursLoading } = useFlavours();
+
+  const isLoading = !bare && (
+    isSettingsLoading || 
+    (isHomepage && (isHomeLoading || isProductsLoading || isFlavoursLoading))
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-ink text-cream">
+        <div className="relative flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#3E332A] border-t-[#D5B066]" />
+          <p className="font-display text-sm tracking-[0.2em] text-[#D5B066]/80 uppercase animate-pulse">Loading Sonrup...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {!bare && <Header />}
+      <Outlet />
+      {!bare && <Footer />}
+      <CartDrawer />
+      <Toaster position="bottom-right" />
+    </>
   );
 }
 

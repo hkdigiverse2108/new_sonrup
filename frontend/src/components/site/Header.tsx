@@ -14,17 +14,20 @@ const NAV = [
 ] as const;
 
 export function AnnouncementBar() {
-  const { data: settings } = useIntegrationsSettings();
+  const { data: settings, isLoading } = useIntegrationsSettings();
+  
+  if (isLoading) {
+    return <div className="bg-ink h-[32px] w-full" />; // Blank placeholder to prevent layout shifts
+  }
+
   const rawItems = settings?.announcement_bar_items || [];
   const validItems = rawItems.filter((l: string) => l.trim().length > 0);
-  const items = validItems.length 
-    ? validItems 
-    : [
-        "FREE SHIPPING ON ORDERS ABOVE ₹499",
-        "60 GUMMIES PER TUBE",
-        "MADE WITH REAL FRUIT FLAVOURS",
-        "VEGETARIAN · PECTIN BASED",
-      ];
+  
+  if (validItems.length === 0) {
+    return null; // Hide if no announcement bar items are set
+  }
+
+  const items = validItems;
       
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">

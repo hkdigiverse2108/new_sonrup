@@ -47,6 +47,23 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { isLoading: isHomeLoading } = useHomeContent();
+  const { isLoading: isProductsLoading } = useProducts();
+  const { isLoading: isFlavoursLoading } = useFlavours();
+
+  const isLoading = isHomeLoading || isProductsLoading || isFlavoursLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[85vh] items-center justify-center bg-ink text-cream">
+        <div className="relative flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#3E332A] border-t-[#D5B066]" />
+          <p className="font-display text-sm tracking-[0.2em] text-[#D5B066]/80 uppercase animate-pulse">Loading Sonrup...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main>
       <Hero />
