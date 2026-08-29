@@ -126,17 +126,18 @@ function AdminOrders() {
                                   throw new Error("No label details returned from Delhivery");
                                 }
                                 const data = res.label_data;
-                                
-                                const formatDate = (dateStr: string) => {
+                                const formatDateOnly = (dateStr: string) => {
                                   if (!dateStr) return "";
                                   const d = new Date(dateStr);
-                                  const year = d.getFullYear();
-                                  const month = d.getMonth() + 1;
-                                  const day = d.getDate();
+                                  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+                                };
+                                const formatTimeOnly = (dateStr: string) => {
+                                  if (!dateStr) return "";
+                                  const d = new Date(dateStr);
                                   const hours = String(d.getHours()).padStart(2, '0');
                                   const minutes = String(d.getMinutes()).padStart(2, '0');
                                   const seconds = String(d.getSeconds()).padStart(2, '0');
-                                  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                                  return `${hours}:${minutes}:${seconds}`;
                                 };
 
                                 printWindow.document.write(`
@@ -155,7 +156,7 @@ function AdminOrders() {
                                         align-items: flex-start;
                                       }
                                       .label-container {
-                                        width: 380px; /* standard 4x6 print width */
+                                        width: 380px;
                                         border: 1.5px solid #000;
                                         padding: 0;
                                         box-sizing: border-box;
@@ -167,25 +168,25 @@ function AdminOrders() {
                                       }
                                       .header-col-left {
                                         width: 25%;
-                                        height: 48px;
+                                        height: 52px;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
-                                        font-size: 15px;
+                                        font-size: 16px;
                                         font-weight: bold;
                                         border-right: 1.5px solid #000;
                                         box-sizing: border-box;
                                       }
                                       .header-col-right {
                                         width: 75%;
-                                        height: 48px;
+                                        height: 52px;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
                                         box-sizing: border-box;
                                       }
                                       .delhivery-logo {
-                                        height: 30px;
+                                        height: 35px;
                                         display: block;
                                       }
                                       .barcode-container {
@@ -194,32 +195,27 @@ function AdminOrders() {
                                         border-bottom: 1.5px solid #000;
                                         box-sizing: border-box;
                                       }
-                                      .barcode-img {
-                                        max-width: 90%;
-                                        height: 60px;
-                                        display: inline-block;
-                                      }
                                       .awb-text {
                                         font-size: 13px;
                                         font-weight: bold;
                                         margin-top: 2px;
-                                        letter-spacing: 1px;
+                                        letter-spacing: 1.5px;
                                       }
                                       .routing-container {
                                         display: flex;
                                         justify-content: space-between;
                                         align-items: center;
                                         border-bottom: 1.5px solid #000;
-                                        padding: 3px 8px;
+                                        padding: 4px 8px;
                                         box-sizing: border-box;
                                       }
                                       .routing-pincode {
-                                        font-size: 16px;
+                                        font-size: 20px;
                                         font-weight: bold;
                                         font-family: Arial, sans-serif;
                                       }
                                       .routing-code {
-                                        font-size: 16px;
+                                        font-size: 20px;
                                         font-weight: bold;
                                         font-family: Arial, sans-serif;
                                       }
@@ -233,7 +229,7 @@ function AdminOrders() {
                                         font-size: 11px;
                                         border-right: 1.5px solid #000;
                                         box-sizing: border-box;
-                                        line-height: 1.3;
+                                        line-height: 1.35;
                                       }
                                       .shipto-right {
                                         width: 32%;
@@ -255,7 +251,7 @@ function AdminOrders() {
                                         font-size: 10px;
                                         border-right: 1.5px solid #000;
                                         box-sizing: border-box;
-                                        line-height: 1.25;
+                                        line-height: 1.3;
                                       }
                                       .seller-right {
                                         width: 35%;
@@ -265,6 +261,7 @@ function AdminOrders() {
                                         flex-direction: column;
                                         justify-content: center;
                                         box-sizing: border-box;
+                                        line-height: 1.3;
                                       }
                                       .items-table {
                                         width: 100%;
@@ -273,7 +270,7 @@ function AdminOrders() {
                                       }
                                       .items-table th, .items-table td {
                                         border-right: 1.5px solid #000;
-                                        padding: 4px 8px;
+                                        padding: 6px 8px;
                                         font-size: 11px;
                                         text-align: left;
                                       }
@@ -304,7 +301,6 @@ function AdminOrders() {
                                   </head>
                                   <body>
                                     <div class="label-container">
-                                      <!-- Header -->
                                       <div class="flex-row" style="border-bottom: 1.5px solid #000;">
                                         <div class="header-col-left">
                                           ${data.snm}
@@ -314,26 +310,23 @@ function AdminOrders() {
                                         </div>
                                       </div>
                                       
-                                      <!-- Barcode -->
                                       <div class="barcode-container">
-                                        <img class="barcode-img" src="${data.barcode}" />
+                                        <svg id="awb-barcode" style="margin: 0 auto; display: block;"></svg>
                                         <div class="awb-text">${data.wbn}</div>
                                       </div>
                                       
-                                      <!-- Routing -->
                                       <div class="routing-container">
                                         <div class="routing-pincode">${data.pin}</div>
                                         <div class="routing-code">${data.sort_code}</div>
                                       </div>
                                       
-                                      <!-- Ship To -->
                                       <div class="shipto-container">
                                         <div class="shipto-left">
                                           Ship To:<br/>
                                           <span style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${data.name}</span><br/>
                                           <span style="font-size: 11px; display: block; margin-top: 1px; color: #333;">${data.name}</span>
                                           ${data.address}<br/>
-                                          ${data.destination_city} (${data.st})<br/>
+                                          ${data.destination}<br/>
                                           PIN:${data.pin}
                                         </div>
                                         <div class="shipto-right">
@@ -343,7 +336,6 @@ function AdminOrders() {
                                         </div>
                                       </div>
                                       
-                                      <!-- Seller & Date -->
                                       <div class="seller-container">
                                         <div class="seller-left">
                                           Seller: ${data.snm}<br/>
@@ -351,11 +343,11 @@ function AdminOrders() {
                                           GST: ${data.client_gst_tin || '24-UR'}
                                         </div>
                                         <div class="seller-right">
-                                          Date: ${formatDate(data.cd)}
+                                          Date: ${formatDateOnly(data.cd)}<br/>
+                                          ${formatTimeOnly(data.cd)}
                                         </div>
                                       </div>
                                       
-                                      <!-- Items Table -->
                                       <table class="items-table">
                                         <thead>
                                           <tr>
@@ -378,19 +370,41 @@ function AdminOrders() {
                                         </tbody>
                                       </table>
                                       
-                                      <!-- Bottom Section Barcode -->
                                       <div class="bottom-barcode-container">
-                                        <img style="height: 35px; max-width: 90%;" src="${data.oid_barcode}" /><br/>
-                                        <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">${data.oid}</span>
+                                        <svg id="oid-barcode" style="margin: 0 auto; display: block;"></svg>
+                                        <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px; margin-top: 2px; display: block;">${data.oid}</span>
                                       </div>
 
-                                      <!-- Return Address -->
                                       <div class="bottom-return-container">
                                         Return Address: ${data.radd}
                                       </div>
                                     </div>
+
+                                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
                                     <script>
                                       window.onload = function() {
+                                        try {
+                                          JsBarcode("#awb-barcode", "${data.wbn}", {
+                                            format: "CODE128",
+                                            width: 1.8,
+                                            height: 55,
+                                            displayValue: false,
+                                            margin: 0
+                                          });
+                                        } catch(e) {
+                                          console.error(e);
+                                        }
+                                        try {
+                                          JsBarcode("#oid-barcode", "${data.oid}", {
+                                            format: "CODE128",
+                                            width: 1.4,
+                                            height: 35,
+                                            displayValue: false,
+                                            margin: 0
+                                          });
+                                        } catch(e) {
+                                          console.error(e);
+                                        }
                                         window.print();
                                       }
                                     </script>
