@@ -17,6 +17,12 @@ export default defineConfig({
     server: {
       watch: {
         ignored: ['**/public/uploads/**']
+      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true
+        }
       }
     }
   },

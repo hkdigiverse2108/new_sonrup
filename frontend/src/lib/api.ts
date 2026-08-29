@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Product } from "./products";
 
 // Use the Vite environment variable if available, otherwise fallback to relative
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export const TOKEN_KEY = "sonrup_token";
 
@@ -122,6 +122,13 @@ export const useHomeContent = () => {
   });
 };
 
+export const useLoginContent = () => {
+  return useQuery({
+    queryKey: ["login_content"],
+    queryFn: () => fetchJson<any>("/api/content/login"),
+  });
+};
+
 export const useAboutContent = () => {
   return useQuery({
     queryKey: ["about_content"],
@@ -187,7 +194,13 @@ export const apiAdminUpdateProduct = (slug: string, data: any) => fetchJson(`/ap
 export const apiAdminDeleteProduct = (slug: string) => fetchJson(`/api/admin/products/${slug}`, { method: "DELETE" });
 
 export const apiAdminUpdateHomeContent = (data: any) =>
-  fetchJson("/api/admin/content/home", {
+  fetchJson<any>("/api/admin/content/home", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateLoginContent = (data: any) =>
+  fetchJson<any>("/api/admin/content/login", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -257,6 +270,13 @@ export const useIntegrationsSettings = () => {
   return useQuery({
     queryKey: ["integrations_settings"],
     queryFn: () => fetchJson<any>("/api/settings/integrations"),
+  });
+};
+
+export const useAdminIntegrationsSettings = () => {
+  return useQuery({
+    queryKey: ["admin_integrations_settings"],
+    queryFn: () => fetchJson<any>("/api/admin/settings/integrations"),
   });
 };
 

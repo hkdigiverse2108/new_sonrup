@@ -8,6 +8,8 @@ import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { useAuth, type Order } from "@/lib/auth";
 import { apiAddOrder, useIntegrationsSettings } from "@/lib/api";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/checkout")({
@@ -147,7 +149,7 @@ function Checkout() {
                 }
                 
                 try {
-                  const orderRes = await fetch("http://localhost:8000/api/razorpay/create-order", {
+                  const orderRes = await fetch(`${API_URL}/api/razorpay/create-order`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ amount: Number(subtotal + shipping) })
@@ -164,7 +166,7 @@ function Checkout() {
                     order_id: orderRes.order_id,
                     handler: async function (response: any) {
                       try {
-                        const verifyRes = await fetch("http://localhost:8000/api/razorpay/verify", {
+                        const verifyRes = await fetch(`${API_URL}/api/razorpay/verify`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({

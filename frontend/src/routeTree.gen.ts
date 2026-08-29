@@ -51,6 +51,7 @@ import { Route as AdminSettingsFlavoursRouteImport } from './routes/admin/settin
 import { Route as AdminSettingsHeroRouteImport } from './routes/admin/settings/hero'
 import { Route as AdminSettingsIngredientsRouteImport } from './routes/admin/settings/ingredients'
 import { Route as AdminSettingsJournalRouteImport } from './routes/admin/settings/journal'
+import { Route as AdminSettingsLoginRouteImport } from './routes/admin/settings/login'
 import { Route as AdminSettingsPoliciesRouteImport } from './routes/admin/settings/policies'
 import { Route as AdminSettingsReviewsRouteImport } from './routes/admin/settings/reviews'
 import { Route as AdminSettingsSocialRouteImport } from './routes/admin/settings/social'
@@ -268,6 +269,11 @@ const AdminSettingsJournalRoute = AdminSettingsJournalRouteImport.update({
   path: '/settings/journal',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsLoginRoute = AdminSettingsLoginRouteImport.update({
+  id: '/settings/login',
+  path: '/settings/login',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsPoliciesRoute = AdminSettingsPoliciesRouteImport.update({
   id: '/settings/policies',
   path: '/settings/policies',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings/hero': typeof AdminSettingsHeroRoute
   '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
   '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/login': typeof AdminSettingsLoginRoute
   '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
   '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
   '/admin/settings/social': typeof AdminSettingsSocialRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/admin/settings/hero': typeof AdminSettingsHeroRoute
   '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
   '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/login': typeof AdminSettingsLoginRoute
   '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
   '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
   '/admin/settings/social': typeof AdminSettingsSocialRoute
@@ -435,6 +443,7 @@ export interface FileRoutesById {
   '/admin/settings/hero': typeof AdminSettingsHeroRoute
   '/admin/settings/ingredients': typeof AdminSettingsIngredientsRoute
   '/admin/settings/journal': typeof AdminSettingsJournalRoute
+  '/admin/settings/login': typeof AdminSettingsLoginRoute
   '/admin/settings/policies': typeof AdminSettingsPoliciesRoute
   '/admin/settings/reviews': typeof AdminSettingsReviewsRoute
   '/admin/settings/social': typeof AdminSettingsSocialRoute
@@ -486,6 +495,7 @@ export interface FileRouteTypes {
     | '/admin/settings/hero'
     | '/admin/settings/ingredients'
     | '/admin/settings/journal'
+    | '/admin/settings/login'
     | '/admin/settings/policies'
     | '/admin/settings/reviews'
     | '/admin/settings/social'
@@ -534,6 +544,7 @@ export interface FileRouteTypes {
     | '/admin/settings/hero'
     | '/admin/settings/ingredients'
     | '/admin/settings/journal'
+    | '/admin/settings/login'
     | '/admin/settings/policies'
     | '/admin/settings/reviews'
     | '/admin/settings/social'
@@ -583,6 +594,7 @@ export interface FileRouteTypes {
     | '/admin/settings/hero'
     | '/admin/settings/ingredients'
     | '/admin/settings/journal'
+    | '/admin/settings/login'
     | '/admin/settings/policies'
     | '/admin/settings/reviews'
     | '/admin/settings/social'
@@ -908,6 +920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsJournalRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings/login': {
+      id: '/admin/settings/login'
+      path: '/settings/login'
+      fullPath: '/admin/settings/login'
+      preLoaderRoute: typeof AdminSettingsLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings/policies': {
       id: '/admin/settings/policies'
       path: '/settings/policies'
@@ -984,6 +1003,7 @@ interface AdminRouteChildren {
   AdminSettingsHeroRoute: typeof AdminSettingsHeroRoute
   AdminSettingsIngredientsRoute: typeof AdminSettingsIngredientsRoute
   AdminSettingsJournalRoute: typeof AdminSettingsJournalRoute
+  AdminSettingsLoginRoute: typeof AdminSettingsLoginRoute
   AdminSettingsPoliciesRoute: typeof AdminSettingsPoliciesRoute
   AdminSettingsReviewsRoute: typeof AdminSettingsReviewsRoute
   AdminSettingsSocialRoute: typeof AdminSettingsSocialRoute
@@ -1011,6 +1031,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsHeroRoute: AdminSettingsHeroRoute,
   AdminSettingsIngredientsRoute: AdminSettingsIngredientsRoute,
   AdminSettingsJournalRoute: AdminSettingsJournalRoute,
+  AdminSettingsLoginRoute: AdminSettingsLoginRoute,
   AdminSettingsPoliciesRoute: AdminSettingsPoliciesRoute,
   AdminSettingsReviewsRoute: AdminSettingsReviewsRoute,
   AdminSettingsSocialRoute: AdminSettingsSocialRoute,

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useIntegrationsSettings, apiAdminUpdateIntegrationsSettings } from "@/lib/api";
+import { useAdminIntegrationsSettings, apiAdminUpdateIntegrationsSettings } from "@/lib/api";
 import { CheckCircle2, Truck, Package, Eye, EyeOff, Megaphone, CreditCard, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin/integrations")({
 
 function IntegrationsSettingsPage() {
   const queryClient = useQueryClient();
-  const { data: settings, isLoading } = useIntegrationsSettings();
+  const { data: settings, isLoading } = useAdminIntegrationsSettings();
   const [form, setForm] = useState<any>(null);
   const [showToken, setShowToken] = useState(false);
   const [showRazorpaySecret, setShowRazorpaySecret] = useState(false);
@@ -25,6 +25,7 @@ function IntegrationsSettingsPage() {
   const saveMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateIntegrationsSettings(data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_integrations_settings"] });
       queryClient.invalidateQueries({ queryKey: ["integrations_settings"] });
       toast.success("Settings saved successfully");
     },
@@ -81,7 +82,7 @@ function IntegrationsSettingsPage() {
                 <span className="text-sm font-semibold text-foreground">Scrolling Items (One per line)</span>
                 <textarea
                   value={form.announcement_bar_items?.join("\n") || ""}
-                  onChange={(e) => setForm({ ...form, announcement_bar_items: e.target.value.split("\n").filter((l) => l.trim().length > 0) })}
+                  onChange={(e) => setForm({ ...form, announcement_bar_items: e.target.value.split("\n") })}
                   placeholder="FREE SHIPPING ON ORDERS ABOVE ₹499&#10;60 GUMMIES PER TUBE"
                   rows={5}
                   className="rounded-xl border border-input bg-transparent px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl resize-y"

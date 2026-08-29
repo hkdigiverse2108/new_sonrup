@@ -15,8 +15,10 @@ const NAV = [
 
 export function AnnouncementBar() {
   const { data: settings } = useIntegrationsSettings();
-  const items = settings?.announcement_bar_items?.length 
-    ? settings.announcement_bar_items 
+  const rawItems = settings?.announcement_bar_items || [];
+  const validItems = rawItems.filter((l: string) => l.trim().length > 0);
+  const items = validItems.length 
+    ? validItems 
     : [
         "FREE SHIPPING ON ORDERS ABOVE ₹499",
         "60 GUMMIES PER TUBE",
@@ -27,7 +29,7 @@ export function AnnouncementBar() {
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">
       <div className="marquee-track flex w-max gap-10 whitespace-nowrap">
-        {[0, 1].map((k) => (
+        {[...Array(15)].map((_, k) => (
           <div key={k} className="flex gap-10">
             {items.map((t, idx) => (
               <span key={idx} className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/80">

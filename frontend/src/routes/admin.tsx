@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "sonrup_admin_token";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -193,6 +193,12 @@ function AdminLayout() {
                   className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
                 >
                   Contact Page
+                </Link>
+                <Link
+                  to="/admin/settings/login"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                >
+                  Login Page
                 </Link>
                 <Link
                   to="/admin/settings/journal"
@@ -380,6 +386,13 @@ function AdminLayout() {
                       className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
                     >
                       Contact Page
+                    </Link>
+                    <Link
+                      to="/admin/settings/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Login Page
                     </Link>
                     <Link
                       to="/admin/settings/journal"

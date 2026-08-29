@@ -7,6 +7,7 @@ import { RouteError } from "@/components/site/Page";
 import { useAuth } from "@/lib/auth";
 import { IMG } from "@/lib/products";
 import { cn } from "@/lib/utils";
+import { useLoginContent, fetchJson } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -28,12 +29,20 @@ const PERKS = [
 ];
 
 function LoginPage() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { data: content } = useLoginContent();
+  const loginContent = content || {
+    image: IMG.multi,
+    subtitle: "Delicious Nutrition.",
+    description: "Formulated with care to make taking your vitamins the best part of your day. Your wellness journey starts here."
+  };
+
+  const [mode, setMode] = useState<"login" | "register" | "forgot" | "otp" | "reset">("login");
   const [show, setShow] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { login, register } = useAuth();
@@ -43,122 +52,131 @@ function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await (mode === "login" ? login(email, password) : register(name, email, password, phone));
-    if (!res.ok) {
+    
+    try {
+      if (mode === "login" || mode === "register") {
+        const res = await (mode === "login" ? login(email, password) : register(name, email, password, phone));
+        if (!res.ok) {
+          setBusy(false);
+          setError(res.error ?? "Something went wrong");
+          return;
+        }
+        toast.success(mode === "login" ? "Welcome back" : "Account created");
+        void navigate({ to: "/account" });
+      } else if (mode === "forgot") {
+        const res = await fetchJson<{success: boolean, message: string}>(`/api/auth/forgot-password`, {
+          method: "POST",
+          body: JSON.stringify({ email })
+        });
+        toast.success(res.message);
+        setMode("otp");
+        setBusy(false);
+      } else if (mode === "otp") {
+        const res = await fetchJson<{success: boolean, message: string}>(`/api/auth/verify-otp`, {
+          method: "POST",
+          body: JSON.stringify({ email, otp })
+        });
+        toast.success(res.message);
+        setMode("reset");
+        setBusy(false);
+      } else if (mode === "reset") {
+        const res = await fetchJson<{success: boolean, message: string}>(`/api/auth/reset-password`, {
+          method: "POST",
+          body: JSON.stringify({ email, otp, new_password: password })
+        });
+        toast.success(res.message);
+        setMode("login");
+        setBusy(false);
+      }
+    } catch (err: any) {
       setBusy(false);
-      setError(res.error ?? "Something went wrong");
-      return;
+      setError(err.message || "Something went wrong");
     }
-    toast.success(mode === "login" ? "Welcome back" : "Account created");
-    void navigate({ to: "/account" });
   };
 
   return (
-    <main className="min-h-screen bg-background lg:grid lg:grid-cols-[1.05fr_1fr]">
-      {/* Brand panel */}
-      <aside className="relative overflow-hidden bg-ink px-6 py-14 text-cream lg:px-14 lg:py-20">
-        <div className="aurora pointer-events-none absolute -left-32 -top-40 h-[560px] w-[560px] blob bg-primary/25 blur-[120px]" />
-        <div className="aurora pointer-events-none absolute -right-24 bottom-0 h-[420px] w-[420px] blob bg-secondary/20 blur-[110px] [animation-delay:-8s]" />
-        <div className="pointer-events-none absolute inset-0 hero-grid opacity-[0.12]" />
-
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="Sonrup" 
-                className="h-15 w-auto object-contain object-left" 
-                style={{ marginLeft: "-44px" }} 
-              />
-            </Link>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-cream/60 transition-colors hover:text-cream"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to store
-            </Link>
-          </div>
-
-          <div className="mt-16 max-w-md lg:mt-auto">
-            <div className="mask-rise">
-              <Eyebrow className="border-cream/15 bg-cream/[0.06] text-cream/70">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Members get more
-              </Eyebrow>
-            </div>
-            <h1 className="mask-rise mt-7 font-display text-[clamp(2.3rem,6vw,3.6rem)] font-extrabold leading-[0.92] tracking-[-0.045em] [--d:120ms]">
-              Your gummy routine, <span className="text-gradient-gold">remembered.</span>
-            </h1>
-            <ul className="mt-9 space-y-3.5">
-              {PERKS.map((p, i) => (
-                <li
-                  key={p}
-                  className="mask-rise flex items-start gap-3 text-sm text-cream/70"
-                  style={{ ["--d" as string]: `${240 + i * 110}ms` }}
-                >
-                  <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/20 text-primary">
-                    <Check className="h-3.5 w-3.5" />
-                  </span>
-                  {p}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative mt-14 flex items-center gap-5 lg:mt-16">
-            <img
-              src={IMG.multi}
-              alt="Sonrup gummies"
-              className="float-slow h-24 w-20 rotate-[-7deg] rounded-2xl object-cover shadow-[var(--shadow-lift)]"
+    <main className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-8">
+      <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Back to Store
+      </Link>
+      
+      <div className="w-full max-w-[1000px] bg-card rounded-[2.5rem] shadow-2xl shadow-black/5 overflow-hidden flex flex-col lg:flex-row">
+        
+        {/* Left Side (Brand/Image) */}
+        <div className="bg-ink p-8 lg:p-10 flex flex-col justify-between lg:w-[45%]">
+          <div>
+            <img 
+              src="/logo.png" 
+              alt="Sonrup" 
+              className="h-16 w-auto object-contain object-left" 
+              style={{ marginLeft: "-44px" }} 
             />
+          </div>
+          
+          <div className="my-6 flex justify-center">
             <img
-              src={IMG.kids}
-              alt="Sonrup kids gummies"
-              className="float-fast h-24 w-20 rotate-[6deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] [animation-delay:-2s]"
+              src={loginContent.image}
+              alt="Sonrup Gummies"
+              className="w-full max-w-[280px] object-cover rounded-3xl shadow-xl shadow-black/20"
             />
-            <div className="pl-2">
-              <Rating value={4.8} count={4356} />
-              <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-cream/45">
-                120,000+ tubes shipped
-              </p>
-            </div>
+          </div>
+          
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-primary">{loginContent.subtitle}</p>
+            <p className="mt-3 text-[13px] text-cream/70 leading-relaxed whitespace-pre-wrap">
+              {loginContent.description}
+            </p>
           </div>
         </div>
-      </aside>
 
-      {/* Form panel */}
-      <section className="relative flex items-center justify-center px-5 py-16 lg:px-14">
-        <div className="pointer-events-none absolute -right-24 top-10 h-72 w-72 blob bg-primary/15 blur-[90px]" />
-        <div className="relative w-full max-w-md">
-          <div className="flex rounded-full border border-border bg-muted/60 p-1">
-            {(["login", "register"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMode(m);
-                  setError(null);
-                }}
-                className={cn(
-                  "relative flex-1 rounded-full px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.18em] transition-all duration-500",
-                  mode === m
-                    ? "bg-card text-foreground shadow-[var(--shadow-soft)]"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {m === "login" ? "Sign in" : "Create account"}
-              </button>
-            ))}
-          </div>
+        {/* Right Side (Form) */}
+        <div className="p-8 lg:p-10 flex flex-col justify-center lg:w-[55%]">
+          {/* Tabs */}
+          {/* Tabs */}
+          {["login", "register"].includes(mode) ? (
+            <div className="flex border-b border-border/60 mb-6">
+              {(["login", "register"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setMode(m);
+                    setError(null);
+                  }}
+                  className={cn(
+                    "flex-1 pb-4 text-[12px] font-bold uppercase tracking-widest transition-colors relative",
+                    mode === m ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {m === "login" ? "Login" : "Sign Up"}
+                  {mode === m && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground" />
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button type="button" onClick={() => { setMode("login"); setError(null); }} className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground mb-6 transition-colors">
+              <ArrowLeft className="h-4 w-4" /> Back to Login
+            </button>
+          )}
 
-          <h2 key={mode} className="mt-10 font-display text-3xl font-extrabold tracking-[-0.04em] [animation:rise-in_0.6s_both]">
-            {mode === "login" ? "Welcome back." : "Let's get you started."}
+          <h2 className="text-[28px] font-display font-semibold mb-1 tracking-tight">
+            {mode === "login" ? "Welcome back" : 
+             mode === "register" ? "Create account" : 
+             mode === "forgot" ? "Forgot password" :
+             mode === "otp" ? "Enter OTP" : "Reset password"}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {mode === "login"
-              ? "Sign in to see your orders, addresses and saved gummies."
-              : "One account for orders, wishlist and faster checkout."}
+          <p className="text-[13px] text-muted-foreground mb-6">
+            {mode === "login" 
+              ? "Enter your email and password to access your account." 
+              : mode === "register" ? "Sign up to track orders and save your favourite gummies."
+              : mode === "forgot" ? "Enter your email to receive an OTP."
+              : mode === "otp" ? "Enter the 6-digit OTP sent to your email."
+              : "Enter your new password below."}
           </p>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
+          <form onSubmit={submit} className="space-y-3.5">
             {mode === "register" && (
               <>
                 <Field
@@ -166,7 +184,7 @@ function LoginPage() {
                   label="Full name"
                   value={name}
                   onChange={setName}
-                  placeholder="Janvi Sharma"
+                  placeholder="Your Name"
                   autoComplete="name"
                 />
                 <Field
@@ -180,65 +198,85 @@ function LoginPage() {
                 />
               </>
             )}
-            <Field
-              icon={<Mail className="h-4 w-4" />}
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-            <div className="relative">
+
+            {["login", "register", "forgot"].includes(mode) && (
+              <Field
+                icon={<Mail className="h-4 w-4" />}
+                label="Email address"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            )}
+
+            {mode === "otp" && (
               <Field
                 icon={<Lock className="h-4 w-4" />}
-                label="Password"
-                type={show ? "text" : "password"}
-                value={password}
-                onChange={setPassword}
-                placeholder="At least 6 characters"
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                label="OTP"
+                type="text"
+                value={otp}
+                onChange={setOtp}
+                placeholder="123456"
               />
-              <button
-                type="button"
-                aria-label={show ? "Hide password" : "Show password"}
-                onClick={() => setShow((s) => !s)}
-                className="absolute right-3 top-9 grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
-              >
-                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
+            )}
+            
+            {["login", "register", "reset"].includes(mode) && (
+              <div className="relative">
+                <Field
+                  icon={<Lock className="h-4 w-4" />}
+                  label={mode === "reset" ? "New Password" : "Password"}
+                  type={show ? "text" : "password"}
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="••••••••"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  extraLabel={mode === "login" ? <button type="button" onClick={() => { setMode("forgot"); setError(null); }} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors absolute right-0 top-0">Forgot password?</button> : undefined}
+                />
+                <button
+                  type="button"
+                  aria-label={show ? "Hide password" : "Show password"}
+                  onClick={() => setShow((s) => !s)}
+                  className="absolute right-3 top-9 grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+                >
+                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            )}
 
             {error && (
-              <p className="rounded-2xl bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary [animation:rise-in_0.4s_both]">
+              <p className="rounded-xl bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary">
                 {error}
               </p>
             )}
 
-            <BrandButton type="submit" variant="solid" size="lg" className="group w-full" disabled={busy}>
-              {mode === "login" ? "Sign in" : "Create account"}
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </BrandButton>
+            <button 
+              type="submit" 
+              className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full py-3.5 text-[12px] font-bold uppercase tracking-widest transition-all hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 mt-4" 
+              disabled={busy}
+            >
+              {mode === "login" ? "Sign in" : mode === "register" ? "Sign up" : mode === "forgot" ? "Send OTP" : mode === "otp" ? "Verify OTP" : "Reset Password"}
+            </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            {mode === "login" ? "New to Sonrup?" : "Already have an account?"}{" "}
-            <button
-              onClick={() => {
-                setMode(mode === "login" ? "register" : "login");
-                setError(null);
-              }}
-              className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4"
-            >
-              {mode === "login" ? "Create one" : "Sign in instead"}
-            </button>
-          </p>
-
-          <p className="mt-8 text-center text-[11px] leading-relaxed text-muted-foreground">
-            This account experience is powered by the backend database.
-          </p>
+          {["login", "register"].includes(mode) && (
+            <p className="mt-5 text-center text-[13px] text-muted-foreground">
+              {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "login" ? "register" : "login");
+                  setError(null);
+                }}
+                className="font-semibold text-foreground hover:underline decoration-foreground/30 underline-offset-4"
+              >
+                {mode === "login" ? "Sign up" : "Login"}
+              </button>
+            </p>
+          )}
         </div>
-      </section>
+      </div>
     </main>
   );
 }
@@ -251,6 +289,7 @@ function Field({
   type = "text",
   placeholder,
   autoComplete,
+  extraLabel
 }: {
   icon: React.ReactNode;
   label: string;
@@ -259,21 +298,26 @@ function Field({
   type?: string;
   placeholder?: string;
   autoComplete?: string;
+  extraLabel?: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
-      <span className="mt-2 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-all duration-300 focus-within:border-primary focus-within:shadow-[var(--shadow-glow)]">
-        <span className="text-muted-foreground">{icon}</span>
+    <label className="block relative">
+      <div className="flex justify-between items-center mb-2.5">
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-foreground/70">{label}</span>
+        {extraLabel}
+      </div>
+      <span className="flex items-center gap-3 rounded-[16px] border border-border/60 bg-transparent px-4 py-3 transition-all duration-300 focus-within:border-foreground focus-within:shadow-[0_0_0_1px_var(--foreground)]">
+        <span className="text-muted-foreground/70">{icon}</span>
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          className="w-full bg-transparent pr-8 text-sm font-medium outline-none placeholder:text-muted-foreground/70"
+          className="w-full bg-transparent pr-8 text-[14px] font-medium outline-none placeholder:text-muted-foreground/40"
         />
       </span>
     </label>
   );
 }
+

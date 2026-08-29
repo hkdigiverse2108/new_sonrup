@@ -17,9 +17,9 @@ export function Footer() {
   const waChannelNumber = waChannel?.value?.replace(/\D/g, "");
 
   let socials = contactContent?.socials ? [...contactContent.socials] : [
-    { platform: "Instagram", url: "#" },
-    { platform: "Facebook", url: "#" },
-    { platform: "YouTube", url: "#" },
+    { platform: "Instagram", url: "" },
+    { platform: "Facebook", url: "" },
+    { platform: "YouTube", url: "" },
   ];
 
   // If WhatsApp is present in socials, make sure its URL is in sync with waChannelNumber if available
@@ -29,6 +29,9 @@ export function Footer() {
   } else if (waSocialIdx === -1 && waChannelNumber) {
     socials.push({ platform: "WhatsApp", url: `https://wa.me/${waChannelNumber}` });
   }
+
+  // Filter out any socials that don't have a valid URL
+  socials = socials.filter((s: any) => s.url && s.url.trim() !== "" && s.url.trim() !== "#");
 
   const getSocialIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
@@ -85,8 +88,8 @@ export function Footer() {
             title="Shop"
             links={[
               { label: "All Gummies", to: "/shop" },
-              { label: "Best Sellers", to: "/shop" },
-              { label: "Kids", to: "/shop" },
+              { label: "Best Sellers", to: "/shop", search: { sort: "bestsellers" } },
+              { label: "New Releases", to: "/shop", search: { sort: "new" } },
               { label: "Wishlist", to: "/wishlist" },
             ]}
           />
@@ -145,7 +148,7 @@ export function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col gap-4 border-t border-cream/10 pt-8 text-xs text-cream/50 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} Sonrup Nutrition. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Sonrup. All rights reserved.</p>
           <div className="flex flex-wrap gap-5">
             {policies.map((p) => (
               <Link key={p.slug} to="/policies/$slug" params={{ slug: p.slug }} className="transition-colors hover:text-primary">
@@ -159,14 +162,14 @@ export function Footer() {
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+function FooterCol({ title, links }: { title: string; links: { label: string; to: string; search?: any }[] }) {
   return (
     <div>
       <h4 className="text-xs font-bold uppercase tracking-[0.22em] text-primary">{title}</h4>
       <ul className="mt-4 space-y-3 text-sm text-cream/65">
         {links.map((l) => (
           <li key={l.label}>
-            <Link to={l.to} className="transition-colors hover:text-cream">
+            <Link to={l.to as any} search={l.search} className="transition-colors hover:text-cream">
               {l.label}
             </Link>
           </li>

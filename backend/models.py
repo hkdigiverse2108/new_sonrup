@@ -181,6 +181,18 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class VerifyOtpRequest(BaseModel):
+    email: str
+    otp: str
+
+class ResetPasswordOtpRequest(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
@@ -466,3 +478,12 @@ class BroadcastPayload(BaseModel):
     subject: str
     message: str
     target: str
+
+# -------------------------------------------------------------------
+# LOGIN PAGE CMS
+# -------------------------------------------------------------------
+
+class LoginPageContentModel(BaseModel):
+    image: str = "/multi-vitamin.jpg"
+    subtitle: str = "Delicious Nutrition."
+    description: str = "Formulated with care to make taking your vitamins the best part of your day. Your wellness journey starts here."

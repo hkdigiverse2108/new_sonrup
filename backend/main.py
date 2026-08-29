@@ -10,14 +10,19 @@ from email.message import EmailMessage
 from typing import List
 import jwt
 import razorpay
+import random
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.database import connect_to_mongo, close_mongo_connection, get_database
 from backend.models import (
     UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
-    HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload, IntegrationsModel
+    HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload, IntegrationsModel, LoginPageContentModel,
+    ForgotPasswordRequest, VerifyOtpRequest, ResetPasswordOtpRequest
 )
+
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -371,6 +376,15 @@ async def delete_milestone(year: str, db=Depends(get_database), current_user=Dep
     await db["milestones"].delete_one({"year": year})
     return {"message": "Milestone deleted"}
 
+@app.get("/api/content/login")
+async def get_login_content(db=Depends(get_database)):
+    content = await db["login_content"].find_one({}, {"_id": 0})
+    if not content:
+        content = LoginPageContentModel().dict()
+        await db["login_content"].insert_one(content)
+        content = await db["login_content"].find_one({}, {"_id": 0})
+    return content
+
 @app.get("/api/content/home")
 async def get_home_content(db=Depends(get_database)):
     content = await db["home_content"].find_one({}, {"_id": 0})
@@ -470,6 +484,71 @@ async def login_user(req: UserLogin, db=Depends(get_database)):
     token = create_access_token({"sub": user["email"]})
     return {"access_token": token, "token_type": "bearer"}
 
+@app.post("/api/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest, background_tasks: BackgroundTasks, db=Depends(get_database)):
+    user = await db["users"].find_one({"email": req.email})
+    if not user:
+        # Return success even if not found to prevent email enumeration
+        return {"success": True, "message": "If that email exists, an OTP has been sent."}
+    
+    otp = str(random.randint(100000, 999999))
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    
+    await db["otps"].replace_one(
+        {"email": req.email},
+        {"email": req.email, "otp": otp, "expires_at": expires_at},
+        upsert=True
+    )
+    
+    subject = "Your Password Reset OTP"
+    body = f"""Hi there,
+
+We received a request to reset your password. Here is your One-Time Password (OTP):
+
+<div style="text-align: center; margin: 30px 0;">
+    <span style="background-color: #f3f4f6; color: #111827; padding: 12px 24px; font-size: 24px; font-weight: bold; letter-spacing: 4px; border-radius: 8px;">{otp}</span>
+</div>
+
+This OTP is valid for 10 minutes.
+If you did not request this, please ignore this email.
+
+Stay healthy,
+The Sonrup Team"""
+    
+    background_tasks.add_task(send_custom_email, req.email, subject, body)
+    return {"success": True, "message": "If that email exists, an OTP has been sent."}
+
+@app.post("/api/auth/verify-otp")
+async def verify_otp(req: VerifyOtpRequest, db=Depends(get_database)):
+    otp_doc = await db["otps"].find_one({"email": req.email})
+    if not otp_doc or otp_doc["otp"] != req.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+    if datetime.utcnow() > otp_doc["expires_at"]:
+        raise HTTPException(status_code=400, detail="OTP has expired")
+        
+    return {"success": True, "message": "OTP verified successfully"}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordOtpRequest, db=Depends(get_database)):
+    otp_doc = await db["otps"].find_one({"email": req.email})
+    if not otp_doc or otp_doc["otp"] != req.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+        
+    if datetime.utcnow() > otp_doc["expires_at"]:
+        raise HTTPException(status_code=400, detail="OTP has expired")
+        
+    # Update password
+    await db["users"].update_one(
+        {"email": req.email},
+        {"$set": {"password_hash": hash_password(req.new_password)}}
+    )
+    
+    # Delete OTP to prevent reuse
+    await db["otps"].delete_one({"email": req.email})
+    
+    return {"success": True, "message": "Password reset successfully"}
+
 @app.get("/api/auth/me")
 async def get_my_profile(current_user=Depends(get_current_user), db=Depends(get_database)):
     orders_cursor = db["orders"].find({"customer_email": current_user["email"]}, {"_id": 0})
@@ -521,7 +600,7 @@ async def upload_file(file: UploadFile = File(...), current_user=Depends(get_cur
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    api_url = os.getenv("VITE_API_URL", "http://localhost:8000")
+    api_url = os.getenv("VITE_API_URL", "")
     return {"url": f"{api_url}/uploads/{unique_filename}"}
 
 @app.post("/api/user/addresses")
@@ -600,7 +679,7 @@ def send_welcome_email(email_address: str):
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5151")
+    frontend_url = os.environ.get("FRONTEND_URL", "")
     
     if not smtp_host or not smtp_user or not smtp_pass:
         print("SMTP credentials not configured.")
@@ -685,6 +764,7 @@ def send_custom_email(email_address: str, subject: str, body_text: str):
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_pass = os.environ.get("SMTP_PASS", "")
+    frontend_url = os.environ.get("FRONTEND_URL", "")
 
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -693,16 +773,16 @@ def send_custom_email(email_address: str, subject: str, body_text: str):
     
     html_content = f"""
     <html>
-    <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; padding: 20px; background-color: #faf7f2; margin: 0;">
-        <div style="max-width: 600px; margin: 40px auto; background: #fff; border: 1px solid #e5e1dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-            <div style="background-color: #1f1d1a; padding: 30px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -1px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: inline-block;">sonrup<span style="color: #eab308;">.</span></h1>
+    <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333333; line-height: 1.6; padding: 20px; margin: 0; background-color: #f9f9f9;">
+        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #eaeaea; overflow: hidden;">
+            <div style="padding: 25px 30px; text-align: center; background-color: #1f1d1a;">
+                <img src="{frontend_url}/logo.png" alt="SONRUP" style="height: 40px; width: auto; color: #eab308; font-size: 24px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;" />
             </div>
-            <div style="padding: 40px 30px; font-size: 15px; color: #333; white-space: pre-wrap;">
+            <div style="padding: 30px; font-size: 16px; white-space: pre-wrap;">
 {body_text}
             </div>
-            <div style="background-color: #faf7f2; padding: 20px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #e5e1dc;">
-                &copy; 2026 Sonrup Nutrition. All rights reserved.
+            <div style="padding: 20px; text-align: center; font-size: 12px; color: #888888; border-top: 1px solid #eaeaea; background-color: #fafafa;">
+                &copy; {datetime.now().year} Sonrup. All rights reserved.
             </div>
         </div>
     </body>

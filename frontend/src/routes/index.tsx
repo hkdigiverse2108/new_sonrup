@@ -55,7 +55,7 @@ function Home() {
       <FlavourExperience />
       <WhyOurGummies />
       <IngredientStory />
-      <FindYourGummy />
+
       <BrandStory />
       <Reviews />
       <SocialGrid />
@@ -295,6 +295,9 @@ function TrustStrip() {
 
 function BestSellers() {
   const { data: products = [] } = useProducts();
+  const bestSellers = products
+    .filter((p) => (p.badges || []).some(b => b.toLowerCase().includes("best seller")))
+    .slice(0, 3);
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
       <div className="flex flex-wrap items-end justify-between gap-6">
@@ -310,7 +313,7 @@ function BestSellers() {
       </div>
 
       <div className="no-scrollbar -mx-5 mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-4 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
-        {products.map((p, i) => (
+        {bestSellers.map((p, i) => (
           <Reveal key={p.slug} delay={i * 110} className="w-[78vw] shrink-0 snap-start sm:w-[360px] lg:w-auto">
             <ProductCard product={p} className={cn(i === 1 && "lg:-translate-y-6")} />
           </Reveal>
@@ -533,77 +536,6 @@ function IngredientStory() {
   );
 }
 
-/* ---------------- FINDER ---------------- */
-
-function FindYourGummy() {
-  const [picked, setPicked] = useState<string[]>(["Daily Wellness"]);
-  const { data: goalsData = [] } = useGoals();
-  const goals = goalsData.map(g => g.name);
-  const { data: products = [] } = useProducts();
-  const matches = products.filter((p) => p.goals.some((g) => picked.includes(g)));
-
-  return (
-    <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
-      <div className="overflow-hidden rounded-[2.5rem] bg-card shadow-[var(--shadow-soft)]">
-        <div className="grid lg:grid-cols-[1fr_0.9fr]">
-          <div className="p-8 sm:p-12">
-            <Eyebrow>Product finder</Eyebrow>
-            <h2 className="display-xl mt-5 text-4xl leading-[0.92] lg:text-5xl">Find your perfect gummy</h2>
-            <p className="mt-4 max-w-md text-muted-foreground">
-              Tell us what you're after. We'll point you at the tube that fits.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-2.5">
-              {goals.map((g) => {
-                const on = picked.includes(g);
-                return (
-                  <button
-                    key={g}
-                    onClick={() => setPicked((p) => (on ? p.filter((x) => x !== g) : [...p, g]))}
-                    className={cn(
-                      "rounded-full border px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] transition-all duration-300",
-                      on
-                        ? "border-transparent bg-ink text-cream shadow-[var(--shadow-soft)]"
-                        : "border-border bg-background hover:border-ink/40",
-                    )}
-                  >
-                    {g}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="bg-muted/60 p-8 sm:p-12">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-              {matches.length} match{matches.length === 1 ? "" : "es"}
-            </p>
-            <div className="mt-5 space-y-3">
-              {matches.map((p) => (
-                <Link
-                  key={p.slug}
-                  to="/product/$slug"
-                  params={{ slug: p.slug }}
-                  className="group flex items-center gap-4 rounded-2xl bg-card p-3 transition-all duration-300 hover:shadow-[var(--shadow-soft)]"
-                >
-                  <img src={p.image} alt={p.name} className="h-16 w-14 rounded-xl object-cover" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{inr(p.price)}</p>
-                  </div>
-                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-                </Link>
-              ))}
-              {matches.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nothing matches yet — pick another goal.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ---------------- BRAND STORY ---------------- */
 

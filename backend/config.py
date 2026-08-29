@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017"
     database_name: str = "sparkle_stream_cleaner"
     backend_port: int = 8000
-    backend_url: str = "http://localhost:8000"
+    backend_url: str = ""
 
 
     # Point to the .env file in the root directory (parent of the backend folder)

@@ -70,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "Enter a valid email address" };
-    if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters" };
     try {
       const data = await apiLogin({ email, password });
       localStorage.setItem(TOKEN_KEY, data.access_token);
@@ -89,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (name: string, email: string, password: string, phone: string = "") => {
     if (name.trim().length < 2) return { ok: false, error: "Please enter your name" };
     if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "Enter a valid email address" };
-    if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters" };
     try {
       const data = await apiRegister({ name: name.trim(), email, password, phone: phone.trim() });
       localStorage.setItem(TOKEN_KEY, data.access_token);

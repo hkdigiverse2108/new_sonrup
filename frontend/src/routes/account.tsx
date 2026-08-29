@@ -54,10 +54,11 @@ function AccountPage() {
   const { user, ready, logout } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("profile");
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
-    if (ready && !user) void navigate({ to: "/login" });
-  }, [ready, user, navigate]);
+    if (ready && !user && !isSigningOut) void navigate({ to: "/login" });
+  }, [ready, user, navigate, isSigningOut]);
 
   if (!ready || !user) {
     return (
@@ -102,6 +103,7 @@ function AccountPage() {
             </div>
             <button
               onClick={() => {
+                setIsSigningOut(true);
                 logout();
                 toast("Signed out");
                 void navigate({ to: "/" });

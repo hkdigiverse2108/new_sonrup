@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel
+from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel
 from backend.main import get_current_user
 from typing import Any, Dict
 import os
@@ -27,7 +27,7 @@ async def upload_file(file: UploadFile = File(...), admin=Depends(require_admin)
     filepath = os.path.join("backend/uploads", filename)
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    api_url = os.getenv("VITE_API_URL", "http://localhost:8000")
+    api_url = os.getenv("VITE_API_URL", "")
     return {"url": f"{api_url}/uploads/{filename}"}
 
 # ---------------------------------------------------------
@@ -119,6 +119,36 @@ async def update_order_status(order_id: str, payload: Dict[str, str], admin=Depe
     status = payload.get("status")
     if not status:
         raise HTTPException(status_code=400, detail="Missing status")
+        
+    order = await db["orders"].find_one({"id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if status == "Cancelled" and order.get("delhivery_awb"):
+        awb = order.get("delhivery_awb")
+        integrations = await db["integrations"].find_one({}) or {}
+        token = integrations.get("delhivery_api_token")
+        
+        if token:
+            delhivery_payload = {
+                "waybill": awb,
+                "cancellation": "true"
+            }
+            headers = {
+                "Authorization": f"Token {token}",
+                "Content-Type": "application/json"
+            }
+            try:
+                async with httpx.AsyncClient() as client:
+                    await client.post(
+                        "https://track.delhivery.com/api/p/edit", 
+                        json=delhivery_payload, 
+                        headers=headers,
+                        timeout=15.0
+                    )
+            except Exception as e:
+                print("Failed to cancel on Delhivery during status update:", str(e))
+
     await db["orders"].update_one({"id": order_id}, {"$set": {"status": status}})
     return {"success": True}
 
@@ -345,6 +375,14 @@ async def delete_order(order_id: str, admin=Depends(require_admin), db=Depends(g
     return {"success": True}
 
 # ---------------------------------------------------------
+# Login Page Content
+# ---------------------------------------------------------
+@router.put("/content/login")
+async def update_login_content(content: LoginPageContentModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["login_content"].replace_one({}, content.model_dump(), upsert=True)
+    return {"success": True}
+
+# ---------------------------------------------------------
 # Home Page Content
 # ---------------------------------------------------------
 @router.put("/content/home")
@@ -374,6 +412,14 @@ async def delete_flavour(token: str, admin=Depends(require_admin), db=Depends(ge
 # ---------------------------------------------------------
 # Integrations Settings
 # ---------------------------------------------------------
+@router.get("/settings/integrations")
+async def get_admin_integrations_settings(admin=Depends(require_admin), db=Depends(get_database)):
+    content = await db["integrations"].find_one({}, {"_id": 0})
+    if not content:
+        from backend.models import IntegrationsModel
+        content = IntegrationsModel().model_dump()
+    return content
+
 @router.put("/settings/integrations")
 async def update_integrations_settings(content: IntegrationsModel, admin=Depends(require_admin), db=Depends(get_database)):
     existing = await db["integrations"].find_one({}) or {}
