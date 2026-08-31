@@ -203,35 +203,12 @@ function ProductPage() {
             )}
           </div>
 
-          <Accordion type="single" collapsible className="mt-10" defaultValue="benefits">
-            <Acc value="benefits" title="Benefits">
-              <ul className="space-y-2">
-                {product.benefits.map((b) => (
-                  <li key={b} className="flex items-start gap-2">
-                    <Plus className="mt-0.5 h-4 w-4 shrink-0 text-secondary" /> {b}
-                  </li>
-                ))}
-              </ul>
-            </Acc>
-            <Acc value="ingredients" title="Ingredients">
-              <ul className="space-y-3">
-                {product.ingredients.map((i) => (
-                  <li key={i.name}>
-                    <span className="font-bold text-foreground">{i.name}</span> — {i.note}
-                  </li>
-                ))}
-              </ul>
-            </Acc>
-            <Acc value="nutrition" title="Nutritional information">
-              <dl className="divide-y divide-border">
-                {product.nutrition.map((n) => (
-                  <div key={n.label} className="flex items-center justify-between py-2">
-                    <dt>{n.label}</dt>
-                    <dd className="font-bold text-foreground">{n.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </Acc>
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="mt-10" 
+            defaultValue={product.accordions && product.accordions.length > 0 ? "tab-0" : "benefits"}
+          >
             {product.accordions && product.accordions.length > 0 ? (
               product.accordions.map((acc: any, i: number) => (
                 <Acc key={i} value={`tab-${i}`} title={acc.title}>
@@ -240,6 +217,34 @@ function ProductPage() {
               ))
             ) : (
               <>
+                <Acc value="benefits" title="Benefits">
+                  <ul className="space-y-2">
+                    {product.benefits.map((b) => (
+                      <li key={b} className="flex items-start gap-2">
+                        <Plus className="mt-0.5 h-4 w-4 shrink-0 text-secondary" /> {b}
+                      </li>
+                    ))}
+                  </ul>
+                </Acc>
+                <Acc value="ingredients" title="Ingredients">
+                  <ul className="space-y-3">
+                    {product.ingredients.map((i) => (
+                      <li key={i.name}>
+                        <span className="font-bold text-foreground">{i.name}</span> — {i.note}
+                      </li>
+                    ))}
+                  </ul>
+                </Acc>
+                <Acc value="nutrition" title="Nutritional information">
+                  <dl className="divide-y divide-border">
+                    {product.nutrition.map((n) => (
+                      <div key={n.label} className="flex items-center justify-between py-2">
+                        <dt>{n.label}</dt>
+                        <dd className="font-bold text-foreground">{n.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Acc>
                 <Acc value="how" title="How to use">
                   {product.howToUse}
                 </Acc>
