@@ -169,6 +169,20 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
     payment_mode = "COD" if is_cod else "Pre-paid"
     cod_amount = order.get("total", 0) if is_cod else 0
 
+    resolved_items = []
+    for item in order.get("items", []):
+        prod = await db["products"].find_one({"slug": item.get("slug") or item.get("product_slug") or ""})
+        if prod and prod.get("combo_products"):
+            for sub_slug in prod["combo_products"]:
+                sub_prod = await db["products"].find_one({"slug": sub_slug})
+                if sub_prod:
+                    resolved_items.append({
+                        "name": sub_prod.get("name") or "Gummy Tube",
+                        "qty": (item.get("qty") or item.get("quantity") or 1)
+                    })
+        else:
+            resolved_items.append(item)
+
     # Assuming default 500g for gummy tubes
     payload = {
         "format": "json",
@@ -189,7 +203,7 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
                     "return_city": "",
                     "return_state": "",
                     "return_country": "",
-                    "products_desc": ", ".join(f"{item.get('name') or 'Gummy Tube'} (x{item.get('qty') or 1})" for item in order.get("items", []))[:240] or "SonRup Gummy Tubes",
+                    "products_desc": ", ".join(f"{item.get('name') or 'Gummy Tube'} (x{item.get('qty') or 1})" for item in resolved_items)[:240] or "SonRup Gummy Tubes",
                     "hsn_code": "",
                     "cod_amount": cod_amount,
                     "order_date": datetime.now().isoformat(),
@@ -197,7 +211,7 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
                     "seller_add": "",
                     "seller_name": "SonRup",
                     "seller_inv": "",
-                    "quantity": sum(item.get("qty") or item.get("quantity") or 1 for item in order.get("items", [])),
+                    "quantity": sum(item.get("qty") or item.get("quantity") or 1 for item in resolved_items),
                     "weight": 500
                 }
             ],

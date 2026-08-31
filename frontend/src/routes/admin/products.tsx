@@ -323,7 +323,22 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1">
               <Label>Name</Label>
-              <input className="field font-semibold" required value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
+              <input
+                className="field font-semibold"
+                required
+                value={formData.name || ''}
+                onChange={e => {
+                  const nameVal = e.target.value;
+                  const newFormData = { ...formData, name: nameVal };
+                  newFormData.slug = nameVal
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/[\s_]+/g, '-')
+                    .replace(/-+/g, '-');
+                  setFormData(newFormData);
+                }}
+              />
             </label>
             <label className="grid gap-1">
               <Label>Tagline</Label>
@@ -331,7 +346,7 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
             </label>
             <label className="grid gap-1">
               <Label>Categories (Top Headline Tags)</Label>
-              <input className="field" placeholder="e.g. Immunity, Wellness" value={(formData.categories || []).join(', ')} onChange={e => setFormData({...formData, categories: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
+              <input className="field" placeholder="e.g. Wellness, Kids" value={(formData.categories || []).join(', ')} onChange={e => setFormData({...formData, categories: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
             </label>
             <label className="grid gap-1">
               <Label>Badges (Best Seller / New Arrival)</Label>
@@ -356,11 +371,11 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
             </label>
             <label className="grid gap-1">
               <Label>Goals</Label>
-              <input className="field" placeholder="e.g. Sleep, Immunity" value={(formData.goals || []).join(', ')} onChange={e => setFormData({...formData, goals: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
+              <input className="field" placeholder="e.g. Sleep, Energy" value={(formData.goals || []).join(', ')} onChange={e => setFormData({...formData, goals: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean)})} />
             </label>
             <label className="grid gap-1">
               <Label>URL Slug</Label>
-              <input className="field text-muted-foreground" required value={formData.slug || ''} onChange={e => setFormData({...formData, slug: e.target.value})} disabled={!!product.slug} />
+              <input className="field text-muted-foreground" required value={formData.slug || ''} onChange={e => setFormData({...formData, slug: e.target.value})} />
             </label>
           </div>
         </FieldGroup>
@@ -664,6 +679,58 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
               })}
               {!(formData.related_products || []).length && (
                 <div className="text-xs text-muted-foreground">No related products selected.</div>
+              )}
+            </div>
+          </div>
+        </FieldGroup>
+
+        {/* 7. Combo Products */}
+        <FieldGroup title="Combo Products (Bundle Included Items)">
+          <div className="grid gap-3">
+            <select
+              className="field"
+              value=""
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const cp = formData.combo_products || [];
+                if (!cp.includes(val)) {
+                  setFormData({ ...formData, combo_products: [...cp, val] });
+                }
+              }}
+            >
+              <option value="">+ Add a combo product item...</option>
+              {allProducts
+                .filter(p => p.slug !== product.slug)
+                .filter(p => !(formData.combo_products || []).includes(p.slug))
+                .map(p => (
+                  <option key={p.slug} value={p.slug}>{p.name}</option>
+                ))}
+            </select>
+            
+            <div className="flex flex-wrap gap-2">
+              {(formData.combo_products || []).map((slug: string) => {
+                const p = allProducts.find(prod => prod.slug === slug);
+                if (!p) return null;
+                return (
+                  <div key={slug} className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2.5 pr-1.5 shadow-sm">
+                    {p.image && <img src={p.image} className="h-5 w-5 rounded-full object-cover shrink-0" />}
+                    <span className="text-sm font-semibold">{p.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cp = formData.combo_products || [];
+                        setFormData({ ...formData, combo_products: cp.filter((s: string) => s !== slug) });
+                      }}
+                      className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+              {!(formData.combo_products || []).length && (
+                <div className="text-xs text-muted-foreground">Not a combo/bundle product (No items selected).</div>
               )}
             </div>
           </div>
