@@ -638,6 +638,10 @@ class RazorpayCreateOrderRequest(BaseModel):
 @app.post("/api/razorpay/create-order")
 async def create_razorpay_order(data: RazorpayCreateOrderRequest, db=Depends(get_database)):
     integrations = await db["integrations"].find_one({}) or {}
+    
+    if not integrations.get("razorpay_active", True):
+        raise HTTPException(status_code=400, detail="Online payment is currently disabled")
+
     key_id = integrations.get("razorpay_key_id")
     key_secret = integrations.get("razorpay_key_secret")
 

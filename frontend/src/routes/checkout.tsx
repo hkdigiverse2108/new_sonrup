@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, CreditCard, Lock, ShoppingBag, Truck } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton } from "@/components/site/Primitives";
@@ -40,6 +40,14 @@ function Checkout() {
   const [pay, setPay] = useState("online");
   const [isProcessing, setIsProcessing] = useState(false);
   const { data: settings } = useIntegrationsSettings();
+  const isOnlineActive = settings?.razorpay_active !== false;
+
+  useEffect(() => {
+    if (settings && settings.razorpay_active === false && pay === "online") {
+      setPay("cod");
+    }
+  }, [settings, pay]);
+
   const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 59;
 
@@ -311,16 +319,19 @@ function Checkout() {
                   {PAYMENTS.map((p) => {
                     const isSelected = pay === p.id;
                     const Icon = p.id === "online" ? CreditCard : Truck;
+                    const isDisabled = p.id === "online" && !isOnlineActive;
                     return (
                       <button
                         type="button"
                         key={p.id}
-                        onClick={() => setPay(p.id)}
+                        disabled={isDisabled}
+                        onClick={() => !isDisabled && setPay(p.id)}
                         className={cn(
                           "group relative flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-300",
                           isSelected
                             ? "border-ink bg-sand/30 shadow-[var(--shadow-soft)] scale-[1.01] ring-1 ring-ink/5"
-                            : "border-border bg-card hover:border-ink/40 hover:bg-sand/10 hover:shadow-sm"
+                            : "border-border bg-card hover:border-ink/40 hover:bg-sand/10 hover:shadow-sm",
+                          isDisabled && "opacity-55 cursor-not-allowed hover:border-border hover:bg-card hover:shadow-none"
                         )}
                       >
                         {/* Radio indicator */}
@@ -340,7 +351,7 @@ function Checkout() {
                           </div>
                           {p.note && (
                             <p className="text-xs text-muted-foreground leading-relaxed pr-4">
-                              {p.note}
+                              {isDisabled ? "Online payment is currently unavailable" : p.note}
                             </p>
                           )}
                         </div>

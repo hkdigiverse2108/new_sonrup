@@ -204,6 +204,19 @@ function IntegrationsSettingsPage() {
             </div>
             
             <div className="space-y-5">
+              <label className="flex items-center gap-3 cursor-pointer py-1 select-none">
+                <input
+                  type="checkbox"
+                  checked={form.razorpay_active !== false}
+                  onChange={(e) => setForm({ ...form, razorpay_active: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <div>
+                  <span className="text-sm font-semibold text-foreground block">Active Status</span>
+                  <span className="text-xs text-muted-foreground block">Enable or disable online payments via Razorpay.</span>
+                </div>
+              </label>
+
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-foreground">Environment Mode</span>
                 <select

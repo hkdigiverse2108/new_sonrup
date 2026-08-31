@@ -25,6 +25,7 @@ class IntegrationsModel(BaseModel):
     razorpay_key_id: Optional[str] = ""
     razorpay_key_secret: Optional[str] = ""
     razorpay_mode: str = "test"
+    razorpay_active: bool = True
     announcement_bar_items: List[str] = [
         "FREE SHIPPING ON ORDERS ABOVE ₹499",
         "60 GUMMIES PER TUBE",
