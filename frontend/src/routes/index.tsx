@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -708,10 +708,103 @@ function SocialGrid({ content }: { content: any }) {
     images: []
   };
 
-  const tiles = section.images?.length === 6 ? section.images : [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
-  
+  const rawTiles = Array.isArray(section.images) && section.images.length > 0 ? section.images : [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
+  const tiles = rawTiles.filter(Boolean);
+
+  let displayTiles = [...tiles];
+  if (tiles.length > 0) {
+    while (displayTiles.length < 12) {
+      displayTiles = [...displayTiles, ...tiles];
+    }
+  }
+  const marqueeTiles = [...displayTiles, ...displayTiles];
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [dragged, setDragged] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || marqueeTiles.length === 0) return;
+    
+    let animationFrameId: number;
+    let isHovered = false;
+
+    const onMouseEnter = () => { isHovered = true; };
+    const onMouseLeave = () => { isHovered = false; };
+
+    el.addEventListener("mouseenter", onMouseEnter);
+    el.addEventListener("mouseleave", onMouseLeave);
+
+    const scroll = () => {
+      if (!isHovered && el && !isMouseDown) {
+        el.scrollLeft += 0.8; // smooth crawl speed
+        
+        // Loop scrolling seamlessly:
+        const halfWidth = el.scrollWidth / 2;
+        if (el.scrollLeft >= halfWidth) {
+          el.scrollLeft -= halfWidth;
+        } else if (el.scrollLeft < 0) {
+          el.scrollLeft += halfWidth;
+        }
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      el.removeEventListener("mouseenter", onMouseEnter);
+      el.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [tiles, isMouseDown, marqueeTiles.length]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsMouseDown(true);
+    setDragged(false);
+    setStartX(e.pageX - (scrollRef.current?.offsetLeft || 0));
+    setScrollLeft(scrollRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseLeave = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    
+    if (Math.abs(x - startX) > 5) {
+      setDragged(true);
+    }
+    
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+
+    // Loop check for drag scrolling:
+    const el = scrollRef.current;
+    const halfWidth = el.scrollWidth / 2;
+    if (el.scrollLeft >= halfWidth) {
+      el.scrollLeft -= halfWidth;
+      setStartX(x);
+      setScrollLeft(el.scrollLeft);
+    } else if (el.scrollLeft < 0) {
+      el.scrollLeft += halfWidth;
+      setStartX(x);
+      setScrollLeft(el.scrollLeft);
+    }
+  };
+
   return (
-    <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
+    <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10 overflow-hidden">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <Reveal>
           <SectionTitle eyebrow={section.eyebrow} title={<>{section.title}</>} />
@@ -730,35 +823,70 @@ function SocialGrid({ content }: { content: any }) {
           )}
         </Reveal>
       </div>
-      <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((src: string, i: number) => {
-          const link = section.image_links?.[i] || "#";
-          const isLink = link !== "#" && link !== "";
-          
-          const ImageWrapper = ({ children }: { children: React.ReactNode }) => 
-            isLink ? (
-              <a href={link} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
-                {children}
-              </a>
-            ) : (
-              <div className="h-full w-full">{children}</div>
-            );
 
-          return (
-            <Reveal key={i} delay={i * 60} className={cn(i === 1 && "md:row-span-2", i === 4 && "lg:col-span-2")}>
-              <div className="group h-full overflow-hidden rounded-3xl bg-muted/20">
-                <ImageWrapper>
-                  <img
-                    src={src}
-                    alt="Sonrup gummies lifestyle"
-                    loading="lazy"
-                    className="h-full min-h-48 w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                </ImageWrapper>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+      <div className="mt-16 overflow-hidden w-full select-none">
+        <div 
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className="flex gap-6 overflow-x-auto pb-12 pt-8 no-scrollbar cursor-grab active:cursor-grabbing select-none"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {marqueeTiles.map((src: string, index: number) => {
+            const originalIndex = index % tiles.length;
+            const link = section.image_links?.[originalIndex] || "#";
+            const isLink = link !== "#" && link !== "";
+            
+            const ImageWrapper = ({ children }: { children: React.ReactNode }) => 
+              isLink ? (
+                <a 
+                  href={link} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="block h-full w-full"
+                  onClick={(e) => {
+                    if (dragged) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  {children}
+                </a>
+              ) : (
+                <div className="h-full w-full">{children}</div>
+              );
+
+            // Stagger pattern based on the index to make it wave-like!
+            const staggerClass = index % 3 === 0 ? "-translate-y-4" : index % 3 === 1 ? "translate-y-4" : "translate-y-0";
+
+            return (
+              <div 
+                key={index} 
+                className={cn("shrink-0 w-[220px] md:w-[280px] transition-transform duration-500", staggerClass)}
+              >
+                <div className="group overflow-hidden rounded-3xl bg-muted/20 w-full aspect-[4/5] shadow-md hover:shadow-xl transition-all duration-300">
+                  <ImageWrapper>
+                    <img
+                      src={src}
+                      alt="Sonrup gummies lifestyle"
+                      loading="lazy"
+                      draggable="false"
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
+                    />
+                  </ImageWrapper>
+                </div>
               </div>
-            </Reveal>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </section>
   );

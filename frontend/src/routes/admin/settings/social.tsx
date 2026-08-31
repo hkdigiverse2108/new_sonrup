@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent } from "@/lib/api";
-import { Plus, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2, Trash2 } from "lucide-react";
 import { IMG } from "@/lib/products";
 
 export const Route = createFileRoute("/admin/settings/social")({
   component: SocialSettingsPage,
 });
 
-// ─── Image Upload Component ──────────────────────────────────────────────────────
 function ImageUpload({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -24,9 +25,17 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
     }
     setLoading(false);
   };
+
+  const handleBoxClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <label className="grid gap-1 h-full">
-      <div className="flex flex-col h-full items-center justify-center gap-3 rounded-xl border border-[#e5e1dc] bg-[#faf9f8] p-2 transition-colors focus-within:border-[#3E332A]/50 focus-within:ring-1 focus-within:ring-[#3E332A]/20 relative overflow-hidden min-h-[140px] group">
+    <div className="relative h-full w-full group">
+      <div 
+        onClick={handleBoxClick}
+        className="flex flex-col h-full items-center justify-center gap-3 rounded-xl border border-[#e5e1dc] bg-[#faf9f8] p-2 transition-colors hover:border-[#3E332A]/50 cursor-pointer relative overflow-hidden min-h-[140px]"
+      >
         {value ? (
           <img src={value} alt="Preview" className="absolute inset-0 h-full w-full object-cover transition-opacity group-hover:opacity-40" />
         ) : (
@@ -36,15 +45,16 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
         )}
         <div className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity ${value ? 'opacity-0 group-hover:opacity-100 bg-black/10' : 'opacity-100'}`}>
           <span className="bg-white/90 text-[10px] font-bold uppercase tracking-widest text-[#3E332A] px-3 py-1 rounded-full shadow-sm mb-2">{label}</span>
-          <span className="bg-[#3E332A] text-[10px] font-bold uppercase tracking-widest text-white px-3 py-1 rounded-full shadow-sm cursor-pointer hover:bg-[#3E332A]/90">
+          <span className="bg-[#3E332A] text-[10px] font-bold uppercase tracking-widest text-white px-3 py-1 rounded-full shadow-sm hover:bg-[#3E332A]/90">
             {value ? "Change Image" : "Upload Image"}
           </span>
         </div>
         <input 
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleUpload}
-          className="absolute inset-0 opacity-0 cursor-pointer"
+          className="hidden"
           disabled={loading}
         />
         {loading && (
@@ -53,7 +63,7 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
           </div>
         )}
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -71,10 +81,10 @@ function SocialSettingsPage() {
         title: rawSection.title || "Join the gummy club",
         cta_text: rawSection.cta_text || "Follow us",
         cta_link: rawSection.cta_link || "#",
-        images: rawSection.images?.length === 6 ? rawSection.images : [
+        images: Array.isArray(rawSection.images) ? rawSection.images : [
           IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit
         ],
-        image_links: rawSection.image_links?.length === 6 ? rawSection.image_links : [
+        image_links: Array.isArray(rawSection.image_links) ? rawSection.image_links : [
           "#", "#", "#", "#", "#", "#"
         ]
       };
@@ -101,9 +111,24 @@ function SocialSettingsPage() {
   };
 
   const updateImageLink = (index: number, val: string) => {
-    const newLinks = [...section.image_links];
+    const newLinks = [...(section.image_links || [])];
+    while (newLinks.length <= index) {
+      newLinks.push("#");
+    }
     newLinks[index] = val;
     setSection({ image_links: newLinks });
+  };
+
+  const addTile = () => {
+    const newImages = [...section.images, ""];
+    const newLinks = [...(section.image_links || []), "#"];
+    setSection({ images: newImages, image_links: newLinks });
+  };
+
+  const removeTile = (index: number) => {
+    const newImages = section.images.filter((_: any, i: number) => i !== index);
+    const newLinks = (section.image_links || []).filter((_: any, i: number) => i !== index);
+    setSection({ images: newImages, image_links: newLinks });
   };
 
   return (
@@ -111,7 +136,7 @@ function SocialSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#3E332A]">Social Section</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage the "Join the Gummy Club" text and grid images.</p>
+          <p className="text-sm text-muted-foreground mt-1">Manage the "Join the Gummy Club" text and grid images dynamically.</p>
         </div>
         <button
           onClick={() => saveMutation.mutate(form)}
@@ -178,26 +203,44 @@ function SocialSettingsPage() {
 
         {/* Right Column: Masonry Grid Images */}
         <div className="xl:col-span-8">
-          <div className="rounded-xl border border-[#e5e1dc] bg-white p-4 shadow-sm h-full">
-            <div className="mb-6">
-              <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">MASONRY GRID IMAGES</h2>
-              <p className="mt-1 text-[11px] text-muted-foreground">Manage the 6 images and their links.</p>
+          <div className="rounded-xl border border-[#e5e1dc] bg-white p-4 shadow-sm h-full space-y-6">
+            <div>
+              <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">GRID IMAGES</h2>
+              <p className="mt-1 text-[11px] text-muted-foreground">Manage the images and their links. Grid layout will dynamically adjust on the website.</p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 auto-rows-max">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className={`flex flex-col gap-2 ${i === 4 ? "col-span-2 sm:col-span-1" : "col-span-1"} ${i === 1 ? "row-span-2" : ""}`}>
-                  <div className={`flex-1 ${i === 1 ? "min-h-[280px]" : "min-h-[140px]"}`}>
-                    <ImageUpload label={`Tile ${i + 1}`} value={section.images[i]} onChange={(val) => updateImage(i, val)} />
+              {section.images.map((img: string, i: number) => (
+                <div key={i} className="flex flex-col gap-2 rounded-xl border border-dashed border-[#e5e1dc] bg-[#faf9f8]/40 p-2.5 relative col-span-1">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#3E332A]/60">Tile {i + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTile(i)}
+                      className="text-[9px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-[140px] aspect-[4/5]">
+                    <ImageUpload label={`Tile ${i + 1}`} value={img} onChange={(val) => updateImage(i, val)} />
                   </div>
                   <input 
-                    className="w-full rounded-md border border-[#e5e1dc] bg-[#faf9f8] px-3 py-1.5 text-[11px] text-foreground outline-none transition focus:border-[#3E332A]/50" 
+                    className="w-full rounded-md border border-[#e5e1dc] bg-white px-3 py-1.5 text-[11px] text-foreground outline-none transition focus:border-[#3E332A]/50 shadow-sm" 
                     value={section.image_links?.[i] || ""} 
                     onChange={(e) => updateImageLink(i, e.target.value)} 
                     placeholder="https://instagram.com/p/..."
                   />
                 </div>
               ))}
+
+              <button
+                type="button"
+                onClick={addTile}
+                className="col-span-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#3E332A]/30 hover:border-[#3E332A]/60 hover:bg-[#3E332A]/5 py-4 text-xs font-bold text-[#3E332A] uppercase tracking-wider transition cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> Add image tile
+              </button>
             </div>
           </div>
         </div>
