@@ -40,7 +40,7 @@ function FaqsSettingsPage() {
 
   const list = faqs.filter(
     (f) =>
-      (cat === "All" || f.category === cat) &&
+      (cat === "All" || f.category?.trim().toLowerCase() === cat.trim().toLowerCase()) &&
       (q.trim() === "" || (f.q + f.a).toLowerCase().includes(q.toLowerCase())),
   );
 
