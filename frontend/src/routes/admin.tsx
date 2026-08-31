@@ -181,6 +181,12 @@ function AdminLayout() {
                   Social Section
                 </Link>
                 <Link
+                  to="/admin/settings/final-cta"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                >
+                  Final CTA Section
+                </Link>
+                <Link
                   to="/admin/settings/faqs"
                   className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
                 >
@@ -369,6 +375,13 @@ function AdminLayout() {
                       className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
                     >
                       Social Section
+                    </Link>
+                    <Link
+                      to="/admin/settings/final-cta"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                    >
+                      Final CTA Section
                     </Link>
                     <Link
                       to="/admin/settings/faqs"

@@ -367,6 +367,8 @@ class AboutPageContentModel(BaseModel):
     why: AboutWhyContent = AboutWhyContent()
     values_header: AboutValuesHeaderContent = AboutValuesHeaderContent()
     journey_header: AboutJourneyHeaderContent = AboutJourneyHeaderContent()
+    cta: AboutBottomCtaContent = AboutBottomCtaContent()
+
 
 class BrandValueModel(BaseModel):
     title: str

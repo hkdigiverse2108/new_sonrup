@@ -71,12 +71,39 @@ function AboutSettingsPage() {
 
   useEffect(() => {
     if (aboutContent && !form) {
+      const heroData = aboutContent.hero || {};
       const whyData = aboutContent.why || {};
+      const valuesHeaderData = aboutContent.values_header || {};
+      const journeyHeaderData = aboutContent.journey_header || {};
+      const ctaData = aboutContent.cta || {};
       setForm({
         ...aboutContent,
+        hero: {
+          eyebrow: heroData.eyebrow || "Our story",
+          title_black: heroData.title_black || "Supplements you actually ",
+          title_gold: heroData.title_gold || "look forward to.",
+          sub: heroData.sub || ""
+        },
         why: {
-          ...whyData,
+          eyebrow: whyData.eyebrow || "Why we exist",
+          title: whyData.title || "Flavour first. Science always.",
+          sub: whyData.sub || "",
+          benefits: whyData.benefits || [],
           image: whyData.image || IMG.multi
+        },
+        values_header: {
+          eyebrow: valuesHeaderData.eyebrow || "What we stand for",
+          title: valuesHeaderData.title || "Our values"
+        },
+        journey_header: {
+          eyebrow: journeyHeaderData.eyebrow || "The journey",
+          title: journeyHeaderData.title || "How we got here"
+        },
+        cta: {
+          title: ctaData.title || "Ready to make it a habit?",
+          sub: ctaData.sub || "Start with a best seller — free shipping on orders above ₹499.",
+          button_text: ctaData.button_text || "Shop the range",
+          button_link: ctaData.button_link || "/shop"
         }
       });
     }
