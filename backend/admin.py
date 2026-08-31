@@ -189,7 +189,7 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
                     "return_city": "",
                     "return_state": "",
                     "return_country": "",
-                    "products_desc": "SonRup Gummy Tubes",
+                    "products_desc": ", ".join(f"{item.get('name') or 'Gummy Tube'} (x{item.get('qty') or 1})" for item in order.get("items", []))[:240] or "SonRup Gummy Tubes",
                     "hsn_code": "",
                     "cod_amount": cod_amount,
                     "order_date": datetime.now().isoformat(),

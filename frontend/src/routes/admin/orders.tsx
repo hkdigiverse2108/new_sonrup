@@ -126,6 +126,23 @@ function AdminOrders() {
                                   throw new Error("No label details returned from Delhivery");
                                 }
                                 const data = res.label_data;
+                                const phone = data.phone || data.mobile || data.cust_phone || data.ph || "";
+                                const itemsRows = order.items && order.items.length > 0
+                                  ? order.items.map((item: any) => `
+                                      <tr>
+                                        <td>${item.name || 'Gummy Tube'} (${item.qty || 1})</td>
+                                        <td>₹${Number(item.price || 0).toFixed(2)}</td>
+                                        <td>₹${Number((item.price || 0) * (item.qty || 1)).toFixed(2)}</td>
+                                      </tr>
+                                    `).join("")
+                                  : `
+                                      <tr>
+                                        <td>${data.prd}</td>
+                                        <td>₹${Number(data.rs).toFixed(2)}</td>
+                                        <td>₹${Number(data.rs).toFixed(2)}</td>
+                                      </tr>
+                                    `;
+                                const totalDisplayPrice = order.total ? Number(order.total).toFixed(2) : Number(data.rs).toFixed(2);
                                 const formatDateOnly = (dateStr: string) => {
                                   if (!dateStr) return "";
                                   const d = new Date(dateStr);
@@ -167,18 +184,20 @@ function AdminOrders() {
                                         width: 100%;
                                       }
                                       .header-col-left {
-                                        width: 25%;
+                                        width: 45%;
                                         height: 52px;
                                         display: flex;
                                         align-items: center;
                                         justify-content: center;
-                                        font-size: 16px;
+                                        font-size: 14px;
                                         font-weight: bold;
                                         border-right: 1.5px solid #000;
                                         box-sizing: border-box;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
                                       }
                                       .header-col-right {
-                                        width: 75%;
+                                        width: 55%;
                                         height: 52px;
                                         display: flex;
                                         align-items: center;
@@ -186,8 +205,9 @@ function AdminOrders() {
                                         box-sizing: border-box;
                                       }
                                       .delhivery-logo {
-                                        height: 35px;
+                                        height: 38px;
                                         display: block;
+                                        object-fit: contain;
                                       }
                                       .barcode-container {
                                         text-align: center;
@@ -303,7 +323,7 @@ function AdminOrders() {
                                     <div class="label-container">
                                       <div class="flex-row" style="border-bottom: 1.5px solid #000;">
                                         <div class="header-col-left">
-                                          ${data.snm}
+                                          ${data.cl || data.snm || ""}
                                         </div>
                                         <div class="header-col-right">
                                           <img class="delhivery-logo" src="https://track.delhivery.com/static/images/new_logo.png" alt="DELHIVERY" />
@@ -322,17 +342,16 @@ function AdminOrders() {
                                       
                                       <div class="shipto-container">
                                         <div class="shipto-left">
-                                          Ship To:<br/>
+                                          Shipping Address:<br/>
                                           <span style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${data.name}</span><br/>
-                                          <span style="font-size: 11px; display: block; margin-top: 1px; color: #333;">${data.name}</span>
+                                          <span style="font-size: 11px; display: block; margin-top: 1px; color: #333;">Phone: ${phone}</span>
                                           ${data.address}<br/>
                                           ${data.destination}<br/>
                                           PIN:${data.pin}
                                         </div>
                                         <div class="shipto-right">
-                                          <div style="font-weight: bold;">${data.pt}</div>
-                                          <div style="font-size: 10px; margin: 1px 0;">Surface</div>
-                                          <div style="font-size: 13px; margin-top: 12px; font-weight: bold;">INR ${Math.round(data.cod || data.rs)}</div>
+                                          <div style="font-weight: bold; font-size: 14px; text-transform: uppercase;">${data.pt}</div>
+                                          <div style="font-size: 15px; margin-top: 6px; font-weight: bold; color: #000;">₹${Number(data.cod || data.rs).toFixed(2)}</div>
                                         </div>
                                       </div>
                                       
@@ -357,15 +376,11 @@ function AdminOrders() {
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          <tr>
-                                            <td>${data.prd}</td>
-                                            <td>INR ${Math.round(data.rs)}</td>
-                                            <td>INR ${Math.round(data.rs)}</td>
-                                          </tr>
+                                          ${itemsRows}
                                           <tr style="border-top: 1.5px solid #000; font-weight: bold;">
                                             <td>Total</td>
-                                            <td>INR ${Math.round(data.rs)}</td>
-                                            <td>INR ${Math.round(data.rs)}</td>
+                                            <td></td>
+                                            <td>₹${totalDisplayPrice}</td>
                                           </tr>
                                         </tbody>
                                       </table>
