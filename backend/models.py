@@ -90,7 +90,7 @@ class PostModel(BaseModel):
     date: str
     read: str
     excerpt: str
-    accent: str
+    accent: Optional[str] = ""
     body: List[str]
 
 class PolicySection(BaseModel):
@@ -451,7 +451,7 @@ class PostModel(BaseModel):
     date: str
     read: str
     excerpt: str
-    accent: str
+    accent: Optional[str] = ""
     image: Optional[str] = ""
     body: List[PostBlock]
     rank: int = 0

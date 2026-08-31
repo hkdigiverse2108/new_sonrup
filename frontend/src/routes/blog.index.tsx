@@ -24,29 +24,26 @@ export const Route = createFileRoute("/blog/")({
   errorComponent: RouteError,
 });
 
-const accentBg: Record<string, string> = {
-  citrus: "bg-citrus/15",
-  berry: "bg-berry/12",
-  grape: "bg-grape/12",
-  primary: "bg-primary/20",
-  leaf: "bg-leaf/15",
-};
 
-const accentText: Record<string, string> = {
-  citrus: "text-citrus",
-  berry: "text-berry",
-  grape: "text-grape",
-  primary: "text-ink",
-  leaf: "text-leaf",
-};
 
 function JournalPage() {
   const { data: posts = [], isLoading } = usePosts();
   const { data: journalContent } = useJournalContent();
 
-  const categories = ["All", ...Array.from(new Set(posts.map((p) => p.category)))];
+  const sortedPosts = [...posts].sort((a, b) => {
+    const rA = a.rank ?? 0;
+    const rB = b.rank ?? 0;
+    const rankA = rA > 0 ? rA : 9999;
+    const rankB = rB > 0 ? rB : 9999;
+    if (rankA !== rankB) return rankA - rankB;
+    const dateA = a.date ? new Date(a.date).getTime() : 0;
+    const dateB = b.date ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  const categories = ["All", ...Array.from(new Set(sortedPosts.map((p) => p.category)))];
   const [cat, setCat] = useState("All");
-  const list = cat === "All" ? posts : posts.filter((p) => p.category === cat);
+  const list = cat === "All" ? sortedPosts : sortedPosts.filter((p) => p.category === cat);
   const [lead, ...rest] = list;
 
   const hero = journalContent?.hero || { eyebrow: "The Journal", title_black: "Straight answers about", title_gold: "what you swallow.", sub: "No mysticism, no miracle claims. Just clear writing on ingredients, doses and the small habits that make a routine stick." };
@@ -89,7 +86,7 @@ function JournalPage() {
               params={{ slug: lead.slug }}
               className="group mt-10 grid overflow-hidden rounded-[2.5rem] border border-border/70 bg-card shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)] lg:grid-cols-[1.1fr_1fr]"
             >
-              <div className={cn("relative flex min-h-64 items-end overflow-hidden", accentBg[lead.accent] ?? "bg-muted")}>
+              <div className="relative flex min-h-64 items-end overflow-hidden bg-muted">
                 {lead.image && <img src={lead.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                 <div className="float-slow absolute -right-16 -top-16 h-64 w-64 blob bg-card/45" />
                 <div className="spin-slow absolute -bottom-24 -left-24 h-56 w-56 blob bg-card/30" />
@@ -123,15 +120,10 @@ function JournalPage() {
                 params={{ slug: p.slug }}
                 className="group surface-card lift flex h-full flex-col overflow-hidden"
               >
-                <div className={cn("relative h-48 overflow-hidden", accentBg[p.accent] ?? "bg-muted")}>
+                <div className="relative h-48 overflow-hidden bg-muted">
                   {p.image && <img src={p.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                   <div className="float-slow absolute -right-8 -top-8 h-32 w-32 blob bg-card/45" />
-                  <span
-                    className={cn(
-                      "absolute bottom-4 left-4 rounded-full bg-card/90 px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.2em] backdrop-blur-sm",
-                      accentText[p.accent] ?? "text-primary",
-                    )}
-                  >
+                  <span className="absolute bottom-4 left-4 rounded-full bg-card/90 px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.2em] backdrop-blur-sm text-primary">
                     {p.category}
                   </span>
                 </div>

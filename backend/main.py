@@ -930,8 +930,22 @@ async def get_journal_content(db=Depends(get_database)):
 
 @app.get("/api/posts")
 async def get_posts(db=Depends(get_database)):
-    cursor = db["posts"].find({}, {"_id": 0}).sort([("rank", 1), ("date", -1)])
+    cursor = db["posts"].find({}, {"_id": 0})
     posts = await cursor.to_list(length=100)
+    
+    def safe_rank(x):
+        r = x.get("rank")
+        try:
+            r = int(r)
+        except (TypeError, ValueError):
+            r = 0
+        return r if r > 0 else 9999
+        
+    # Sort by date descending first (stable sort)
+    posts.sort(key=lambda x: x.get("date", "") or "", reverse=True)
+    # Then sort by rank ascending
+    posts.sort(key=safe_rank)
+    
     return posts
 
 @app.get("/api/posts/{slug}")

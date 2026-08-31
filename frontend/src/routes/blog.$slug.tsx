@@ -6,13 +6,7 @@ import { BrandButton, Reveal } from "@/components/site/Primitives";
 import { usePosts, fetchJson } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const accentBg: Record<string, string> = {
-  citrus: "bg-citrus/15",
-  berry: "bg-berry/12",
-  grape: "bg-grape/12",
-  primary: "bg-primary/20",
-  leaf: "bg-leaf/15",
-};
+
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
@@ -85,7 +79,7 @@ function ArticlePage() {
         />
       </div>
 
-      <section className={cn("relative overflow-hidden", accentBg[post.accent] ?? "bg-muted")}>
+      <section className="relative overflow-hidden bg-muted">
         {post.image && <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover mix-blend-overlay opacity-30" />}
         <div className="spin-slow pointer-events-none absolute -right-24 -top-24 h-80 w-80 blob bg-card/40" />
         <div className="float-slow pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 blob bg-card/30" />
@@ -161,7 +155,7 @@ function ArticlePage() {
                   params={{ slug: p.slug }}
                   className="group surface-card lift flex h-full flex-col overflow-hidden"
                 >
-                  <div className={cn("h-24", accentBg[p.accent] ?? "bg-muted")} />
+                  <div className="h-24 bg-muted" />
                   <div className="flex flex-1 flex-col p-6">
                     <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-muted-foreground">
                       {p.category}

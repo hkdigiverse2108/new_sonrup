@@ -81,7 +81,6 @@ function PostEditor() {
     date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     read: "5 min read",
     excerpt: "",
-    accent: "primary",
     image: "",
     body: [{ type: "text", content: "" }],
     rank: 0,
@@ -179,16 +178,12 @@ function PostEditor() {
               }} placeholder="Enter post title..." /></label>
               <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">SLUG (URL)</span><input className="w-full rounded-md border px-3 py-2 text-[13px] bg-gray-50" value={form.slug} onChange={(e) => setField("slug", e.target.value)} disabled={!isNew} /></label>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">CATEGORY</span><input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.category} onChange={(e) => setField("category", e.target.value)} placeholder="e.g. Science" /></label>
                 <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">PUBLISH DATE</span><input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.date} onChange={(e) => setField("date", e.target.value)} /></label>
                 <label className="grid gap-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">RANK (Sort Order)</span>
                   <input type="number" className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.rank} onChange={(e) => setField("rank", parseInt(e.target.value) || 0)} placeholder="e.g. 1" />
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">ACCENT COLOR</span>
-                  <input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.accent} onChange={(e) => setField("accent", e.target.value)} placeholder="e.g. #FF5733 or primary" />
                 </label>
               </div>
               

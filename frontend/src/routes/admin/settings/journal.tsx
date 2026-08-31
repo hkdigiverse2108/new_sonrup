@@ -135,7 +135,16 @@ function JournalSettingsPage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {posts.map((p) => (
+            {[...posts].sort((a, b) => {
+              const rA = a.rank ?? 0;
+              const rB = b.rank ?? 0;
+              const rankA = rA > 0 ? rA : 9999;
+              const rankB = rB > 0 ? rB : 9999;
+              if (rankA !== rankB) return rankA - rankB;
+              const dateA = a.date ? new Date(a.date).getTime() : 0;
+              const dateB = b.date ? new Date(b.date).getTime() : 0;
+              return dateB - dateA;
+            }).map((p) => (
               <div key={p.slug} className="group relative rounded-xl border bg-card p-4 shadow-sm transition hover:shadow-md">
                 <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 z-10">
                   <button
