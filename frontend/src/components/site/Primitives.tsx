@@ -104,16 +104,21 @@ export function Rating({ value, count, size = 14 }: { value: number; count?: num
 }
 
 export function Price({ price, mrp, size = "md" }: { price: number; mrp: number; size?: "md" | "lg" }) {
-  const off = Math.round(((mrp - price) / mrp) * 100);
+  const hasDiscount = mrp > price;
+  const off = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
   return (
     <div className="flex flex-wrap items-baseline gap-2">
       <span className={cn("font-display font-extrabold tracking-tight", size === "lg" ? "text-3xl" : "text-lg")}>
         {inr(price)}
       </span>
-      <span className="text-sm text-muted-foreground line-through">{inr(mrp)}</span>
-      <span className="rounded-full bg-secondary/12 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-secondary">
-        {off}% off
-      </span>
+      {hasDiscount && (
+        <>
+          <span className="text-sm text-muted-foreground line-through">{inr(mrp)}</span>
+          <span className="rounded-full bg-secondary/12 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-secondary">
+            {off}% off
+          </span>
+        </>
+      )}
     </div>
   );
 }
