@@ -34,7 +34,11 @@ function JournalSettingsPage() {
 
   const saveContentMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateJournalContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["journal_content"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journal_content"] });
+      toast.success("Journal header settings saved successfully!");
+    },
+    onError: () => toast.error("Failed to save settings"),
   });
 
   const deletePostMutation = useMutation({

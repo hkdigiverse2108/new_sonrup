@@ -194,6 +194,8 @@ const tone: Record<string, string> = {
   leaf: "bg-leaf/15 text-leaf",
   primary: "bg-primary/20 text-ink",
   ink: "bg-ink/10 text-ink",
+  bestseller: "bg-[#F59E0B]/15 text-[#D97706]",
+  newarrival: "bg-[#3B82F6]/15 text-[#2563EB]",
 };
 
 export function Badge({ children, token = "primary" }: { children: ReactNode; token?: string }) {
@@ -229,12 +231,13 @@ export function ProductCard({ product, className }: { product: Product; classNam
       <Link to="/product/$slug" params={{ slug: product.slug }} className="relative block overflow-hidden">
         <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-60" />
         <div className="absolute left-4 top-4 z-10 flex flex-col items-start gap-1.5">
-          {product.badges.map((b) => (
-            <Badge key={b} token={product.flavourToken}>
+          {product.badges?.filter(b => b.toLowerCase().includes("best") || b.toLowerCase().includes("new")).map((b) => (
+            <Badge key={b} token={b.toLowerCase().includes("best") ? "bestseller" : "newarrival"}>
               {b}
             </Badge>
           ))}
         </div>
+
         <img
           src={product.image}
           alt={product.name}

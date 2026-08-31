@@ -177,24 +177,7 @@ function FlavoursSettingsPage() {
                         onChange={(e) => { const n = [...flavoursList]; n[i].name = e.target.value; setFlavoursList(n); }} 
                       />
                     </label>
-                    <label className="grid gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">COLOR THEME</span>
-                      <div className="flex h-8 w-full items-center gap-2 overflow-hidden rounded-lg border border-[#e5e1dc] bg-white px-2 py-1 transition focus-within:border-[#3E332A]/50">
-                        <input
-                          type="color"
-                          className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
-                          value={flavour.token.startsWith('#') ? flavour.token : '#000000'}
-                          onChange={(e) => { const n = [...flavoursList]; n[i].token = e.target.value; setFlavoursList(n); }}
-                        />
-                        <input
-                          type="text"
-                          className="w-full text-xs outline-none bg-transparent"
-                          value={flavour.token}
-                          onChange={(e) => { const n = [...flavoursList]; n[i].token = e.target.value; setFlavoursList(n); }}
-                          placeholder="#000000"
-                        />
-                      </div>
-                    </label>
+
                     <label className="grid gap-1 sm:col-span-2">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">DESCRIPTION</span>
                       <input 

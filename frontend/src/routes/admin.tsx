@@ -43,7 +43,11 @@ function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    setIsSettingsOpen(location.pathname.includes("/admin/settings"));
+    setIsSettingsOpen(
+      location.pathname.includes("/admin/settings") ||
+      location.pathname.includes("/admin/post") ||
+      location.pathname.includes("/admin/policy")
+    );
   }, [location.pathname]);
 
   useEffect(() => {
@@ -202,13 +206,13 @@ function AdminLayout() {
                 </Link>
                 <Link
                   to="/admin/settings/journal"
-                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary ${location.pathname.includes("/admin/post") ? "bg-primary/10 text-primary" : ""}`}
                 >
                   Journal Page
                 </Link>
                 <Link
                   to="/admin/settings/policies"
-                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary ${location.pathname.includes("/admin/policy") ? "bg-primary/10 text-primary" : ""}`}
                 >
                   Legal Policies
                 </Link>

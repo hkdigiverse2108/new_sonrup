@@ -908,3 +908,45 @@ app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
 
 from backend.admin import router as admin_router
 app.include_router(admin_router)
+
+# ---------------------------------------------------------
+# Content Getters (Public APIs)
+# ---------------------------------------------------------
+@app.get("/api/content/about")
+async def get_about_content(db=Depends(get_database)):
+    content = await db["about_content"].find_one({}, {"_id": 0})
+    if not content:
+        from backend.models import AboutPageContentModel
+        content = AboutPageContentModel().model_dump()
+    return content
+
+@app.get("/api/content/journal")
+async def get_journal_content(db=Depends(get_database)):
+    content = await db["journal_content"].find_one({}, {"_id": 0})
+    if not content:
+        from backend.models import JournalPageContentModel
+        content = JournalPageContentModel().model_dump()
+    return content
+
+@app.get("/api/posts")
+async def get_posts(db=Depends(get_database)):
+    cursor = db["posts"].find({}, {"_id": 0}).sort([("rank", 1), ("date", -1)])
+    posts = await cursor.to_list(length=100)
+    return posts
+
+@app.get("/api/posts/{slug}")
+async def get_post_by_slug(slug: str, db=Depends(get_database)):
+    post = await db["posts"].find_one({"slug": slug}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+@app.get("/api/brand-values")
+async def get_brand_values(db=Depends(get_database)):
+    cursor = db["brand_values"].find({}, {"_id": 0})
+    return await cursor.to_list(length=100)
+
+@app.get("/api/milestones")
+async def get_milestones(db=Depends(get_database)):
+    cursor = db["milestones"].find({}, {"_id": 0}).sort("year", 1)
+    return await cursor.to_list(length=100)

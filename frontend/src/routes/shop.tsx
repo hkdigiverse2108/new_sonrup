@@ -68,7 +68,7 @@ export function useShopFilters(search: ShopSearch, products: Product[], maxPrice
     if (search.q.trim()) {
       const q = search.q.trim().toLowerCase();
       list = list.filter((p) =>
-        [p.name, p.tagline, p.description, p.flavour, ...p.categories, ...p.benefits]
+        [p.name, p.tagline, p.description, ...p.categories, ...p.benefits]
           .join(" ")
           .toLowerCase()
           .includes(q),

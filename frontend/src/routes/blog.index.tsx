@@ -90,9 +90,10 @@ function JournalPage() {
               className="group mt-10 grid overflow-hidden rounded-[2.5rem] border border-border/70 bg-card shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)] lg:grid-cols-[1.1fr_1fr]"
             >
               <div className={cn("relative flex min-h-64 items-end overflow-hidden", accentBg[lead.accent] ?? "bg-muted")}>
+                {lead.image && <img src={lead.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                 <div className="float-slow absolute -right-16 -top-16 h-64 w-64 blob bg-card/45" />
                 <div className="spin-slow absolute -bottom-24 -left-24 h-56 w-56 blob bg-card/30" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="relative p-9">
                   <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white">
                     Featured
@@ -123,6 +124,7 @@ function JournalPage() {
                 className="group surface-card lift flex h-full flex-col overflow-hidden"
               >
                 <div className={cn("relative h-48 overflow-hidden", accentBg[p.accent] ?? "bg-muted")}>
+                  {p.image && <img src={p.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                   <div className="float-slow absolute -right-8 -top-8 h-32 w-32 blob bg-card/45" />
                   <span
                     className={cn(

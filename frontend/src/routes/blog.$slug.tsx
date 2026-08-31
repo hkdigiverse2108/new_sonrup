@@ -86,6 +86,7 @@ function ArticlePage() {
       </div>
 
       <section className={cn("relative overflow-hidden", accentBg[post.accent] ?? "bg-muted")}>
+        {post.image && <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover mix-blend-overlay opacity-30" />}
         <div className="spin-slow pointer-events-none absolute -right-24 -top-24 h-80 w-80 blob bg-card/40" />
         <div className="float-slow pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 blob bg-card/30" />
         <Container className="relative py-14 lg:py-20">

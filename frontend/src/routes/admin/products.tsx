@@ -102,7 +102,7 @@ function AdminProducts() {
                   <tr>
                     <th className="px-6 py-4 font-medium">Product</th>
                     <th className="px-6 py-4 font-medium">Price</th>
-                    <th className="px-6 py-4 font-medium">Flavour</th>
+                    <th className="px-6 py-4 font-medium">Pack Size</th>
                     <th className="px-6 py-4 text-right font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -116,7 +116,7 @@ function AdminProducts() {
                         </div>
                       </td>
                       <td className="px-6 py-4">₹{p.price}</td>
-                      <td className="px-6 py-4">{p.flavour}</td>
+                      <td className="px-6 py-4">{p.count}</td>
                       <td className="px-6 py-4 text-right">
                         <button onClick={() => setEditing(p)} className="p-2 text-muted-foreground hover:text-primary">
                           <Edit2 className="h-4 w-4" />
@@ -353,9 +353,9 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
               <select
                 value={
                   (formData.badges || []).some(b => b === 'Best Sellers' || b === 'Best Seller')
-                    ? 'Best Seller'
+                    ? 'Best Sellers'
                     : (formData.badges || []).some(b => b === 'New Arrivals' || b === 'New Arrival')
-                    ? 'New Arrival'
+                    ? 'New Arrivals'
                     : ''
                 }
                 onChange={e => {
@@ -365,8 +365,8 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
                 className="field"
               >
                 <option value="">— None —</option>
-                <option value="Best Seller">Best Sellers</option>
-                <option value="New Arrival">New Arrivals</option>
+                <option value="Best Sellers">Best Sellers</option>
+                <option value="New Arrivals">New Arrivals</option>
               </select>
             </label>
             <label className="grid gap-1">
@@ -454,7 +454,7 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
         </FieldGroup>
 
         {/* 3. Pricing & Specs */}
-        <FieldGroup title="Pricing & Variant Specs (Price, Pack Size, Flavour, etc.)">
+        <FieldGroup title="Pricing & Variant Specs (Price, Pack Size, Format)">
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="grid gap-1">
               <Label>Price (₹)</Label>
@@ -468,18 +468,12 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
               <Label>Pack Size (e.g. 60 Gummies)</Label>
               <input className="field" required value={formData.count || ''} onChange={e => setFormData({...formData, count: e.target.value})} />
             </label>
-            <label className="grid gap-1">
-              <Label>Flavour</Label>
-              <input className="field" required value={formData.flavour || ''} onChange={e => setFormData({...formData, flavour: e.target.value})} />
-            </label>
+
             <label className="grid gap-1">
               <Label>Format</Label>
               <input className="field" value={formData.format || ''} placeholder="e.g. Pectin Gummy" onChange={e => setFormData({...formData, format: e.target.value})} />
             </label>
-            <label className="grid gap-1">
-              <Label>Flavour Token (Color Indicator)</Label>
-              <input className="field" required value={formData.flavourToken || ''} onChange={e => setFormData({...formData, flavourToken: e.target.value})} />
-            </label>
+
           </div>
         </FieldGroup>
 

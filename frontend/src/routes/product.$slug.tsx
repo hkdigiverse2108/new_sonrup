@@ -90,12 +90,13 @@ function ProductPage() {
           <div className="surface-card relative overflow-hidden">
             <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-50" />
             <div className="absolute left-5 top-5 z-10 flex flex-col gap-2">
-              {product.badges.map((b) => (
-                <Badge key={b} token={product.flavourToken}>
+              {product.badges?.filter(b => b.toLowerCase().includes("best") || b.toLowerCase().includes("new")).map((b) => (
+                <Badge key={b} token={b.toLowerCase().includes("best") ? "bestseller" : "newarrival"}>
                   {b}
                 </Badge>
               ))}
             </div>
+
             <img
               src={gallery[activeImg]}
               alt={product.name}
@@ -144,7 +145,7 @@ function ProductPage() {
           <p className="mt-6 text-base leading-relaxed text-muted-foreground">{product.description}</p>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Spec label="Flavour" value={product.flavour} />
+
             <Spec label="Pack size" value={product.count} />
             <Spec label="Format" value={product.format || "Pectin Gummy"} />
           </div>

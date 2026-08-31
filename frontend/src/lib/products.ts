@@ -19,8 +19,7 @@ export type Product = {
   mrp: number;
   rating: number;
   reviews: number;
-  flavour: string;
-  flavourToken: string;
+
   categories: string[];
   benefits: string[];
   goals: string[];

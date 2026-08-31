@@ -48,8 +48,7 @@ class ProductModel(BaseModel):
     mrp: float
     rating: Optional[float] = 5.0
     reviews: Optional[int] = 0
-    flavour: Optional[str] = ""
-    flavourToken: Optional[str] = ""
+
     categories: Optional[List[str]] = []
     benefits: Optional[List[str]] = []
     goals: Optional[List[str]] = []
@@ -369,6 +368,14 @@ class AboutPageContentModel(BaseModel):
     values_header: AboutValuesHeaderContent = AboutValuesHeaderContent()
     journey_header: AboutJourneyHeaderContent = AboutJourneyHeaderContent()
 
+class BrandValueModel(BaseModel):
+    title: str
+    body: str
+
+class MilestoneModel(BaseModel):
+    year: str
+    text: str
+
 # -------------------------------------------------------------------
 # CONTACT PAGE CMS
 # -------------------------------------------------------------------
@@ -447,6 +454,7 @@ class PostModel(BaseModel):
     accent: str
     image: Optional[str] = ""
     body: List[PostBlock]
+    rank: int = 0
 
 # -------------------------------------------------------------------
 # POLICIES CMS

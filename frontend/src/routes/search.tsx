@@ -30,7 +30,7 @@ function SearchPage() {
 
   const matches = query
     ? products.filter((p) =>
-        [p.name, p.tagline, p.description, p.flavour, ...p.categories, ...p.benefits, ...p.goals]
+        [p.name, p.tagline, p.description, ...p.categories, ...p.benefits, ...p.goals]
           .join(" ")
           .toLowerCase()
           .includes(query),

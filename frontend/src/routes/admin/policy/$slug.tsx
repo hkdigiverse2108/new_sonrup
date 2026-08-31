@@ -17,7 +17,7 @@ function PolicyEditorPage() {
 
   const { data: initialData, isLoading } = useQuery<any>({
     queryKey: ["policy", slug],
-    queryFn: () => fetchJson<any>(`/api/policies/${slug}`).then((r) => r.json()),
+    queryFn: () => fetchJson<any>(`/api/policies/${slug}`),
     enabled: !isNew,
   });
 

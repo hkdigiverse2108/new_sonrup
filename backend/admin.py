@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel
+from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel
 from backend.main import get_current_user
 from typing import Any, Dict
 import os
@@ -502,4 +502,70 @@ async def update_integrations_settings(content: IntegrationsModel, admin=Depends
     if new_data.get("razorpay_key_secret") == "***":
         new_data["razorpay_key_secret"] = existing.get("razorpay_key_secret", "")
     await db["integrations"].replace_one({}, new_data, upsert=True)
+    return {"success": True}
+
+# ---------------------------------------------------------
+# About & Journal Page Content
+# ---------------------------------------------------------
+@router.put("/content/about")
+async def update_about_content(content: AboutPageContentModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["about_content"].replace_one({}, content.model_dump(), upsert=True)
+    return {"success": True}
+
+@router.put("/content/journal")
+async def update_journal_content(content: JournalPageContentModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["journal_content"].replace_one({}, content.model_dump(), upsert=True)
+    return {"success": True}
+
+@router.post("/posts")
+async def create_post(post: PostModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["posts"].insert_one(post.model_dump())
+    return {"success": True}
+
+@router.put("/posts/{slug}")
+async def update_post(slug: str, post: PostModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["posts"].replace_one({"slug": slug}, post.model_dump())
+    return {"success": True}
+
+@router.delete("/posts/{slug}")
+async def delete_post(slug: str, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["posts"].delete_one({"slug": slug})
+    return {"success": True}
+
+from backend.models import BrandValueModel, MilestoneModel
+
+# ---------------------------------------------------------
+# Brand Values
+# ---------------------------------------------------------
+@router.post("/brand-values")
+async def create_brand_value(val: BrandValueModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["brand_values"].insert_one(val.model_dump())
+    return {"success": True}
+
+@router.put("/brand-values/{title}")
+async def update_brand_value(title: str, val: BrandValueModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["brand_values"].replace_one({"title": title}, val.model_dump())
+    return {"success": True}
+
+@router.delete("/brand-values/{title}")
+async def delete_brand_value(title: str, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["brand_values"].delete_one({"title": title})
+    return {"success": True}
+
+# ---------------------------------------------------------
+# Milestones
+# ---------------------------------------------------------
+@router.post("/milestones")
+async def create_milestone(val: MilestoneModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["milestones"].insert_one(val.model_dump())
+    return {"success": True}
+
+@router.put("/milestones/{year}")
+async def update_milestone(year: str, val: MilestoneModel, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["milestones"].replace_one({"year": year}, val.model_dump())
+    return {"success": True}
+
+@router.delete("/milestones/{year}")
+async def delete_milestone(year: str, admin=Depends(require_admin), db=Depends(get_database)):
+    await db["milestones"].delete_one({"year": year})
     return {"success": True}

@@ -70,7 +70,7 @@ function PostEditor() {
 
   const { data: existingPost, isLoading } = useQuery<any>({
     queryKey: ["posts", slug],
-    queryFn: () => fetchJson<any>(`/api/posts/${slug}`).then((r) => r.json()),
+    queryFn: () => fetchJson<any>(`/api/posts/${slug}`),
     enabled: !isNew,
   });
 
@@ -84,6 +84,7 @@ function PostEditor() {
     accent: "primary",
     image: "",
     body: [{ type: "text", content: "" }],
+    rank: 0,
   });
 
   useEffect(() => {
@@ -119,12 +120,12 @@ function PostEditor() {
     return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-[#3E332A]" /></div>;
   }
 
-  const setField = (k: string, v: string) => setForm({ ...form, [k]: v });
+  const setField = (k: string, v: any) => setForm({ ...form, [k]: v });
   
-  const updateBlock = (idx: number, content: string) => {
+  const updateBlock = (index: number, content: string) => {
     const newBody = [...form.body];
-    newBody[idx].content = content;
-    setForm({ ...form, body: newBody });
+    newBody[index] = { ...newBody[index], content };
+    setField("body", newBody);
   };
   
   const addBlock = (type: "text" | "image") => {
@@ -174,25 +175,28 @@ function PostEditor() {
             <div className="grid gap-4">
               <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">TITLE</span><input className="w-full rounded-md border px-3 py-2 text-[13px] font-bold" value={form.title} onChange={(e) => {
                 const title = e.target.value;
-                if (isNew) {
-                  setForm({ ...form, title, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') });
-                } else setField("title", title);
+                setForm({ ...form, title, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') });
               }} placeholder="Enter post title..." /></label>
               <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">SLUG (URL)</span><input className="w-full rounded-md border px-3 py-2 text-[13px] bg-gray-50" value={form.slug} onChange={(e) => setField("slug", e.target.value)} disabled={!isNew} /></label>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">CATEGORY</span><input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.category} onChange={(e) => setField("category", e.target.value)} placeholder="e.g. Science" /></label>
                 <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">PUBLISH DATE</span><input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.date} onChange={(e) => setField("date", e.target.value)} /></label>
                 <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">ACCENT COLOR</span>
-                  <select className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.accent} onChange={(e) => setField("accent", e.target.value)}>
-                    <option value="primary">Primary (Yellow)</option>
-                    <option value="citrus">Citrus (Orange)</option>
-                    <option value="berry">Berry (Red)</option>
-                    <option value="grape">Grape (Purple)</option>
-                    <option value="leaf">Leaf (Green)</option>
-                  </select>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">RANK (Sort Order)</span>
+                  <input type="number" className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.rank} onChange={(e) => setField("rank", parseInt(e.target.value) || 0)} placeholder="e.g. 1" />
                 </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">ACCENT COLOR</span>
+                  <input className="w-full rounded-md border px-3 py-2 text-[13px]" value={form.accent} onChange={(e) => setField("accent", e.target.value)} placeholder="e.g. #FF5733 or primary" />
+                </label>
+              </div>
+              
+              <div className="grid gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">COVER IMAGE (OPTIONAL)</span>
+                <div className="h-48 rounded overflow-hidden border border-dashed border-gray-300 relative">
+                  <ImageUpload label="Cover Image" value={form.image} onChange={(v) => setField("image", v)} />
+                </div>
               </div>
 
               <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">EXCERPT</span><textarea className="w-full rounded-md border px-3 py-2 text-[13px] min-h-[80px]" value={form.excerpt} onChange={(e) => setField("excerpt", e.target.value)} placeholder="Short summary for the blog list..." /></label>
