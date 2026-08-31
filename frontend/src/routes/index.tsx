@@ -47,13 +47,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { isLoading: isHomeLoading } = useHomeContent();
+  const { data: homeContent, isLoading: isHomeLoading } = useHomeContent();
   const { isLoading: isProductsLoading } = useProducts();
   const { isLoading: isFlavoursLoading } = useFlavours();
 
   const isLoading = isHomeLoading || isProductsLoading || isFlavoursLoading;
 
-  if (isLoading) {
+  if (isLoading || !homeContent) {
     return (
       <div className="flex min-h-[85vh] items-center justify-center bg-ink text-cream">
         <div className="relative flex flex-col items-center gap-4">
@@ -66,18 +66,18 @@ function Home() {
 
   return (
     <main>
-      <Hero />
-      <TrustStrip />
+      <Hero content={homeContent} />
+      <TrustStrip content={homeContent} />
       <BestSellers />
-      <FlavourExperience />
-      <WhyOurGummies />
-      <IngredientStory />
+      <FlavourExperience content={homeContent} />
+      <WhyOurGummies content={homeContent} />
+      <IngredientStory content={homeContent} />
 
-      <BrandStory />
-      <Reviews />
-      <SocialGrid />
-      <FaqTeaser />
-      <FinalCta />
+      <BrandStory content={homeContent} />
+      <Reviews content={homeContent} />
+      <SocialGrid content={homeContent} />
+      <FaqTeaser content={homeContent} />
+      <FinalCta content={homeContent} />
     </main>
   );
 }
@@ -107,12 +107,11 @@ const HERO_DEFAULTS = {
   badge2_value: "100% vegetarian",
 };
 
-function Hero() {
+function Hero({ content }: { content: any }) {
   const [word, setWord] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const { data: homeContent } = useHomeContent();
   
-  const hero = homeContent?.hero ? { ...HERO_DEFAULTS, ...homeContent.hero } : HERO_DEFAULTS;
+  const hero = content?.hero ? { ...HERO_DEFAULTS, ...content.hero } : HERO_DEFAULTS;
 
   const rotate: string[] = hero.rotate?.length ? hero.rotate : HERO_DEFAULTS.rotate;
   const stats: any[] = hero.stats?.length ? hero.stats : HERO_DEFAULTS.stats;
@@ -278,10 +277,8 @@ const iconMap: Record<string, any> = {
   Leaf, Sparkles, BadgeCheck, Truck, Heart, Clock, FlaskConical, PackageCheck, Star, Shield, Check, ThumbsUp
 };
 
-function TrustStrip() {
-  const { data: homeContent } = useHomeContent();
-
-  const rawItems = homeContent?.trust_strip?.length ? homeContent.trust_strip : trust;
+function TrustStrip({ content }: { content: any }) {
+  const rawItems = content?.trust_strip?.length ? content.trust_strip : trust;
   // Normalize legacy string arrays from DB to object format
   const displayItems = typeof rawItems[0] === 'string' 
     ? rawItems.map((t: string) => ({ icon: "BadgeCheck", label: t }))
@@ -342,12 +339,11 @@ function BestSellers() {
 
 /* ---------------- FLAVOURS ---------------- */
 
-function FlavourExperience() {
+function FlavourExperience({ content }: { content: any }) {
   const [active, setActive] = useState<number | null>(null);
   const { data: flavours = [] } = useFlavours();
-  const { data: homeContent } = useHomeContent();
 
-  const section = homeContent?.flavour_section ?? {
+  const section = content?.flavour_section ?? {
     eyebrow: "Flavour experience",
     title_black: "Five flavours.",
     title_gold: "Zero compromise."
@@ -466,10 +462,8 @@ const whys = [
 ];
 
 
-function WhyOurGummies() {
-  const { data: homeContent } = useHomeContent();
-
-  const rawWhy = homeContent?.why || {};
+function WhyOurGummies({ content }: { content: any }) {
+  const rawWhy = content?.why || {};
   const why = {
     eyebrow: rawWhy.eyebrow || "WHY OUR GUMMIES",
     title: rawWhy.title || "BUILT TO BE TAKEN, NOT JUST BOUGHT.",
@@ -537,10 +531,8 @@ const ringItems = [
   { name: "Tamarind", note: "Real imli flavour", pos: "right-0 bottom-16" },
 ];
 
-function IngredientStory() {
-  const { data: homeContent } = useHomeContent();
-
-  const rawStory = homeContent?.ingredient_story || {};
+function IngredientStory({ content }: { content: any }) {
+  const rawStory = content?.ingredient_story || {};
   const story = {
     eyebrow: rawStory.eyebrow || "Ingredient story",
     title: rawStory.title || "What's inside the tube",
@@ -571,7 +563,7 @@ function IngredientStory() {
             <img
               src={story.image}
               alt="Sonrup gummies ingredients"
-              className="float-slow w-full rounded-[2rem] shadow-[var(--shadow-lift)]"
+              className="float-slow w-full aspect-[3/4] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
             />
           </div>
 
@@ -594,10 +586,8 @@ function IngredientStory() {
 
 /* ---------------- BRAND STORY ---------------- */
 
-function BrandStory() {
-  const { data: homeContent } = useHomeContent();
-
-  const rawStory = homeContent?.brand_story || {};
+function BrandStory({ content }: { content: any }) {
+  const rawStory = content?.brand_story || {};
   const story = {
     eyebrow: rawStory.eyebrow || "Our story",
     title_black1: rawStory.title_black1 || "We started with a",
@@ -649,12 +639,12 @@ function BrandStory() {
           <img
             src={story.main_image}
             alt="Sonrup main story image"
-            className="ml-auto w-[76%] rounded-[2.5rem] object-cover shadow-[var(--shadow-lift)]"
+            className="ml-auto w-[76%] aspect-[3/4] rounded-[2.5rem] object-cover shadow-[var(--shadow-lift)]"
           />
           <img
             src={story.floating_image}
             alt="Sonrup floating story image"
-            className="float-slow absolute bottom-[-3rem] left-0 w-[46%] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
+            className="float-slow absolute bottom-[-3rem] left-0 w-[46%] aspect-square rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
           />
         </Reveal>
       </div>
@@ -664,11 +654,10 @@ function BrandStory() {
 
 /* ---------------- REVIEWS ---------------- */
 
-function Reviews() {
+function Reviews({ content }: { content: any }) {
   const { data: reviewsList = [] } = useReviews();
-  const { data: homeContent } = useHomeContent();
 
-  const section = homeContent?.reviews_section || {
+  const section = content?.reviews_section || {
     eyebrow: "Reviews",
     title: "Loved by 120,000+ mornings"
   };
@@ -710,10 +699,8 @@ function Reviews() {
 
 /* ---------------- SOCIAL ---------------- */
 
-function SocialGrid() {
-  const { data: homeContent } = useHomeContent();
-
-  const section = homeContent?.social_section || {
+function SocialGrid({ content }: { content: any }) {
+  const section = content?.social_section || {
     eyebrow: "@sonrup",
     title: "Join the gummy club",
     cta_text: "Follow us",
@@ -779,12 +766,11 @@ function SocialGrid() {
 
 /* ---------------- FAQ ---------------- */
 
-function FaqTeaser() {
+function FaqTeaser({ content }: { content: any }) {
   const [open, setOpen] = useState(0);
   const { data: faqs = [] } = useFaqs();
-  const { data: homeContent } = useHomeContent();
 
-  const section = homeContent?.faq_settings?.home_section || {
+  const section = content?.faq_settings?.home_section || {
     eyebrow: "FAQ",
     title: "Good questions, straight answers",
     cta_text: "All FAQs"
@@ -829,10 +815,8 @@ function FaqTeaser() {
 
 /* ---------------- FINAL CTA ---------------- */
 
-function FinalCta() {
-  const { data: homeContent } = useHomeContent();
-
-  const section = homeContent?.final_cta || {
+function FinalCta({ content }: { content: any }) {
+  const section = content?.final_cta || {
     title_white: "Ready to make your day a little ",
     title_gold: "sweeter?",
     button_1_text: "Shop all gummies",

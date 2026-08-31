@@ -87,11 +87,7 @@ function ProductPage() {
       <Container className="grid gap-10 py-10 lg:grid-cols-2 lg:gap-16 lg:py-14">
         {/* Gallery */}
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <div
-            onMouseEnter={() => setZoom(true)}
-            onMouseLeave={() => setZoom(false)}
-            className="surface-card relative overflow-hidden"
-          >
+          <div className="surface-card relative overflow-hidden">
             <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-50" />
             <div className="absolute left-5 top-5 z-10 flex flex-col gap-2">
               {product.badges.map((b) => (
@@ -104,11 +100,8 @@ function ProductPage() {
               src={gallery[activeImg]}
               alt={product.name}
               width={1024}
-              height={1280}
-              className={cn(
-                "relative aspect-4/5 w-full object-cover transition-transform duration-700 ease-out",
-                zoom && "scale-[1.15]",
-              )}
+              height={1024}
+              className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out"
             />
           </div>
           <div className="mt-4 flex gap-3">
@@ -118,7 +111,7 @@ function ProductPage() {
                 onClick={() => setActiveImg(i)}
                 aria-label={`View image ${i + 1}`}
                 className={cn(
-                  "h-20 w-16 overflow-hidden rounded-xl border-2 transition-all",
+                  "h-16 w-16 overflow-hidden rounded-xl border-2 transition-all",
                   activeImg === i ? "border-secondary" : "border-transparent opacity-60 hover:opacity-100",
                 )}
               >
