@@ -106,7 +106,7 @@ export function Footer() {
 
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Join the Gummy Club</h4>
-            <p className="mt-4 text-sm text-cream/65">10% off your first tube, plus early access to new flavours.</p>
+            <p className="mt-4 text-sm text-cream/65">Subscribe for early access to new flavours, club updates, and more.</p>
             <form onSubmit={async (e) => {
               e.preventDefault();
               const form = e.target as HTMLFormElement;

@@ -149,7 +149,7 @@ function Hero() {
             </Eyebrow>
           </div>
 
-          <h1 className="mt-8 font-display text-[clamp(2.9rem,9vw,5.9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
+          <h1 className="mt-8 font-display text-[clamp(2.2rem,9vw,5.9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
             <span className="mask-rise block [--d:80ms]">{hero.headline_line1}</span>
             <span className="mask-rise block [--d:200ms]">
               {hero.headline_line2.includes(" ") ? (
@@ -200,11 +200,11 @@ function Hero() {
             </a>
           </div>
 
-          <dl className="mask-rise mt-14 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur [--d:700ms]">
+          <dl className="mask-rise mt-14 grid max-w-lg grid-cols-1 md:grid-cols-3 divide-y divide-cream/10 md:divide-y-0 md:divide-x md:divide-cream/10 overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur [--d:700ms]">
             {stats.map((s) => (
-              <div key={s.k} className="px-4 py-5">
+              <div key={s.k} className="px-4 py-4 md:py-5 text-center md:text-left">
                 <dt className="font-display text-xl font-extrabold text-primary sm:text-2xl">{s.k}</dt>
-                <dd className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cream/50">{s.v}</dd>
+                <dd className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cream/50 leading-tight">{s.v}</dd>
               </div>
             ))}
           </dl>
@@ -228,21 +228,21 @@ function Hero() {
             </div>
 
             <div
-              className="absolute -left-5 top-24 z-20 rounded-2xl border border-cream/10 bg-ink/85 px-4 py-3 shadow-[var(--shadow-lift)] backdrop-blur sm:-left-10"
+              className="absolute left-2 md:-left-5 top-24 z-20 rounded-2xl border border-cream/10 bg-ink/85 px-4 py-3 shadow-[var(--shadow-lift)] backdrop-blur sm:-left-10"
               style={{ transform: `translate3d(${tilt.x * -46}px, ${tilt.y * -36}px, 0)` }}
             >
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{hero.badge1_label}</p>
-              <p className="font-display text-base font-extrabold text-cream">{hero.badge1_value}</p>
+              <p className="font-display text-sm md:text-base font-extrabold text-cream">{hero.badge1_value}</p>
             </div>
 
             <div
-              className="absolute -right-4 bottom-20 z-20 flex items-center gap-3 rounded-2xl bg-cream px-4 py-3 text-ink shadow-[var(--shadow-lift)] sm:-right-9"
+              className="absolute right-2 md:-right-4 bottom-20 z-20 flex items-center gap-2 md:gap-3 rounded-2xl bg-cream px-3 py-2 md:px-4 md:py-3 text-ink shadow-[var(--shadow-lift)] sm:-right-9"
               style={{ transform: `translate3d(${tilt.x * -62}px, ${tilt.y * -48}px, 0)` }}
             >
-              <Leaf className="h-5 w-5 text-leaf" />
+              <Leaf className="h-4 w-4 md:h-5 md:w-5 text-leaf shrink-0" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{hero.badge2_label}</p>
-                <p className="font-display text-base font-extrabold">{hero.badge2_value}</p>
+                <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{hero.badge2_label}</p>
+                <p className="font-display text-sm md:text-base font-extrabold">{hero.badge2_value}</p>
               </div>
             </div>
 
@@ -375,10 +375,11 @@ function FlavourExperience() {
               <div
                 key={f.name}
                 onMouseEnter={() => setActive(i)}
+                onClick={() => setActive(isActive ? null : i)}
                 className={cn(
                   "relative overflow-hidden rounded-[2rem] border border-cream/10 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] h-full cursor-pointer group shadow-[0_10px_30px_rgba(0,0,0,0.3)]",
-                  isActive ? "lg:flex-[3.5]" : "lg:flex-[1]",
-                  "max-lg:h-36 max-lg:w-full"
+                  isActive ? "lg:flex-[3.5] max-lg:h-52" : "lg:flex-[1]",
+                  "max-lg:h-28 max-lg:w-full"
                 )}
               >
                 {/* Background Image with Brightness Effect */}
@@ -414,14 +415,16 @@ function FlavourExperience() {
                     {/* Expanded State: Normal Title and Description */}
                     <div className={cn(
                       "transition-all duration-500",
-                      isActive ? "opacity-100 translate-x-0" : "lg:opacity-0 lg:translate-x-4 max-lg:block"
+                      isActive ? "opacity-100 translate-y-0" : "max-lg:translate-y-2 lg:opacity-0 lg:translate-x-4"
                     )}>
-                      <h3 className="font-display text-2xl lg:text-3xl font-extrabold text-cream tracking-tight uppercase">
+                      <h3 className="font-display text-xl lg:text-3xl font-extrabold text-cream tracking-tight uppercase">
                         {f.name}
                       </h3>
-                      <p className="mt-2 max-w-sm text-xs lg:text-sm leading-relaxed text-cream/80 font-medium">
-                        {f.note}
-                      </p>
+                      {isActive && (
+                        <p className="mt-2 max-w-sm text-xs lg:text-sm leading-relaxed text-cream/80 font-medium animate-in fade-in duration-300">
+                          {f.note}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -430,7 +433,7 @@ function FlavourExperience() {
                     {/* Expanded Shop Button */}
                     <div className={cn(
                       "transition-all duration-500",
-                      isActive ? "opacity-100 translate-y-0" : "lg:opacity-0 lg:translate-y-2"
+                      isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
                     )}>
                       <Link to="/shop">
                         <BrandButton variant="gold" size="sm" className="group">
@@ -488,7 +491,7 @@ function WhyOurGummies() {
               className="w-full aspect-[4/5] rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
             />
           </div>
-          <div className="float-slow absolute -bottom-8 -right-4 max-w-[220px] rounded-3xl bg-card p-5 shadow-[var(--shadow-lift)]">
+          <div className="float-slow absolute -bottom-8 right-2 md:-right-4 max-w-[200px] md:max-w-[220px] rounded-3xl bg-card p-4 md:p-5 shadow-[var(--shadow-lift)]">
             <p className="font-display text-4xl font-extrabold">{why.stat_value}</p>
             <p className="mt-1 text-xs text-muted-foreground">{why.stat_text}</p>
           </div>
@@ -614,7 +617,7 @@ function BrandStory() {
   };
 
   return (
-    <section className="relative overflow-hidden py-24">
+    <section className="relative overflow-hidden py-24 pb-32 md:pb-24">
       <div className="mx-auto grid max-w-[1400px] items-center gap-14 px-5 lg:grid-cols-2 lg:px-10">
         <Reveal>
           <Eyebrow>{story.eyebrow}</Eyebrow>

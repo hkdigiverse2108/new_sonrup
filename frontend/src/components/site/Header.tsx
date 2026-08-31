@@ -116,21 +116,21 @@ export function Header() {
             <button
               aria-label="Search"
               onClick={() => setSearchOpen((s) => !s)}
-              className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
+              className="hidden md:grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
             >
               <Search className="h-[18px] w-[18px]" />
             </button>
             <Link
               to={user ? "/account" : "/login"}
               aria-label="Account"
-              className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
+              className="hidden md:grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
             >
               <User className="h-[18px] w-[18px]" />
             </Link>
             <Link
               to="/wishlist"
               aria-label="Wishlist"
-              className="relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
+              className="hidden md:grid relative h-10 w-10 place-items-center rounded-full transition-colors hover:bg-muted"
             >
               <Heart className="h-[18px] w-[18px]" />
               {wishlist.length > 0 && (
@@ -162,7 +162,25 @@ export function Header() {
         {/* Mobile nav dropdown panel */}
         {mobileMenuOpen && (
           <div className="border-t border-border bg-background px-5 py-5 lg:hidden">
-            <nav className="flex flex-col gap-5">
+            {/* Search Input directly inside mobile menu */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                navigate({ to: "/search", search: { q } });
+              }}
+              className="mb-5 flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2.5 shadow-sm"
+            >
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search gummies, benefits..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </form>
+
+            <nav className="flex flex-col gap-4">
               {NAV.map((item) => (
                 <Link
                   key={item.label}
@@ -175,6 +193,26 @@ export function Header() {
                 </Link>
               ))}
             </nav>
+
+            {/* Extra Mobile Actions: Wishlist and Account */}
+            <div className="mt-5 border-t border-border/80 pt-5 flex flex-col gap-4">
+              <Link
+                to="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground"
+              >
+                <Heart className="h-4 w-4 text-secondary fill-secondary" />
+                <span>Wishlist ({wishlist.length})</span>
+              </Link>
+              <Link
+                to={user ? "/account" : "/login"}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-[13px] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-foreground"
+              >
+                <User className="h-4 w-4 text-ink" />
+                <span>{user ? "My Account" : "Log In / Register"}</span>
+              </Link>
+            </div>
           </div>
         )}
 

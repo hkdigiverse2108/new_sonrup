@@ -156,40 +156,44 @@ function ProductPage() {
             <Spec label="Format" value={product.format || "Pectin Gummy"} />
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <QtyStepper qty={qty} onChange={(n) => setQty(Math.max(1, n))} />
-            <BrandButton
-              size="lg"
-              className="flex-1 min-w-[180px]"
-              onClick={() => {
-                add(product.slug, qty);
-                toast.success(`${product.name} added to bag`);
-              }}
-            >
-              <ShoppingBag className="h-4 w-4" /> Add to Cart
-            </BrandButton>
-            <BrandButton
-              variant="gold"
-              size="lg"
-              className="flex-1 min-w-[180px]"
-              onClick={() => {
-                add(product.slug, qty);
-                setCartOpen(false);
-                navigate({ to: "/checkout" });
-              }}
-            >
-              Buy Now
-            </BrandButton>
-            <button
-              aria-label="Add to wishlist"
-              onClick={() => {
-                toggleWish(product.slug);
-                toast(wished ? "Removed from wishlist" : "Saved to wishlist");
-              }}
-              className="grid h-12 w-12 place-items-center rounded-full border border-border transition-transform hover:scale-105"
-            >
-              <Heart className={cn("h-5 w-5", wished ? "fill-secondary text-secondary" : "text-muted-foreground")} />
-            </button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3 w-full sm:w-auto animate-fade-in">
+              <QtyStepper qty={qty} onChange={(n) => setQty(Math.max(1, n))} className="flex-1 sm:flex-initial" />
+              <button
+                aria-label="Add to wishlist"
+                onClick={() => {
+                  toggleWish(product.slug);
+                  toast(wished ? "Removed from wishlist" : "Saved to wishlist");
+                }}
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border transition-transform hover:scale-105"
+              >
+                <Heart className={cn("h-5 w-5", wished ? "fill-secondary text-secondary" : "text-muted-foreground")} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3 w-full sm:flex-row sm:flex-1">
+              <BrandButton
+                size="lg"
+                className="w-full sm:flex-1"
+                onClick={() => {
+                  add(product.slug, qty);
+                  toast.success(`${product.name} added to bag`);
+                }}
+              >
+                <ShoppingBag className="h-4 w-4" /> Add to Cart
+              </BrandButton>
+              <BrandButton
+                variant="gold"
+                size="lg"
+                className="w-full sm:flex-1"
+                onClick={() => {
+                  add(product.slug, qty);
+                  setCartOpen(false);
+                  navigate({ to: "/checkout" });
+                }}
+              >
+                Buy Now
+              </BrandButton>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">

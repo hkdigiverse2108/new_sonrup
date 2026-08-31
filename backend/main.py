@@ -501,19 +501,14 @@ async def forgot_password(req: ForgotPasswordRequest, background_tasks: Backgrou
     )
     
     subject = "Your Password Reset OTP"
-    body = f"""Hi there,
-
-We received a request to reset your password. Here is your One-Time Password (OTP):
-
-<div style="text-align: center; margin: 30px 0;">
-    <span style="background-color: #f3f4f6; color: #111827; padding: 12px 24px; font-size: 24px; font-weight: bold; letter-spacing: 4px; border-radius: 8px;">{otp}</span>
-</div>
-
-This OTP is valid for 10 minutes.
-If you did not request this, please ignore this email.
-
-Stay healthy,
-The Sonrup Team"""
+    body = f"""\
+<h2 style="margin: 0 0 16px 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.25; color: #3E332A; letter-spacing: -0.02em;">Password Reset Request</h2>
+<p style="margin: 0 0 12px 0; font-size: 15px; line-height: 1.5; color: #5c534c;">Hi there,</p>
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.5; color: #5c534c;">Please use the following One-Time Password (OTP) to reset your <strong>Sonrup</strong> account password:</p>
+<div style="text-align: center; margin: 20px 0;"><div style="background-color: #faf9f6; border: 2px dashed #D5B066; color: #3E332A; padding: 12px 28px; font-size: 32px; font-weight: 800; letter-spacing: 6px; border-radius: 12px; display: inline-block; font-family: 'Plus Jakarta Sans', monospace; line-height: 1;">{otp}</div></div>
+<p style="margin: 0 0 4px 0; font-size: 15px; line-height: 1.5; color: #5c534c; border-top: 1px solid #e5e1dc; padding-top: 16px; margin-top: 20px;">Stay healthy,</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; font-weight: 800; color: #3E332A;">The Sonrup Team</p>
+"""
     
     background_tasks.add_task(send_custom_email, req.email, subject, body)
     return {"success": True, "message": "If that email exists, an OTP has been sent."}
@@ -703,54 +698,76 @@ def send_welcome_email(email_address: str):
 
     msg = EmailMessage()
     msg["Subject"] = "Welcome to the Sonrup Gummy Club! 🎉"
-    msg["From"] = f"Sonrup Nutrition <{smtp_user}>"
+    msg["From"] = f"Sonrup <{smtp_user}>"
     msg["To"] = email_address
 
     # Plain text fallback
-    msg.set_content(f"Welcome to Sonrup Nutrition!\n\nWe are thrilled to have you in the Gummy Club.\nEnjoy 10% off your first tube. Stay tuned for early access to our newest flavours and exclusive wellness tips.\n\nShop now: {frontend_url}\n\nStay healthy,\nThe Sonrup Team")
+    msg.set_content(f"Welcome to the Gummy Club! 🎉\n\nHi there,\n\nWe're thrilled to welcome you to the Sonrup family! You're now set for early access to our newest real-fruit flavours, exclusive offers, and expert wellness tips.\n\nShop our gummies now: {frontend_url}/shop\n\nStay healthy,\nThe Sonrup Team")
 
     # HTML content
     html_content = f"""\
     <!DOCTYPE html>
     <html>
     <head>
-        <style>
-            body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #fcf9f2; color: #1f1d1a; margin: 0; padding: 0; }}
-            .container {{ max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }}
-            .header {{ background-color: #1f1d1a; padding: 30px; text-align: center; }}
-            .header h1 {{ color: #ffffff; margin: 0; font-size: 28px; letter-spacing: -1px; }}
-            .header h1 span {{ color: #eab308; }}
-            .content {{ padding: 40px 30px; line-height: 1.6; font-size: 16px; color: #333333; }}
-            .content h2 {{ color: #1f1d1a; font-size: 22px; margin-top: 0; }}
-            .button-container {{ text-align: center; margin: 35px 0; }}
-            .button {{ background-color: #eab308; color: #1f1d1a; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; display: inline-block; }}
-            .footer {{ background-color: #f8f6f0; padding: 20px; text-align: center; font-size: 12px; color: #888888; border-top: 1px solid #eeeeee; }}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <!--[if mso]>
+        <style type="text/css">
+            body, table, td, a {{ font-family: Arial, Helvetica, sans-serif !important; }}
         </style>
+        <![endif]-->
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>sonrup<span>.</span></h1>
-            </div>
-            <div class="content">
-                <h2>Welcome to the Gummy Club! 🎉</h2>
-                <p>Hi there,</p>
-                <p>We are absolutely thrilled to welcome you to the Sonrup family. You're now on the inside track for everything related to delicious, daily wellness.</p>
-                <p>As a member of the Gummy Club, you'll be the first to hear about our newest real-fruit flavours, exclusive offers, and expert wellness tips.</p>
-                <p>Ready to start your journey? Enjoy <strong>10% off</strong> your first tube by shopping today.</p>
-                
-                <div class="button-container">
-                    <a href="{frontend_url}" class="button">Shop Now</a>
-                </div>
-                
-                <p>Stay healthy, stay sparkling,</p>
-                <p><strong>The Sonrup Team</strong></p>
-            </div>
-            <div class="footer">
-                &copy; 2026 Sonrup Nutrition. All rights reserved.<br>
-                If you didn't subscribe to this list, you can ignore this email.
-            </div>
-        </div>
+    <body style="margin: 0; padding: 0; background-color: #ffffff; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #3E332A;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; padding: 30px 0;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #ffffff;">
+                        <!-- Header -->
+                        <tr>
+                            <td align="center" style="padding: 20px 0 40px 0; text-align: center;">
+                                <a href="{frontend_url}" style="text-decoration: none; display: inline-block;">
+                                    <span style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; color: #3E332A; text-decoration: none; display: inline-block;">
+                                        s<span style="color: #D5B066;">o</span>n<span style="color: #D5B066;">rup</span><sup style="font-size: 10px; color: #8c857e; font-weight: 600; vertical-align: super; margin-left: 1px;">TM</sup>
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 0 20px 10px 20px; font-size: 16px; line-height: 1.6; color: #5c534c;">
+                                <h1 style="margin: 0 0 20px 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.25; color: #3E332A; letter-spacing: -0.02em;">Welcome to the Gummy Club! 🎉</h1>
+                                <p style="margin: 0 0 16px 0;">Hi there,</p>
+                                <p style="margin: 0 0 24px 0;">We're thrilled to welcome you to the <strong>Sonrup</strong> family! You're now set for early access to our newest real-fruit flavours, exclusive offers, and expert daily wellness tips.</p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Button -->
+                        <tr>
+                            <td align="left" style="padding: 10px 20px 40px 20px;">
+                                <a href="{frontend_url}/shop" style="background-color: #D5B066; color: #3E332A !important; padding: 14px 38px; text-decoration: none; border-radius: 50px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block;">Shop Gummies</a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sign-off -->
+                        <tr>
+                            <td style="padding: 0 20px 35px 20px; font-size: 16px; line-height: 1.6; color: #5c534c;">
+                                <p style="margin: 0 0 4px 0;">Stay healthy,</p>
+                                <p style="margin: 0; font-weight: 800; color: #3E332A;">The Sonrup Team</p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center" style="padding: 30px 20px 0 20px; border-top: 1px solid #e5e1dc; font-size: 11px; line-height: 1.5; color: #8c857e; text-align: center;">
+                                &copy; 2026 Sonrup. All rights reserved.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
     """
@@ -784,23 +801,62 @@ def send_custom_email(email_address: str, subject: str, body_text: str):
 
     msg = EmailMessage()
     msg['Subject'] = subject
-    msg['From'] = smtp_user
+    msg['From'] = f"Sonrup <{smtp_user}>"
     msg['To'] = email_address
-    
+
+    is_html = "<" in body_text and ">" in body_text
+    if not is_html:
+        paragraphs = body_text.split("\n\n")
+        body_html = "".join(f'<p style="margin: 0 0 16px 0;">{p.replace(chr(10), "<br>")}</p>' for p in paragraphs if p.strip())
+    else:
+        body_html = body_text
+
     html_content = f"""
+    <!DOCTYPE html>
     <html>
-    <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333333; line-height: 1.6; padding: 20px; margin: 0; background-color: #f9f9f9;">
-        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #eaeaea; overflow: hidden;">
-            <div style="padding: 25px 30px; text-align: center; background-color: #1f1d1a;">
-                <img src="{frontend_url}/logo.png" alt="SONRUP" style="height: 40px; width: auto; color: #eab308; font-size: 24px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;" />
-            </div>
-            <div style="padding: 30px; font-size: 16px; white-space: pre-wrap;">
-{body_text}
-            </div>
-            <div style="padding: 20px; text-align: center; font-size: 12px; color: #888888; border-top: 1px solid #eaeaea; background-color: #fafafa;">
-                &copy; {datetime.now().year} Sonrup. All rights reserved.
-            </div>
-        </div>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <!--[if mso]>
+        <style type="text/css">
+            body, table, td, a {{ font-family: Arial, Helvetica, sans-serif !important; }}
+        </style>
+        <![endif]-->
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #ffffff; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #3E332A;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; padding: 30px 0;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #ffffff;">
+                        <!-- Header -->
+                        <tr>
+                            <td align="center" style="padding: 20px 0 40px 0; text-align: center;">
+                                <a href="{frontend_url}" style="text-decoration: none; display: inline-block;">
+                                    <span style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; color: #3E332A; text-decoration: none; display: inline-block;">
+                                        s<span style="color: #D5B066;">o</span>n<span style="color: #D5B066;">rup</span><sup style="font-size: 10px; color: #8c857e; font-weight: 600; vertical-align: super; margin-left: 1px;">TM</sup>
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 0 20px; font-size: 16px; line-height: 1.6; color: #5c534c; font-family: 'Plus Jakarta Sans', sans-serif;">
+{body_html}
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center" style="padding: 30px 20px 0 20px; border-top: 1px solid #e5e1dc; font-size: 11px; line-height: 1.5; color: #8c857e; text-align: center;">
+                                &copy; {datetime.now().year} Sonrup. All rights reserved.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
     """
