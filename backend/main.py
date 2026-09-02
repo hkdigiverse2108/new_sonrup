@@ -588,12 +588,30 @@ async def upload_file(file: UploadFile = File(...), current_user=Depends(get_cur
     upload_dir = os.path.join(os.getcwd(), "backend", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     
-    file_ext = os.path.splitext(file.filename)[1]
-    unique_filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(upload_dir, unique_filename)
+    ext = file.filename.split(".")[-1].lower()
+    raw_bytes = await file.read()
+    unique_id = uuid.uuid4().hex
     
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        from PIL import Image
+        import io
+        im = Image.open(io.BytesIO(raw_bytes))
+        if im.width > 1920 or im.height > 1920:
+            im.thumbnail((1920, 1920), Image.Resampling.LANCZOS)
+            
+        unique_filename = f"{unique_id}.webp"
+        file_path = os.path.join(upload_dir, unique_filename)
+        
+        if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+            im.save(file_path, "WEBP", quality=85, optimize=True)
+        else:
+            im = im.convert("RGB")
+            im.save(file_path, "WEBP", quality=85, optimize=True)
+    except Exception:
+        unique_filename = f"{unique_id}.{ext}"
+        file_path = os.path.join(upload_dir, unique_filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(raw_bytes)
         
     api_url = os.getenv("VITE_API_URL", "")
     return {"url": f"{api_url}/uploads/{unique_filename}"}

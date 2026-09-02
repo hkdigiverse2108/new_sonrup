@@ -82,16 +82,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-import { integrationsSettingsQueryOptions } from "../lib/api";
-
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context: { queryClient } }) => {
-    try {
-      await queryClient.ensureQueryData(integrationsSettingsQueryOptions());
-    } catch {
-      // Non-blocking fallback for integrations
-    }
-  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

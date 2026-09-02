@@ -3,7 +3,7 @@ import { ChevronDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { useFaqs, useHomeContent } from "@/lib/api";
+import { useFaqs } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/faq")({
@@ -25,16 +25,15 @@ export const Route = createFileRoute("/faq")({
 
 function Faq() {
   const { data: faqs = [], isLoading } = useFaqs();
-  const { data: homeContent } = useHomeContent();
 
-  const pageHeader = homeContent?.faq_settings?.page_header || {
+  const pageHeader = {
     eyebrow: "Help centre",
     title_black: "Questions, ",
     title_gold: "answered.",
     sub: "Ingredients, dosage, delivery and returns — if it isn't here, our team replies within one working day."
   };
 
-  const categories = ["All", ...(homeContent?.faq_settings?.categories || ["PRODUCTS", "INGREDIENTS", "SHIPPING", "RETURNS", "PAYMENTS", "ORDERS"])];
+  const categories = ["All", "PRODUCTS", "INGREDIENTS", "SHIPPING", "RETURNS", "PAYMENTS", "ORDERS"];
   const [cat, setCat] = useState("All");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(faqs[0]?.q ?? null);

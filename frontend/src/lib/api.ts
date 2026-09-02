@@ -88,7 +88,7 @@ export const productsQueryOptions = () =>
   queryOptions({
     queryKey: ["products"],
     queryFn: () => fetchJson<Product[]>("/api/products"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const productDetailQueryOptions = (slug: string) =>
@@ -96,42 +96,42 @@ export const productDetailQueryOptions = (slug: string) =>
     queryKey: ["products", slug],
     queryFn: () => fetchJson<Product>(`/api/products/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const flavoursQueryOptions = () =>
   queryOptions({
     queryKey: ["flavours"],
     queryFn: () => fetchJson<{ name: string; token: string; note: string; image?: string }[]>("/api/flavours"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const goalsQueryOptions = () =>
   queryOptions({
     queryKey: ["goals"],
     queryFn: () => fetchJson<{ name: string }[]>("/api/goals"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const reviewsQueryOptions = () =>
   queryOptions({
     queryKey: ["reviews"],
     queryFn: () => fetchJson<{ name: string; city: string; rating: number; text: string; product: string }[]>("/api/reviews"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const faqsQueryOptions = () =>
   queryOptions({
     queryKey: ["faqs"],
     queryFn: () => fetchJson<{ category: string; q: string; a: string }[]>("/api/faqs"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const postsQueryOptions = () =>
   queryOptions({
     queryKey: ["posts"],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }[]>("/api/posts"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const postDetailQueryOptions = (slug: string) =>
@@ -139,14 +139,14 @@ export const postDetailQueryOptions = (slug: string) =>
     queryKey: ["posts", slug],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }>(`/api/posts/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const policiesQueryOptions = () =>
   queryOptions({
     queryKey: ["policies"],
     queryFn: () => fetchJson<any[]>("/api/policies"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const policyDetailQueryOptions = (slug: string) =>
@@ -154,63 +154,63 @@ export const policyDetailQueryOptions = (slug: string) =>
     queryKey: ["policies", slug],
     queryFn: () => fetchJson<any>(`/api/policies/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const homeContentQueryOptions = () =>
   queryOptions({
     queryKey: ["home_content"],
     queryFn: () => fetchJson<any>("/api/content/home"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const loginContentQueryOptions = () =>
   queryOptions({
     queryKey: ["login_content"],
     queryFn: () => fetchJson<any>("/api/content/login"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const aboutContentQueryOptions = () =>
   queryOptions({
     queryKey: ["about_content"],
     queryFn: () => fetchJson<any>("/api/content/about"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const contactContentQueryOptions = () =>
   queryOptions({
     queryKey: ["contact_content"],
     queryFn: () => fetchJson<any>("/api/content/contact"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const journalContentQueryOptions = () =>
   queryOptions({
     queryKey: ["journal_content"],
     queryFn: () => fetchJson<any>("/api/content/journal"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const brandValuesQueryOptions = () =>
   queryOptions({
     queryKey: ["brand_values"],
     queryFn: () => fetchJson<any[]>("/api/brand-values"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const milestonesQueryOptions = () =>
   queryOptions({
     queryKey: ["milestones"],
     queryFn: () => fetchJson<any[]>("/api/milestones"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 export const integrationsSettingsQueryOptions = () =>
   queryOptions({
     queryKey: ["integrations_settings"],
     queryFn: () => fetchJson<any>("/api/settings/integrations"),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
 // ─── React Query Hooks (delegating to Query Options) ─────────────────────────

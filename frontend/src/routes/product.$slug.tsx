@@ -11,11 +11,9 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/product/$slug")({
-  shouldReload: true,
   loader: async ({ params, context: { queryClient } }) => {
     try {
       const product = await queryClient.ensureQueryData(productDetailQueryOptions(params.slug));
-      await queryClient.ensureQueryData(productsQueryOptions());
       return { product };
     } catch (e) {
       throw notFound();

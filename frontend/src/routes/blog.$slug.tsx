@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Container, Crumbs, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
 import { usePosts, fetchJson, getImageUrl } from "@/lib/api";
@@ -53,39 +53,21 @@ function ArticleNotFound() {
 
 function ArticlePage() {
   const { post, body } = Route.useLoaderData();
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const h = document.documentElement;
-      const max = h.scrollHeight - h.clientHeight;
-      setProgress(max > 0 ? Math.min(100, (h.scrollTop / max) * 100) : 0);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const { data: posts = [] } = usePosts();
   const more = posts.filter((p) => p.slug !== post.slug).slice(0, 3);
 
   return (
     <main>
-      {/* Reading progress */}
-      <div className="sticky top-[92px] z-40 h-1 w-full bg-transparent">
-        <div
-          className="h-full bg-[image:var(--gradient-gold)] transition-[width] duration-150 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
       <section className="relative overflow-hidden bg-muted/20 border-b border-border/40 min-h-[380px] sm:min-h-[440px] lg:min-h-[500px] flex items-center">
         {(post.detail_image || post.image) && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <img
               src={getImageUrl(post.detail_image || post.image)}
               alt={post.title}
-              className="absolute inset-0 h-full w-full object-cover object-[center_20%] md:object-[right_center] lg:object-center opacity-90 contrast-[1.03] transition-all duration-700"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover object-[center_20%] md:object-[right_center] lg:object-center opacity-90 contrast-[1.03]"
             />
             {/* Soft left overlay for high text contrast without washing out the right side */}
             <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 md:via-background/50 to-transparent w-full md:w-[75%]" />

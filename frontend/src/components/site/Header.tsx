@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Heart, Search, ShoppingBag, User, X, Menu } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { useProducts, useIntegrationsSettings, getImageUrl } from "@/lib/api";
+import { productsQueryOptions, useIntegrationsSettings, getImageUrl } from "@/lib/api";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
@@ -54,7 +55,10 @@ export function Header() {
   const { count, setCartOpen, wishlist } = useStore();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: products = [] } = useProducts();
+  const { data: products = [] } = useQuery({
+    ...productsQueryOptions(),
+    enabled: searchOpen || !!q.trim(),
+  });
 
   const searchResults = useMemo(() => {
     if (!q.trim()) return [];

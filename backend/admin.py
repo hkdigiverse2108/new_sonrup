@@ -22,11 +22,33 @@ def require_admin(current_user=Depends(get_current_user)):
 # ---------------------------------------------------------
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), admin=Depends(require_admin)):
-    ext = file.filename.split(".")[-1]
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join("backend/uploads", filename)
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    ext = file.filename.split(".")[-1].lower()
+    raw_bytes = await file.read()
+    
+    unique_id = uuid.uuid4().hex
+    os.makedirs("backend/uploads", exist_ok=True)
+    
+    try:
+        from PIL import Image
+        import io
+        im = Image.open(io.BytesIO(raw_bytes))
+        if im.width > 1920 or im.height > 1920:
+            im.thumbnail((1920, 1920), Image.Resampling.LANCZOS)
+            
+        filename = f"{unique_id}.webp"
+        filepath = os.path.join("backend/uploads", filename)
+        
+        if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+            im.save(filepath, "WEBP", quality=85, optimize=True)
+        else:
+            im = im.convert("RGB")
+            im.save(filepath, "WEBP", quality=85, optimize=True)
+    except Exception:
+        filename = f"{unique_id}.{ext}"
+        filepath = os.path.join("backend/uploads", filename)
+        with open(filepath, "wb") as buffer:
+            buffer.write(raw_bytes)
+            
     api_url = os.getenv("VITE_API_URL", "")
     return {"url": f"{api_url}/uploads/{filename}"}
 
