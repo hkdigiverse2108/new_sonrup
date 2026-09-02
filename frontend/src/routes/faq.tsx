@@ -3,10 +3,14 @@ import { ChevronDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { useFaqs } from "@/lib/api";
+import { faqsQueryOptions, useFaqs } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/faq")({
+  loader: async ({ context: { queryClient } }) => {
+    const faqs = await queryClient.ensureQueryData(faqsQueryOptions());
+    return { faqs };
+  },
   head: () => ({
     meta: [
       { title: "FAQs — Sonrup Gummies" },
@@ -24,7 +28,8 @@ export const Route = createFileRoute("/faq")({
 });
 
 function Faq() {
-  const { data: faqs = [], isLoading } = useFaqs();
+  const loaderData = Route.useLoaderData();
+  const { data: faqs = loaderData?.faqs || [] } = useFaqs();
 
   const pageHeader = {
     eyebrow: "Help centre",
@@ -86,9 +91,6 @@ function Faq() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="py-24 text-center">Loading FAQs...</div>
-        ) : (
         <div className="mt-10 grid gap-3">
           {list.map((f, i) => {
             const isOpen = open === f.q;
@@ -114,7 +116,7 @@ function Faq() {
                     )}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground">{f.a}</p>
+                      <p className="px-6 pb-6 text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{f.a}</p>
                     </div>
                   </div>
                 </div>
@@ -127,7 +129,6 @@ function Faq() {
             </p>
           )}
         </div>
-        )}
 
         <div className="surface-card mt-12 flex flex-col items-center gap-4 px-6 py-12 text-center">
           <h3 className="display-xl text-3xl">Still stuck?</h3>

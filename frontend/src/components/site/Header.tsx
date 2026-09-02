@@ -14,21 +14,17 @@ const NAV = [
   { label: "Contact", to: "/contact" },
 ] as const;
 
+const DEFAULT_ANNOUNCEMENTS = ["FREE SHIPPING ON ORDERS ABOVE ₹499"];
+
 export function AnnouncementBar() {
-  const { data: settings, isLoading } = useIntegrationsSettings();
+  const { data: settings } = useIntegrationsSettings();
   
-  if (isLoading) {
-    return <div className="bg-ink h-[32px] w-full" />; // Blank placeholder to prevent layout shifts
-  }
-
-  const rawItems = settings?.announcement_bar_items || [];
-  const validItems = rawItems.filter((l: string) => l.trim().length > 0);
+  const rawItems = settings?.announcement_bar_items;
+  const validItems = rawItems && rawItems.length > 0 
+    ? rawItems.filter((l: string) => l && l.trim().length > 0)
+    : DEFAULT_ANNOUNCEMENTS;
   
-  if (validItems.length === 0) {
-    return null; // Hide if no announcement bar items are set
-  }
-
-  const items = validItems;
+  const items = validItems.length > 0 ? validItems : DEFAULT_ANNOUNCEMENTS;
       
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">

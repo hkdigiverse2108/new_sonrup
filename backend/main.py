@@ -636,16 +636,106 @@ async def create_order(order: OrderModel, db=Depends(get_database)):
     
     return {"success": True, "order_id": order.id, "token": token}
 
+async def get_delhivery_tracking_info(awb: str, db):
+    try:
+        import httpx
+        integrations = await db["integrations"].find_one({}) or {}
+        token = integrations.get("delhivery_api_token")
+        if not token:
+            return None
+        
+        url = f"https://track.delhivery.com/api/v1/packages/json/?waybill={awb}&token={token}"
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, timeout=8.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                shipment_list = data.get("ShipmentData", [])
+                if shipment_list and "Shipment" in shipment_list[0]:
+                    shipment = shipment_list[0]["Shipment"]
+                    status_obj = shipment.get("Status", {}) or {}
+                    
+                    scans_raw = shipment.get("Scans", []) or []
+                    scans = []
+                    for s in scans_raw:
+                        sd = s.get("ScanDetail", {})
+                        if sd:
+                            scans.append({
+                                "scan": sd.get("Scan") or sd.get("ScanType", ""),
+                                "time": sd.get("ScanDateTime", "") or sd.get("StatusDateTime", ""),
+                                "location": sd.get("ScannedLocation", "") or sd.get("StatusLocation", ""),
+                                "instructions": sd.get("Instructions", "")
+                            })
+                    
+                    scans = sorted(scans, key=lambda x: x["time"] or "", reverse=True)
+                    current_status = status_obj.get("Status") or shipment.get("StatusType") or "Manifested"
+                    
+                    return {
+                        "awb": shipment.get("AWB", awb),
+                        "reference_no": shipment.get("ReferenceNo", ""),
+                        "status": current_status,
+                        "status_type": status_obj.get("StatusType", ""),
+                        "status_code": status_obj.get("StatusCode", ""),
+                        "instructions": status_obj.get("Instructions", ""),
+                        "status_location": status_obj.get("StatusLocation", ""),
+                        "status_time": status_obj.get("StatusDateTime", ""),
+                        "pickup_date": shipment.get("PickUpDate"),
+                        "pickedup_date": shipment.get("PickedupDate"),
+                        "expected_delivery": shipment.get("ExpectedDeliveryDate") or shipment.get("PromisedDeliveryDate"),
+                        "delivery_date": shipment.get("DeliveryDate"),
+                        "first_attempt_date": shipment.get("FirstAttemptDate"),
+                        "received_by": status_obj.get("RecievedBy", ""),
+                        "origin": shipment.get("Origin", ""),
+                        "destination": shipment.get("Destination", ""),
+                        "order_type": shipment.get("OrderType", ""),
+                        "invoice_amount": shipment.get("InvoiceAmount") or shipment.get("CODAmount"),
+                        "quantity": shipment.get("Quantity", "1"),
+                        "sender_name": shipment.get("SenderName") or shipment.get("PickupLocation", ""),
+                        "consignee": shipment.get("Consignee", {}),
+                        "consignee_city": (shipment.get("Consignee") or {}).get("City", ""),
+                        "scans": scans
+                    }
+    except Exception as e:
+        print("[DELHIVERY TRACKING FETCH ERROR]", str(e))
+    return None
+
 @app.get("/api/track-order")
 async def track_order(query: str = Query(...), db=Depends(get_database)):
-    # Search by Order ID or AWB
+    clean_query = query.strip()
+    # Search by Order ID or AWB in DB
     order = await db["orders"].find_one(
-        {"$or": [{"id": query}, {"delhivery_awb": query}]}, 
+        {"$or": [{"id": clean_query}, {"delhivery_awb": clean_query}]}, 
         {"_id": 0}
     )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found. Please check your ID or AWB.")
-    return order
+    
+    if order:
+        awb = order.get("delhivery_awb")
+        if awb:
+            live_tracking = await get_delhivery_tracking_info(awb, db)
+            if live_tracking:
+                order["delhivery_tracking"] = live_tracking
+                if live_tracking.get("status") and live_tracking.get("status") != order.get("delhivery_status"):
+                    await db["orders"].update_one(
+                        {"id": order["id"]},
+                        {"$set": {"delhivery_status": live_tracking["status"]}}
+                    )
+                    order["delhivery_status"] = live_tracking["status"]
+        return order
+        
+    # If not found in DB, check if clean_query is a raw Delhivery AWB number
+    live_tracking = await get_delhivery_tracking_info(clean_query, db)
+    if live_tracking and (live_tracking.get("status") or live_tracking.get("scans")):
+        return {
+            "id": live_tracking.get("awb", clean_query),
+            "date": live_tracking.get("status_time", ""),
+            "status": live_tracking.get("status", "In Transit"),
+            "delhivery_awb": clean_query,
+            "delhivery_status": live_tracking.get("status"),
+            "delhivery_tracking": live_tracking,
+            "items": [],
+            "total": 0
+        }
+        
+    raise HTTPException(status_code=404, detail="Order not found. Please check your Order ID or AWB number.")
 
 from pydantic import BaseModel
 

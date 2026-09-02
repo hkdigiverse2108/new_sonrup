@@ -3,11 +3,18 @@ import { ArrowUpRight, BookOpen, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Container, RouteError } from "@/components/site/Page";
 import { BrandButton, Eyebrow, Reveal } from "@/components/site/Primitives";
-import { usePosts, useJournalContent, getImageUrl } from "@/lib/api";
+import { postsQueryOptions, journalContentQueryOptions, usePosts, useJournalContent, getImageUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/blog/")({
+  loader: async ({ context: { queryClient } }) => {
+    const [posts, journalContent] = await Promise.all([
+      queryClient.ensureQueryData(postsQueryOptions()),
+      queryClient.ensureQueryData(journalContentQueryOptions()),
+    ]);
+    return { posts, journalContent };
+  },
   head: () => ({
     meta: [
       { title: "The Sonrup Journal — Wellness, Ingredients & Honest Science" },
@@ -24,11 +31,10 @@ export const Route = createFileRoute("/blog/")({
   errorComponent: RouteError,
 });
 
-
-
 function JournalPage() {
-  const { data: posts = [], isLoading } = usePosts();
-  const { data: journalContent } = useJournalContent();
+  const loaderData = Route.useLoaderData();
+  const { data: posts = loaderData?.posts || [] } = usePosts();
+  const { data: journalContent = loaderData?.journalContent } = useJournalContent();
 
   const sortedPosts = [...posts].sort((a, b) => {
     const rA = a.rank ?? 0;
@@ -74,10 +80,6 @@ function JournalPage() {
       <Container className="py-14 lg:py-20">
 
 
-        {isLoading ? (
-          <div className="py-24 text-center">Loading posts...</div>
-        ) : (
-        <>
         {/* Lead story */}
         {lead && (
           <Reveal key={lead.slug}>
@@ -139,8 +141,6 @@ function JournalPage() {
             </Reveal>
           ))}
         </div>
-        </>
-        )}
 
         {/* CTA */}
         <Reveal delay={120}>

@@ -190,10 +190,12 @@ function Checkout() {
                               if (res?.token) {
                                 localStorage.setItem("sonrup_token", res.token);
                               }
+                              localStorage.setItem("sonrup_last_order_id", id);
                               clear();
                               window.location.href = `/order-success?orderId=${id}`;
                             }).catch((err) => {
                               console.error(err);
+                              localStorage.setItem("sonrup_last_order_id", id);
                               clear();
                               window.location.href = `/order-success?orderId=${id}`;
                             });
@@ -232,10 +234,12 @@ function Checkout() {
                   if (res?.token) {
                     localStorage.setItem("sonrup_token", res.token);
                   }
+                  localStorage.setItem("sonrup_last_order_id", id);
                   clear();
                   window.location.href = `/order-success?orderId=${id}`;
                 }).catch((err) => {
                   console.error(err);
+                  localStorage.setItem("sonrup_last_order_id", id);
                   clear();
                   window.location.href = `/order-success?orderId=${id}`;
                 });

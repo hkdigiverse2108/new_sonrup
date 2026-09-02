@@ -29,7 +29,8 @@ const SORTS = [
 export const Route = createFileRoute("/shop")({
   validateSearch: shopSearchSchema,
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(productsQueryOptions());
+    const products = await queryClient.ensureQueryData(productsQueryOptions());
+    return { products };
   },
   head: () => ({
     meta: [
@@ -89,10 +90,11 @@ export function useShopFilters(search: ShopSearch, products: Product[], maxPrice
 }
 
 function ShopPage() {
+  const loaderData = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+  const { data: products = loaderData?.products || [] } = useProducts();
   const { data: settings } = useIntegrationsSettings();
   const maxPriceLimit = settings?.max_filter_price ?? 1500;
   
@@ -111,9 +113,6 @@ function ShopPage() {
         sub="Clean actives, real fruit flavours, and doses printed in plain numbers. Filter by what you're actually trying to fix."
       />
 
-      {isLoadingProducts ? (
-        <Container className="py-24 text-center">Loading gummies...</Container>
-      ) : (
       <Container className="py-12 lg:py-16">
         <div className="flex flex-col gap-8">
           {/* Results */}
@@ -187,7 +186,6 @@ function ShopPage() {
           </div>
         </div>
       </Container>
-      )}
     </main>
   );
 }

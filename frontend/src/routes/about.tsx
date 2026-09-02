@@ -16,11 +16,12 @@ import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/about")({
   loader: async ({ context: { queryClient } }) => {
-    await Promise.all([
+    const [aboutContent, brandValues, milestones] = await Promise.all([
       queryClient.ensureQueryData(aboutContentQueryOptions()),
       queryClient.ensureQueryData(brandValuesQueryOptions()),
       queryClient.ensureQueryData(milestonesQueryOptions()),
     ]);
+    return { aboutContent, brandValues, milestones };
   },
   head: () => ({
     meta: [
@@ -49,9 +50,10 @@ function getIcon(name: string) {
 }
 
 function About() {
-  const { data: brandValues = [], isLoading: isLoadingBV } = useBrandValues();
-  const { data: milestones = [], isLoading: isLoadingM } = useMilestones();
-  const { data: aboutContent } = useAboutContent();
+  const loaderData = Route.useLoaderData();
+  const { data: brandValues = loaderData?.brandValues || [] } = useBrandValues();
+  const { data: milestones = loaderData?.milestones || [] } = useMilestones();
+  const { data: aboutContent = loaderData?.aboutContent } = useAboutContent();
 
   const hero = aboutContent?.hero || { eyebrow: "Our story", title_black: "Supplements you actually ", title_gold: "look forward to.", sub: "Sonrup began with a simple frustration: the best formulas in the world do nothing if the tub stays shut. So we built a brand around the one thing most supplements ignore — the experience of taking them." };
   const why = aboutContent?.why || { eyebrow: "Why we exist", title: "Flavour first. Science always.", sub: "Every batch has to pass two tests before it ships: does it work at a meaningful dose, and would you happily take it every morning for a year?", image: "", benefits: [{ icon: "Leaf", t: "Pectin based, 100% vegetarian", d: "No gelatin, ever. Real fruit concentrates for flavour." }, { icon: "ShieldCheck", t: "Tested every batch", d: "Third-party lab checks for potency, purity and heavy metals." }, { icon: "Sparkles", t: "Doses that matter", d: "No fairy dusting — actives at levels backed by research." }] };
@@ -113,7 +115,6 @@ function About() {
       <section className="bg-muted/40 py-16 sm:py-24">
         <Container>
           <SectionTitle eyebrow={valuesHeader.eyebrow} title={valuesHeader.title} align="center" />
-          {isLoadingBV ? <div className="py-24 text-center">Loading...</div> : (
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {brandValues.map((v: { title: string; body: string }, i: number) => (
               <Reveal key={v.title} delay={i * 80}>
@@ -124,13 +125,11 @@ function About() {
               </Reveal>
             ))}
           </div>
-          )}
         </Container>
       </section>
 
       <Container className="py-16 sm:py-24">
         <SectionTitle eyebrow={journeyHeader.eyebrow} title={journeyHeader.title} />
-        {isLoadingM ? <div className="py-24 text-center">Loading...</div> : (
         <div className="mt-12 border-l border-border pl-6 sm:pl-10">
           {milestones.map((m: { year: string; text: string }, i: number) => (
             <Reveal key={m.year} delay={i * 70}>
@@ -142,7 +141,6 @@ function About() {
             </Reveal>
           ))}
         </div>
-        )}
 
         <div className="surface-card mt-8 flex flex-col items-center gap-5 px-6 py-14 text-center">
           <h3 className="display-xl text-3xl sm:text-4xl">{cta.title}</h3>

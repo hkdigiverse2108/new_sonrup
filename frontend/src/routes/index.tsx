@@ -43,13 +43,14 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    await Promise.all([
+    const [homeContent, products, flavours, reviews, faqs] = await Promise.all([
       queryClient.ensureQueryData(homeContentQueryOptions()),
       queryClient.ensureQueryData(productsQueryOptions()),
       queryClient.ensureQueryData(flavoursQueryOptions()),
       queryClient.ensureQueryData(reviewsQueryOptions()),
       queryClient.ensureQueryData(faqsQueryOptions()),
     ]);
+    return { homeContent, products, flavours, reviews, faqs };
   },
   head: () => ({
     meta: [
@@ -65,27 +66,46 @@ export const Route = createFileRoute("/")({
         content: "Delicious daily gummies made to make your everyday routine a little sweeter.",
       },
     ],
+    links: [
+      {
+        rel: "preload",
+        as: "image",
+        href: getImageUrl("/uploads/54436ed47f214de29576ab69177e482c.webp"),
+        type: "image/webp",
+      },
+    ],
   }),
   component: Home,
 });
 
 function Home() {
+  const loaderData = Route.useLoaderData();
   const { data: homeContent } = useHomeContent();
+  const { data: products } = useProducts();
+  const { data: flavours } = useFlavours();
+  const { data: reviews } = useReviews();
+  const { data: faqs } = useFaqs();
+
+  const currentContent = homeContent ?? loaderData?.homeContent;
+  const currentProducts = products ?? loaderData?.products ?? [];
+  const currentFlavours = flavours ?? loaderData?.flavours ?? [];
+  const currentReviews = reviews ?? loaderData?.reviews ?? [];
+  const currentFaqs = faqs ?? loaderData?.faqs ?? [];
 
   return (
     <main>
-      <Hero content={homeContent} />
-      <TrustStrip content={homeContent} />
-      <BestSellers />
-      <FlavourExperience content={homeContent} />
-      <WhyOurGummies content={homeContent} />
-      <IngredientStory content={homeContent} />
+      <Hero content={currentContent} />
+      <TrustStrip content={currentContent} />
+      <BestSellers products={currentProducts} />
+      <FlavourExperience content={currentContent} flavours={currentFlavours} />
+      <WhyOurGummies content={currentContent} />
+      <IngredientStory content={currentContent} />
 
-      <BrandStory content={homeContent} />
-      <Reviews content={homeContent} />
-      <SocialGrid content={homeContent} />
-      <FaqTeaser content={homeContent} />
-      <FinalCta content={homeContent} />
+      <BrandStory content={currentContent} />
+      <Reviews content={currentContent} reviews={currentReviews} />
+      <SocialGrid content={currentContent} />
+      <FaqTeaser content={currentContent} faqs={currentFaqs} />
+      <FinalCta content={currentContent} />
     </main>
   );
 }
@@ -113,6 +133,9 @@ const HERO_DEFAULTS = {
   badge1_value: "Every single batch",
   badge2_label: "Pectin based",
   badge2_value: "100% vegetarian",
+  main_image: "/uploads/54436ed47f214de29576ab69177e482c.webp",
+  left_image: "/uploads/331b66f6350d47f2a59b533f77d63fe2.webp",
+  right_image: "/uploads/1133fd2a246b4a049a9a686d7dad15db.webp",
 };
 
 function Hero({ content }: { content: any }) {
@@ -319,8 +342,9 @@ function TrustStrip({ content }: { content: any }) {
 
 /* ---------------- BEST SELLERS ---------------- */
 
-function BestSellers() {
-  const { data: products = [] } = useProducts();
+function BestSellers({ products: initialProducts }: { products?: any[] }) {
+  const { data: productsData } = useProducts();
+  const products = productsData || initialProducts || [];
   const bestSellers = products
     .filter((p) => (p.badges || []).some(b => b.toLowerCase().includes("best seller")))
     .slice(0, 3);
@@ -351,9 +375,10 @@ function BestSellers() {
 
 /* ---------------- FLAVOURS ---------------- */
 
-function FlavourExperience({ content }: { content: any }) {
+function FlavourExperience({ content, flavours: initialFlavours }: { content: any; flavours?: any[] }) {
   const [active, setActive] = useState<number | null>(null);
-  const { data: flavours = [] } = useFlavours();
+  const { data: flavoursData } = useFlavours();
+  const flavours = flavoursData || initialFlavours || [];
 
   const section = content?.flavour_section ?? {
     eyebrow: "Flavour experience",
@@ -666,8 +691,9 @@ function BrandStory({ content }: { content: any }) {
 
 /* ---------------- REVIEWS ---------------- */
 
-function Reviews({ content }: { content: any }) {
-  const { data: reviewsList = [] } = useReviews();
+function Reviews({ content, reviews: initialReviews }: { content: any; reviews?: any[] }) {
+  const { data: reviewsData } = useReviews();
+  const reviewsList = reviewsData || initialReviews || [];
 
   const section = content?.reviews_section || {
     eyebrow: "Reviews",
@@ -906,9 +932,10 @@ function SocialGrid({ content }: { content: any }) {
 
 /* ---------------- FAQ ---------------- */
 
-function FaqTeaser({ content }: { content: any }) {
+function FaqTeaser({ content, faqs: initialFaqs }: { content: any; faqs?: any[] }) {
   const [open, setOpen] = useState(0);
-  const { data: faqs = [] } = useFaqs();
+  const { data: faqsData } = useFaqs();
+  const faqs = faqsData || initialFaqs || [];
 
   const section = content?.faq_settings?.home_section || {
     eyebrow: "FAQ",
