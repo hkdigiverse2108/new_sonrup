@@ -17,7 +17,7 @@ import { Container, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton, Eyebrow, Reveal } from "@/components/site/Primitives";
 import { useAuth } from "@/lib/auth";
 import { inr } from "@/lib/products";
-import { useProducts } from "@/lib/api";
+import { useProducts, getImageUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -299,7 +299,7 @@ function OrdersPanel() {
                   className="group flex items-center gap-4"
                 >
                   <img
-                    src={p.image}
+                    src={getImageUrl(p.image)}
                     alt={p.name}
                     className="h-16 w-14 rounded-xl object-cover transition-transform duration-500 group-hover:scale-105"
                   />
@@ -493,7 +493,7 @@ function SavedPanel() {
             params={{ slug: p.slug }}
             className="surface-card lift flex items-center gap-5 p-5"
           >
-            <img src={p.image} alt={p.name} className="h-20 w-16 rounded-xl object-cover" />
+            <img src={getImageUrl(p.image)} alt={p.name} className="h-20 w-16 rounded-xl object-cover" />
             <div>
               <p className="font-display text-lg font-extrabold">{p.name}</p>
               <p className="text-sm text-muted-foreground">{p.tagline}</p>

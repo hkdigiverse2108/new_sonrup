@@ -3,7 +3,7 @@ import { ShoppingBag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
-import { useIntegrationsSettings } from "@/lib/api";
+import { useIntegrationsSettings, getImageUrl } from "@/lib/api";
 import { BrandButton, FreeShipBar, QtyStepper } from "./Primitives";
 
 export function CartDrawer() {
@@ -50,7 +50,7 @@ export function CartDrawer() {
 
           {lines.map(({ product, qty }) => (
             <div key={product.slug} className="flex gap-4 rounded-2xl border border-border/70 bg-card p-3">
-              <img src={product.image} alt={product.name} className="h-24 w-20 rounded-xl object-cover" />
+              <img src={getImageUrl(product.image)} alt={product.name} className="h-24 w-20 rounded-xl object-cover" />
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-2">
                   <Link

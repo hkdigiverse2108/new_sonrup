@@ -6,15 +6,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Container, Crumbs, NotFoundBlock, RouteError } from "@/components/site/Page";
 import { Badge, BrandButton, Price, ProductCard, QtyStepper, Rating, Reveal, SectionTitle } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
-import { useProducts, useProductReviews, fetchJson } from "@/lib/api";
+import { useProducts, useProductReviews, fetchJson, productDetailQueryOptions, productsQueryOptions, getImageUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/product/$slug")({
   shouldReload: true,
-  loader: async ({ params }) => {
+  loader: async ({ params, context: { queryClient } }) => {
     try {
-      const product = await fetchJson<any>(`/api/products/${params.slug}`);
+      const product = await queryClient.ensureQueryData(productDetailQueryOptions(params.slug));
+      await queryClient.ensureQueryData(productsQueryOptions());
       return { product };
     } catch (e) {
       throw notFound();
@@ -98,7 +99,7 @@ function ProductPage() {
             </div>
 
             <img
-              src={gallery[activeImg]}
+              src={getImageUrl(gallery[activeImg])}
               alt={product.name}
               width={1024}
               height={1024}
@@ -116,7 +117,7 @@ function ProductPage() {
                   activeImg === i ? "border-secondary" : "border-transparent opacity-60 hover:opacity-100",
                 )}
               >
-                <img src={g} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img src={getImageUrl(g)} alt="" loading="lazy" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

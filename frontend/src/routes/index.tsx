@@ -24,10 +24,33 @@ import {
   SectionTitle,
 } from "@/components/site/Primitives";
 import { IMG, inr } from "@/lib/products";
-import { useProducts, useFlavours, useGoals, useReviews, useFaqs, useHomeContent, fetchJson } from "@/lib/api";
+import {
+  homeContentQueryOptions,
+  productsQueryOptions,
+  flavoursQueryOptions,
+  reviewsQueryOptions,
+  faqsQueryOptions,
+  useProducts,
+  useFlavours,
+  useGoals,
+  useReviews,
+  useFaqs,
+  useHomeContent,
+  fetchJson,
+  getImageUrl
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
+  loader: async ({ context: { queryClient } }) => {
+    await Promise.all([
+      queryClient.ensureQueryData(homeContentQueryOptions()),
+      queryClient.ensureQueryData(productsQueryOptions()),
+      queryClient.ensureQueryData(flavoursQueryOptions()),
+      queryClient.ensureQueryData(reviewsQueryOptions()),
+      queryClient.ensureQueryData(faqsQueryOptions()),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "Sonrup Gummies — Goodness That Tastes This Good" },
@@ -47,22 +70,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { data: homeContent, isLoading: isHomeLoading } = useHomeContent();
-  const { isLoading: isProductsLoading } = useProducts();
-  const { isLoading: isFlavoursLoading } = useFlavours();
-
-  const isLoading = isHomeLoading || isProductsLoading || isFlavoursLoading;
-
-  if (isLoading || !homeContent) {
-    return (
-      <div className="flex min-h-[85vh] items-center justify-center bg-ink text-cream">
-        <div className="relative flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#3E332A] border-t-[#D5B066]" />
-          <p className="font-display text-sm tracking-[0.2em] text-[#D5B066]/80 uppercase animate-pulse">Loading Sonrup...</p>
-        </div>
-      </div>
-    );
-  }
+  const { data: homeContent } = useHomeContent();
 
   return (
     <main>
@@ -219,8 +227,10 @@ function Hero({ content }: { content: any }) {
             <div className="relative overflow-hidden rounded-t-[999px] rounded-b-[2.5rem] border border-cream/12 bg-cream/[0.05] p-3 shadow-[var(--shadow-lift)] backdrop-blur">
               <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-70" />
               <img
-                src={hero.main_image || IMG.multi}
+                src={getImageUrl(hero.main_image || IMG.multi)}
                 alt="Sonrup Biotin + Multivitamin gummies tube"
+                loading="eager"
+                fetchPriority="high"
                 className="float-slow relative z-10 aspect-4/5 w-full rounded-t-[999px] rounded-b-[2rem] object-cover"
               />
               <div className="sheen pointer-events-none absolute inset-0 rounded-t-[999px] rounded-b-[2.5rem]" />
@@ -246,13 +256,15 @@ function Hero({ content }: { content: any }) {
             </div>
 
             <img
-              src={hero.left_image || IMG.shilajit}
+              src={getImageUrl(hero.left_image || IMG.shilajit)}
               alt="Sonrup Himalayan Shilajit gummies"
+              loading="eager"
               className="float-fast absolute -left-8 bottom-2 z-20 hidden h-32 w-24 rotate-[-8deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block"
             />
             <img
-              src={hero.right_image || IMG.kids}
+              src={getImageUrl(hero.right_image || IMG.kids)}
               alt="Sonrup Kid's Multivitamin gummies"
+              loading="eager"
               className="float-slow absolute -right-6 -top-4 z-20 hidden h-32 w-24 rotate-[9deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block [animation-delay:-2.5s]"
             />
           </div>
@@ -380,7 +392,7 @@ function FlavourExperience({ content }: { content: any }) {
               >
                 {/* Background Image with Brightness Effect */}
                 <img
-                  src={f.image}
+                  src={getImageUrl(f.image)}
                   alt={f.name}
                   className={cn(
                     "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out",
@@ -480,7 +492,7 @@ function WhyOurGummies({ content }: { content: any }) {
         <Reveal className="relative">
           <div className="relative overflow-hidden rounded-[2.5rem] bg-[image:var(--gradient-gold)] p-8">
             <img
-              src={why.image}
+              src={getImageUrl(why.image)}
               alt="Sonrup multivitamin gummies packaging"
               className="w-full aspect-[4/5] rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
             />
@@ -561,7 +573,7 @@ function IngredientStory({ content }: { content: any }) {
 
           <div className="relative mx-auto w-[min(70vw,320px)]">
             <img
-              src={story.image}
+              src={getImageUrl(story.image)}
               alt="Sonrup gummies ingredients"
               className="float-slow w-full aspect-[3/4] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
             />
@@ -637,12 +649,12 @@ function BrandStory({ content }: { content: any }) {
 
         <Reveal delay={140} className="relative">
           <img
-            src={story.main_image}
+            src={getImageUrl(story.main_image)}
             alt="Sonrup main story image"
             className="ml-auto w-[76%] aspect-[3/4] rounded-[2.5rem] object-cover shadow-[var(--shadow-lift)]"
           />
           <img
-            src={story.floating_image}
+            src={getImageUrl(story.floating_image)}
             alt="Sonrup floating story image"
             className="float-slow absolute bottom-[-3rem] left-0 w-[46%] aspect-square rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
           />
@@ -875,7 +887,7 @@ function SocialGrid({ content }: { content: any }) {
                 <div className="group overflow-hidden rounded-3xl bg-muted/20 w-full aspect-[4/5] shadow-md hover:shadow-xl transition-all duration-300">
                   <ImageWrapper>
                     <img
-                      src={src}
+                      src={getImageUrl(src)}
                       alt="Sonrup gummies lifestyle"
                       loading="lazy"
                       draggable="false"
@@ -964,13 +976,13 @@ function FinalCta({ content }: { content: any }) {
         <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 blob bg-primary/25 blur-[80px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-80 w-80 blob bg-secondary/25 blur-[80px]" />
         <img
-          src={imgLeft}
+          src={getImageUrl(imgLeft)}
           alt=""
           aria-hidden
           className="float-slow pointer-events-none absolute -left-10 bottom-0 hidden w-48 rotate-[-12deg] rounded-3xl opacity-90 lg:block object-cover h-64"
         />
         <img
-          src={imgRight}
+          src={getImageUrl(imgRight)}
           alt=""
           aria-hidden
           className="float-fast pointer-events-none absolute -right-8 top-4 hidden w-48 rotate-[10deg] rounded-3xl opacity-90 lg:block object-cover h-64"

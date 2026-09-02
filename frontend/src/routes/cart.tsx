@@ -4,7 +4,7 @@ import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Pag
 import { BrandButton, FreeShipBar, QtyStepper } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
-import { useIntegrationsSettings } from "@/lib/api";
+import { useIntegrationsSettings, getImageUrl } from "@/lib/api";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -54,7 +54,7 @@ function CartPage() {
                 <div key={product.slug} className="surface-card flex gap-4 p-4 sm:gap-6 sm:p-5">
                   <Link to="/product/$slug" params={{ slug: product.slug }} className="shrink-0">
                     <img
-                      src={product.image}
+                      src={getImageUrl(product.image)}
                       alt={product.name}
                       className="h-28 w-24 rounded-2xl object-cover sm:h-32 sm:w-28"
                     />

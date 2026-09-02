@@ -897,6 +897,201 @@ async def broadcast_email(payload: BroadcastPayload, background_tasks: Backgroun
     if not emails:
         raise HTTPException(status_code=400, detail="No recipients found for this target.")
     
+    msg["From"] = f"Sonrup <{smtp_user}>"
+    msg["To"] = email_address
+
+    # Plain text fallback
+    msg.set_content(f"Welcome to the Gummy Club! 🎉\n\nHi there,\n\nWe're thrilled to welcome you to the Sonrup family! You're now set for early access to our newest real-fruit flavours, exclusive offers, and expert wellness tips.\n\nShop our gummies now: {frontend_url}/shop\n\nStay healthy,\nThe Sonrup Team")
+
+    # HTML content
+    html_content = f"""\
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <!--[if mso]>
+        <style type="text/css">
+            body, table, td, a {{ font-family: Arial, Helvetica, sans-serif !important; }}
+        </style>
+        <![endif]-->
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #ffffff; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #3E332A;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; padding: 30px 0;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #ffffff;">
+                        <!-- Header -->
+                        <tr>
+                            <td align="center" style="padding: 20px 0 40px 0; text-align: center;">
+                                <a href="{frontend_url}" style="text-decoration: none; display: inline-block;">
+                                    <span style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; color: #3E332A; text-decoration: none; display: inline-block;">
+                                        s<span style="color: #D5B066;">o</span>n<span style="color: #D5B066;">rup</span><sup style="font-size: 10px; color: #8c857e; font-weight: 600; vertical-align: super; margin-left: 1px;">TM</sup>
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 0 20px 10px 20px; font-size: 16px; line-height: 1.6; color: #5c534c;">
+                                <h1 style="margin: 0 0 20px 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.25; color: #3E332A; letter-spacing: -0.02em;">Welcome to the Gummy Club! 🎉</h1>
+                                <p style="margin: 0 0 16px 0;">Hi there,</p>
+                                <p style="margin: 0 0 24px 0;">We're thrilled to welcome you to the <strong>Sonrup</strong> family! You're now set for early access to our newest real-fruit flavours, exclusive offers, and expert daily wellness tips.</p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Button -->
+                        <tr>
+                            <td align="left" style="padding: 10px 20px 40px 20px;">
+                                <a href="{frontend_url}/shop" style="background-color: #D5B066; color: #3E332A !important; padding: 14px 38px; text-decoration: none; border-radius: 50px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block;">Shop Gummies</a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sign-off -->
+                        <tr>
+                            <td style="padding: 0 20px 35px 20px; font-size: 16px; line-height: 1.6; color: #5c534c;">
+                                <p style="margin: 0 0 4px 0;">Stay healthy,</p>
+                                <p style="margin: 0; font-weight: 800; color: #3E332A;">The Sonrup Team</p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center" style="padding: 30px 20px 0 20px; border-top: 1px solid #e5e1dc; font-size: 11px; line-height: 1.5; color: #8c857e; text-align: center;">
+                                &copy; 2026 Sonrup. All rights reserved.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    msg.add_alternative(html_content, subtype='html')
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Failed to send email to {email_address}: {e}")
+
+@app.post("/api/newsletter/subscribe")
+async def subscribe_newsletter(req: NewsletterSubscribe, background_tasks: BackgroundTasks, db=Depends(get_database)):
+    existing = await db["newsletter"].find_one({"email": req.email})
+    if not existing:
+        await db["newsletter"].insert_one({"email": req.email})
+    
+    # Always send the welcome email so the user can test multiple times
+    background_tasks.add_task(send_welcome_email, req.email)
+    
+    return {"success": True, "message": "Subscribed successfully"}
+
+def send_custom_email(email_address: str, subject: str, body_text: str):
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_pass = os.environ.get("SMTP_PASS", "")
+    frontend_url = os.environ.get("FRONTEND_URL", "")
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = f"Sonrup <{smtp_user}>"
+    msg['To'] = email_address
+
+    is_html = "<" in body_text and ">" in body_text
+    if not is_html:
+        paragraphs = body_text.split("\n\n")
+        body_html = "".join(f'<p style="margin: 0 0 16px 0;">{p.replace(chr(10), "<br>")}</p>' for p in paragraphs if p.strip())
+    else:
+        body_html = body_text
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <!--[if mso]>
+        <style type="text/css">
+            body, table, td, a {{ font-family: Arial, Helvetica, sans-serif !important; }}
+        </style>
+        <![endif]-->
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #ffffff; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #3E332A;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; padding: 30px 0;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #ffffff;">
+                        <!-- Header -->
+                        <tr>
+                            <td align="center" style="padding: 20px 0 40px 0; text-align: center;">
+                                <a href="{frontend_url}" style="text-decoration: none; display: inline-block;">
+                                    <span style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; color: #3E332A; text-decoration: none; display: inline-block;">
+                                        s<span style="color: #D5B066;">o</span>n<span style="color: #D5B066;">rup</span><sup style="font-size: 10px; color: #8c857e; font-weight: 600; vertical-align: super; margin-left: 1px;">TM</sup>
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 0 20px; font-size: 16px; line-height: 1.6; color: #5c534c; font-family: 'Plus Jakarta Sans', sans-serif;">
+{body_html}
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center" style="padding: 30px 20px 0 20px; border-top: 1px solid #e5e1dc; font-size: 11px; line-height: 1.5; color: #8c857e; text-align: center;">
+                                &copy; {datetime.now().year} Sonrup. All rights reserved.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    msg.add_alternative(html_content, subtype='html')
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Failed to send custom email to {email_address}: {e}")
+
+@app.get("/api/admin/newsletter")
+async def get_newsletter_subscribers(db=Depends(get_database), current_user=Depends(get_current_user)):
+    cursor = db["newsletter"].find({}, {"_id": 0}).sort("_id", -1)
+    return await cursor.to_list(length=1000)
+
+@app.delete("/api/admin/newsletter/{email}")
+async def delete_newsletter_subscriber(email: str, db=Depends(get_database), current_user=Depends(get_current_user)):
+    await db["newsletter"].delete_one({"email": email})
+    return {"message": "Subscriber removed successfully"}
+
+@app.post("/api/admin/newsletter/broadcast")
+async def broadcast_email(payload: BroadcastPayload, background_tasks: BackgroundTasks, db=Depends(get_database), current_user=Depends(get_current_user)):
+    emails = []
+    if payload.target == "subscribers":
+        cursor = db["newsletter"].find({}, {"_id": 0, "email": 1})
+        emails = [doc["email"] for doc in await cursor.to_list(length=1000)]
+    elif payload.target == "inquiries":
+        cursor = db["contact_messages"].find({}, {"_id": 0, "email": 1})
+        emails = list(set([doc["email"] for doc in await cursor.to_list(length=1000)]))
+    
+    if not emails:
+        raise HTTPException(status_code=400, detail="No recipients found for this target.")
+    
     for email in emails:
         background_tasks.add_task(send_custom_email, email, payload.subject, payload.message)
         
@@ -905,6 +1100,7 @@ async def broadcast_email(payload: BroadcastPayload, background_tasks: Backgroun
 # Serve uploaded files statically
 os.makedirs("backend/uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory="backend/uploads"), name="api_uploads")
 
 from backend.admin import router as admin_router
 app.include_router(admin_router)

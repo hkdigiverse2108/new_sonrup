@@ -42,3 +42,14 @@ __pycache__/
 
 # Uploads
 backend/uploads/
+frontend/public/uploads/
+uploads/
+*.tmp
+
+# TanStack & Nitro Caches
+.tanstack/
+.nitro/
+.output/
+.vinxi/
+dist/
+dist-ssr/

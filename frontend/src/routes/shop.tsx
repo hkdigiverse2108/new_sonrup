@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, ProductCard, Reveal } from "@/components/site/Primitives";
 import { Product } from "@/lib/products";
-import { useProducts, useIntegrationsSettings } from "@/lib/api";
+import { useProducts, useIntegrationsSettings, productsQueryOptions } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const shopSearchSchema = z.object({
@@ -28,6 +28,9 @@ const SORTS = [
 
 export const Route = createFileRoute("/shop")({
   validateSearch: shopSearchSchema,
+  loader: async ({ context: { queryClient } }) => {
+    await queryClient.ensureQueryData(productsQueryOptions());
+  },
   head: () => ({
     meta: [
       { title: "Shop All Gummies — Sonrup Nutrition" },

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { inr, type Product } from "@/lib/products";
 import { useStore } from "@/lib/store";
+import { getImageUrl } from "@/lib/api";
 
 export function Reveal({
   children,
@@ -239,7 +240,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
         </div>
 
         <img
-          src={product.image}
+          src={getImageUrl(product.image)}
           alt={product.name}
           loading="lazy"
           className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"

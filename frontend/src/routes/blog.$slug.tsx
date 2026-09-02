@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Container, Crumbs, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
-import { usePosts, fetchJson } from "@/lib/api";
+import { usePosts, fetchJson, getImageUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 
@@ -80,7 +80,7 @@ function ArticlePage() {
       </div>
 
       <section className="relative overflow-hidden bg-muted">
-        {post.image && <img src={post.image} alt="" className="absolute inset-0 h-full w-full object-cover mix-blend-overlay opacity-30" />}
+        {post.image && <img src={getImageUrl(post.image)} alt="" className="absolute inset-0 h-full w-full object-cover mix-blend-overlay opacity-30" />}
         <div className="spin-slow pointer-events-none absolute -right-24 -top-24 h-80 w-80 blob bg-card/40" />
         <div className="float-slow pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 blob bg-card/30" />
         <Container className="relative py-14 lg:py-20">
@@ -121,7 +121,7 @@ function ArticlePage() {
                     </p>
                   ) : (
                     <div className="my-10 overflow-hidden rounded-2xl border bg-muted shadow-sm">
-                      <img src={content} alt="Blog post visual" className="w-full object-cover" />
+                      <img src={getImageUrl(content)} alt="Blog post visual" className="w-full object-cover" />
                     </div>
                   )}
                 </Reveal>

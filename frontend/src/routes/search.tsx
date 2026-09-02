@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search as SearchIcon } from "lucide-react";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Price, ProductCard, Rating, Reveal } from "@/components/site/Primitives";
-import { useProducts, usePosts } from "@/lib/api";
+import { useProducts, usePosts, getImageUrl } from "@/lib/api";
 
 type S = { q: string };
 
@@ -95,7 +95,7 @@ function SearchPage() {
                         params={{ slug: p.slug }}
                         className="surface-card lift flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
                       >
-                        <img src={p.image} alt={p.name} loading="lazy" className="h-40 w-full rounded-xl object-cover sm:h-24 sm:w-20" />
+                        <img src={getImageUrl(p.image)} alt={p.name} loading="lazy" className="h-40 w-full rounded-xl object-cover sm:h-24 sm:w-20" />
                         <div className="flex-1">
                           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                             {p.categories.join(" · ")}

@@ -7,7 +7,7 @@ import { BrandButton } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { useAuth, type Order } from "@/lib/auth";
-import { apiAddOrder, useIntegrationsSettings } from "@/lib/api";
+import { apiAddOrder, useIntegrationsSettings, getImageUrl } from "@/lib/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 import { cn } from "@/lib/utils";
@@ -393,7 +393,7 @@ function Checkout() {
             <div className="mt-5 grid gap-4">
               {lines.map(({ product, qty }) => (
                 <div key={product.slug} className="flex items-center gap-3">
-                  <img src={product.image} alt={product.name} className="h-16 w-14 rounded-xl object-cover" />
+                  <img src={getImageUrl(product.image)} alt={product.name} className="h-16 w-14 rounded-xl object-cover" />
                   <div className="flex-1">
                     <p className="text-sm font-bold leading-tight">{product.name}</p>
                     <p className="text-xs text-muted-foreground">Qty {qty}</p>

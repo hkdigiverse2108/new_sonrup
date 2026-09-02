@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent } from "@/lib/api";
+import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent, getImageUrl } from "@/lib/api";
 import { CheckCircle2, Plus } from "lucide-react";
 import { IMG } from "@/lib/products";
 
@@ -28,7 +28,7 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
     <label className="grid gap-1 h-full">
       <div className="flex flex-col h-full items-center justify-center gap-3 rounded-xl border border-[#e5e1dc] bg-[#faf9f8] p-2 transition-colors focus-within:border-[#3E332A]/50 focus-within:ring-1 focus-within:ring-[#3E332A]/20 relative overflow-hidden min-h-[160px] group">
         {value ? (
-          <img src={value} alt="Preview" className="absolute inset-0 h-full w-full object-cover transition-opacity group-hover:opacity-40" />
+          <img src={getImageUrl(value)} alt="Preview" className="absolute inset-0 h-full w-full object-cover transition-opacity group-hover:opacity-40" />
         ) : (
           <div className="h-10 w-10 shrink-0 rounded-xl border border-dashed border-border flex items-center justify-center bg-white text-muted-foreground/50">
             <Plus className="h-4 w-4" />

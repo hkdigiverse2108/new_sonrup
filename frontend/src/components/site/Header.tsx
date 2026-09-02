@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { useProducts, useIntegrationsSettings } from "@/lib/api";
+import { useProducts, useIntegrationsSettings, getImageUrl } from "@/lib/api";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
@@ -264,7 +264,7 @@ export function Header() {
                       }}
                       className="flex items-center gap-4 rounded-xl p-3 transition-colors hover:bg-muted"
                     >
-                      <img src={p.image} alt={p.name} className="h-12 w-10 shrink-0 rounded-md object-cover" />
+                      <img src={getImageUrl(p.image)} alt={p.name} className="h-12 w-10 shrink-0 rounded-md object-cover" />
                       <div>
                         <p className="font-display text-sm font-extrabold">{p.name}</p>
                         <p className="text-xs text-muted-foreground">{p.tagline}</p>

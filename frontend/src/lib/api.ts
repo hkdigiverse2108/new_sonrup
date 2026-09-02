@@ -1,8 +1,47 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { Product } from "./products";
 
-// Use the Vite environment variable if available, otherwise fallback to relative
-const API_URL = import.meta.env.VITE_API_URL || "";
+// Resolve API URL properly in both client and SSR (Node/Nitro) environments
+export const getApiUrl = () => {
+  if (typeof window !== "undefined") {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    const host = window.location.hostname;
+    if (host.includes("sonrup.com")) {
+      return "https://api.sonrup.com";
+    }
+    return "";
+  }
+  // Server-side (SSR / Node / Nitro)
+  return process.env.VITE_API_URL || process.env.BACKEND_URL || (process.env.NODE_ENV === "production" ? "https://api.sonrup.com" : "http://localhost:8000");
+};
+
+export const getImageUrl = (url?: string | null): string => {
+  if (!url) return "";
+  
+  // If it's a localhost / 127.0.0.1 image URL accidentally saved into MongoDB
+  if (url.includes("localhost:8000/uploads/") || url.includes("127.0.0.1:8000/uploads/")) {
+    const filename = url.split("/uploads/").pop();
+    const apiUrl = getApiUrl();
+    return `${apiUrl ? apiUrl.replace(/\/$/, "") : "https://api.sonrup.com"}/uploads/${filename}`;
+  }
+
+  // If it's already an absolute URL
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
+  
+  // If it's an uploaded file from backend
+  if (url.startsWith("/uploads/") || url.startsWith("uploads/")) {
+    const cleanPath = url.startsWith("/") ? url : `/${url}`;
+    const apiUrl = getApiUrl();
+    if (apiUrl) {
+      return `${apiUrl.replace(/\/$/, "")}${cleanPath}`;
+    }
+    return `https://api.sonrup.com${cleanPath}`;
+  }
+  
+  return url;
+};
 
 export const TOKEN_KEY = "sonrup_token";
 
@@ -22,7 +61,8 @@ export const fetchJson = async <T,>(url: string, options?: RequestInit, isFormDa
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_URL}${url}`, {
+  const baseUrl = getApiUrl();
+  const res = await fetch(`${baseUrl}${url}`, {
     ...options,
     headers,
   });
@@ -42,127 +82,156 @@ export const fetchJson = async <T,>(url: string, options?: RequestInit, isFormDa
   return res.json();
 };
 
-export const useProducts = () => {
-  return useQuery({
+// ─── Query Options (for SSR Loaders & Client Hooks) ──────────────────────────
+
+export const productsQueryOptions = () =>
+  queryOptions({
     queryKey: ["products"],
     queryFn: () => fetchJson<Product[]>("/api/products"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useProduct = (slug: string) => {
-  return useQuery({
+export const productDetailQueryOptions = (slug: string) =>
+  queryOptions({
     queryKey: ["products", slug],
     queryFn: () => fetchJson<Product>(`/api/products/${slug}`),
     enabled: !!slug,
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useFlavours = () => {
-  return useQuery({
+export const flavoursQueryOptions = () =>
+  queryOptions({
     queryKey: ["flavours"],
-    queryFn: () => fetchJson<{ name: string; token: string; note: string }[]>("/api/flavours"),
+    queryFn: () => fetchJson<{ name: string; token: string; note: string; image?: string }[]>("/api/flavours"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useGoals = () => {
-  return useQuery({
+export const goalsQueryOptions = () =>
+  queryOptions({
     queryKey: ["goals"],
     queryFn: () => fetchJson<{ name: string }[]>("/api/goals"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useReviews = () => {
-  return useQuery({
+export const reviewsQueryOptions = () =>
+  queryOptions({
     queryKey: ["reviews"],
     queryFn: () => fetchJson<{ name: string; city: string; rating: number; text: string; product: string }[]>("/api/reviews"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useFaqs = () => {
-  return useQuery({
+export const faqsQueryOptions = () =>
+  queryOptions({
     queryKey: ["faqs"],
     queryFn: () => fetchJson<{ category: string; q: string; a: string }[]>("/api/faqs"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const usePosts = () => {
-  return useQuery({
+export const postsQueryOptions = () =>
+  queryOptions({
     queryKey: ["posts"],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }[]>("/api/posts"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const usePost = (slug: string) => {
-  return useQuery({
+export const postDetailQueryOptions = (slug: string) =>
+  queryOptions({
     queryKey: ["posts", slug],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }>(`/api/posts/${slug}`),
     enabled: !!slug,
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const usePolicies = () => {
-  return useQuery({
+export const policiesQueryOptions = () =>
+  queryOptions({
     queryKey: ["policies"],
     queryFn: () => fetchJson<any[]>("/api/policies"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const usePolicy = (slug: string) => {
-  return useQuery({
+export const policyDetailQueryOptions = (slug: string) =>
+  queryOptions({
     queryKey: ["policies", slug],
     queryFn: () => fetchJson<any>(`/api/policies/${slug}`),
     enabled: !!slug,
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useHomeContent = () => {
-  return useQuery({
+export const homeContentQueryOptions = () =>
+  queryOptions({
     queryKey: ["home_content"],
     queryFn: () => fetchJson<any>("/api/content/home"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useLoginContent = () => {
-  return useQuery({
+export const loginContentQueryOptions = () =>
+  queryOptions({
     queryKey: ["login_content"],
     queryFn: () => fetchJson<any>("/api/content/login"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useAboutContent = () => {
-  return useQuery({
+export const aboutContentQueryOptions = () =>
+  queryOptions({
     queryKey: ["about_content"],
     queryFn: () => fetchJson<any>("/api/content/about"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useContactContent = () => {
-  return useQuery({
+export const contactContentQueryOptions = () =>
+  queryOptions({
     queryKey: ["contact_content"],
     queryFn: () => fetchJson<any>("/api/content/contact"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useJournalContent = () => {
-  return useQuery({
+export const journalContentQueryOptions = () =>
+  queryOptions({
     queryKey: ["journal_content"],
     queryFn: () => fetchJson<any>("/api/content/journal"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useBrandValues = () => {
-  return useQuery({
+export const brandValuesQueryOptions = () =>
+  queryOptions({
     queryKey: ["brand_values"],
-    queryFn: () => fetchJson("/api/brand-values"),
+    queryFn: () => fetchJson<any[]>("/api/brand-values"),
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useMilestones = () => {
-  return useQuery({
+export const milestonesQueryOptions = () =>
+  queryOptions({
     queryKey: ["milestones"],
-    queryFn: () => fetchJson("/api/milestones"),
+    queryFn: () => fetchJson<any[]>("/api/milestones"),
+    staleTime: 1000 * 60 * 5,
   });
-};
+
+export const integrationsSettingsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["integrations_settings"],
+    queryFn: () => fetchJson<any>("/api/settings/integrations"),
+    staleTime: 1000 * 60 * 5,
+  });
+
+// ─── React Query Hooks (delegating to Query Options) ─────────────────────────
+
+export const useProducts = () => useQuery(productsQueryOptions());
+export const useProduct = (slug: string) => useQuery(productDetailQueryOptions(slug));
+export const useFlavours = () => useQuery(flavoursQueryOptions());
+export const useGoals = () => useQuery(goalsQueryOptions());
+export const useReviews = () => useQuery(reviewsQueryOptions());
+export const useFaqs = () => useQuery(faqsQueryOptions());
+export const usePosts = () => useQuery(postsQueryOptions());
+export const usePost = (slug: string) => useQuery(postDetailQueryOptions(slug));
+export const usePolicies = () => useQuery(policiesQueryOptions());
+export const usePolicy = (slug: string) => useQuery(policyDetailQueryOptions(slug));
+export const useHomeContent = () => useQuery(homeContentQueryOptions());
+export const useLoginContent = () => useQuery(loginContentQueryOptions());
+export const useAboutContent = () => useQuery(aboutContentQueryOptions());
+export const useContactContent = () => useQuery(contactContentQueryOptions());
+export const useJournalContent = () => useQuery(journalContentQueryOptions());
+export const useBrandValues = () => useQuery(brandValuesQueryOptions());
+export const useMilestones = () => useQuery(milestonesQueryOptions());
 
 
 
@@ -268,12 +337,7 @@ export const useAdminSubscribers = () => {
   });
 };
 
-export const useIntegrationsSettings = () => {
-  return useQuery({
-    queryKey: ["integrations_settings"],
-    queryFn: () => fetchJson<any>("/api/settings/integrations"),
-  });
-};
+export const useIntegrationsSettings = () => useQuery(integrationsSettingsQueryOptions());
 
 export const useAdminIntegrationsSettings = () => {
   return useQuery({

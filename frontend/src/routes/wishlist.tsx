@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Container, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton, Eyebrow, Price, Rating, Reveal } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
-import { useProducts } from "@/lib/api";
+import { useProducts, getImageUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/wishlist")({
@@ -76,7 +76,7 @@ function WishlistPage() {
                     >
                       <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-60" />
                       <img
-                        src={p.image}
+                        src={getImageUrl(p.image)}
                         alt={p.name}
                         className="relative h-40 w-32 object-cover transition-transform duration-700 group-hover:scale-[1.07]"
                       />

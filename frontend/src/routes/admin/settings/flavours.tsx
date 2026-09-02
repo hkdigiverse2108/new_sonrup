@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useHomeContent, apiAdminUpdateHomeContent, apiAdminCreateFlavour, apiAdminUpdateFlavour, apiAdminDeleteFlavour, useFlavours, apiUploadFile } from "@/lib/api";
+import { useHomeContent, apiAdminUpdateHomeContent, apiAdminCreateFlavour, apiAdminUpdateFlavour, apiAdminDeleteFlavour, useFlavours, apiUploadFile, getImageUrl } from "@/lib/api";
 import { Plus, Trash2, GripVertical, CheckCircle2, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings/flavours")({
@@ -191,7 +191,7 @@ function FlavoursSettingsPage() {
                       <div className="flex items-center gap-4 mt-1">
                         <div className="h-16 w-16 shrink-0 rounded-xl border border-[#e5e1dc] bg-white overflow-hidden flex items-center justify-center shadow-sm">
                           {flavour.image ? (
-                            <img src={flavour.image} alt={flavour.name} className="h-full w-full object-cover" />
+                            <img src={getImageUrl(flavour.image)} alt={flavour.name} className="h-full w-full object-cover" />
                           ) : (
                             <span className="text-[10px] text-muted-foreground font-medium">No Image</span>
                           )}

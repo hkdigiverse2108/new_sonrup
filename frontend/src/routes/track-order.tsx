@@ -5,7 +5,7 @@ import { CheckCircle, Clock, Truck, Package, PackageOpen, Search } from "lucide-
 import { Container } from "@/components/site/Page";
 import { BrandButton } from "@/components/site/Primitives";
 import { Input } from "@/components/ui/input";
-import { apiTrackOrder } from "@/lib/api";
+import { apiTrackOrder, getImageUrl } from "@/lib/api";
 import { inr } from "@/lib/products";
 import { toast } from "sonner";
 
@@ -137,7 +137,7 @@ function TrackOrderPage() {
                 </h4>
                 {order.items.map((item: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 border-b border-border/50 pb-4 last:border-0 last:pb-0">
-                    <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover bg-muted" />
+                    <img src={getImageUrl(item.image)} alt={item.name} className="h-16 w-16 rounded-lg object-cover bg-muted" />
                     <div className="flex-1">
                       <div className="font-semibold line-clamp-1">{item.name}</div>
                       <div className="text-sm text-muted-foreground">Qty: {item.quantity || item.qty}</div>

@@ -3,10 +3,25 @@ import { Leaf, ShieldCheck, Sparkles, CheckCircle } from "lucide-react";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal, SectionTitle } from "@/components/site/Primitives";
 import { IMG } from "@/lib/products";
-import { useBrandValues, useMilestones, useAboutContent } from "@/lib/api";
+import {
+  useBrandValues,
+  useMilestones,
+  useAboutContent,
+  aboutContentQueryOptions,
+  brandValuesQueryOptions,
+  milestonesQueryOptions,
+  getImageUrl
+} from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/about")({
+  loader: async ({ context: { queryClient } }) => {
+    await Promise.all([
+      queryClient.ensureQueryData(aboutContentQueryOptions()),
+      queryClient.ensureQueryData(brandValuesQueryOptions()),
+      queryClient.ensureQueryData(milestonesQueryOptions()),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "About Sonrup — Gummies Worth Looking Forward To" },
@@ -63,7 +78,7 @@ function About() {
             <div className="relative">
               <div className="absolute -inset-6 blob bg-primary/15 blur-2xl" />
               <img
-                src={why.image || IMG.multi}
+                src={getImageUrl(why.image || IMG.multi)}
                 alt="Sonrup gummies range"
                 className="relative w-full aspect-[4/5] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
               />
