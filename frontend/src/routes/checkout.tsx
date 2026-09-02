@@ -49,7 +49,8 @@ function Checkout() {
   }, [settings, pay]);
 
   const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 59;
+  const SHIPPING_CHARGE = settings?.shipping_charge ?? 59;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {

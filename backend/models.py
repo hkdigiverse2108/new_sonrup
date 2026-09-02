@@ -19,6 +19,7 @@ class TrustBadge(BaseModel):
 
 class IntegrationsModel(BaseModel):
     free_shipping_amount: float = 499.0
+    shipping_charge: float = 59.0
     max_filter_price: float = 1500.0
     delhivery_api_token: Optional[str] = ""
     delhivery_warehouse_name: str = ""

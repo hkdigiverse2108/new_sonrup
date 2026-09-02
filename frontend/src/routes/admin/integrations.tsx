@@ -115,6 +115,17 @@ function IntegrationsSettingsPage() {
                 />
                 <p className="text-xs text-muted-foreground">Orders above this amount will automatically qualify for free shipping.</p>
               </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">Standard Shipping Charge (₹)</span>
+                <input
+                  type="number"
+                  value={form.shipping_charge ?? 59}
+                  onChange={(e) => setForm({ ...form, shipping_charge: parseFloat(e.target.value) || 0 })}
+                  className="rounded-xl border border-input bg-transparent px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl"
+                />
+                <p className="text-xs text-muted-foreground">Standard charge applied to orders below the free shipping threshold.</p>
+              </label>
             </div>
         </div>
 
