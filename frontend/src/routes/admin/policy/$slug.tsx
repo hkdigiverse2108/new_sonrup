@@ -140,9 +140,14 @@ function PolicyEditorPage() {
               className="w-full rounded-md border px-3 py-2 text-[13px]"
               value={form.title}
               onChange={(e) => {
-                setField("title", e.target.value);
                 if (isNew) {
-                  setField("slug", e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+                  setForm({
+                    ...form,
+                    title: e.target.value,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+                  });
+                } else {
+                  setField("title", e.target.value);
                 }
               }}
               placeholder="e.g. Privacy Policy"
