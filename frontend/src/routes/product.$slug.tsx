@@ -104,13 +104,21 @@ function ProductPage() {
               ))}
             </div>
 
-            <img
-              src={getImageUrl(gallery[activeImg])}
-              alt={product.name}
-              width={1024}
-              height={1024}
-              className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out"
-            />
+            <div 
+              className="relative flex aspect-square w-full transition-transform duration-500 ease-in-out" 
+              style={{ transform: `translateX(-${activeImg * 100}%)` }}
+            >
+              {gallery.map((g, i) => (
+                <img
+                  key={i}
+                  src={getImageUrl(g)}
+                  alt={`${product.name} ${i + 1}`}
+                  width={1024}
+                  height={1024}
+                  className="w-full h-full object-cover flex-shrink-0"
+                />
+              ))}
+            </div>
             
             {gallery.length > 1 && (
               <>
