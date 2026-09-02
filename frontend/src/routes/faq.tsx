@@ -38,7 +38,15 @@ function Faq() {
     sub: "Ingredients, dosage, delivery and returns — if it isn't here, our team replies within one working day."
   };
 
-  const categories = ["All", "PRODUCTS", "INGREDIENTS", "SHIPPING", "RETURNS", "PAYMENTS", "ORDERS"];
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    faqs.forEach(f => {
+      if (f.category && f.category.trim()) {
+        cats.add(f.category.trim().toUpperCase());
+      }
+    });
+    return ["All", ...Array.from(cats)];
+  }, [faqs]);
   const [cat, setCat] = useState("All");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(faqs[0]?.q ?? null);
