@@ -678,57 +678,6 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
           </div>
         </FieldGroup>
 
-        {/* 7. Combo Products */}
-        <FieldGroup title="Combo Products (Bundle Included Items)">
-          <div className="grid gap-3">
-            <select
-              className="field"
-              value=""
-              onChange={(e) => {
-                const val = e.target.value;
-                if (!val) return;
-                const cp = formData.combo_products || [];
-                if (!cp.includes(val)) {
-                  setFormData({ ...formData, combo_products: [...cp, val] });
-                }
-              }}
-            >
-              <option value="">+ Add a combo product item...</option>
-              {allProducts
-                .filter(p => p.slug !== product.slug)
-                .filter(p => !(formData.combo_products || []).includes(p.slug))
-                .map(p => (
-                  <option key={p.slug} value={p.slug}>{p.name}</option>
-                ))}
-            </select>
-            
-            <div className="flex flex-wrap gap-2">
-              {(formData.combo_products || []).map((slug: string) => {
-                const p = allProducts.find(prod => prod.slug === slug);
-                if (!p) return null;
-                return (
-                  <div key={slug} className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2.5 pr-1.5 shadow-sm">
-                    {p.image && <img src={p.image} className="h-5 w-5 rounded-full object-cover shrink-0" />}
-                    <span className="text-sm font-semibold">{p.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cp = formData.combo_products || [];
-                        setFormData({ ...formData, combo_products: cp.filter((s: string) => s !== slug) });
-                      }}
-                      className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                );
-              })}
-              {!(formData.combo_products || []).length && (
-                <div className="text-xs text-muted-foreground">Not a combo/bundle product (No items selected).</div>
-              )}
-            </div>
-          </div>
-        </FieldGroup>
 
 
         <div className="sticky bottom-3 flex justify-end gap-2 rounded-xl bg-card border border-border px-4 py-3 shadow-lg">

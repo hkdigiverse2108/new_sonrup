@@ -41,9 +41,7 @@ class ProductModel(BaseModel):
     image: Optional[str] = ""
     gallery: Optional[List[str]] = []
     related_products: Optional[List[str]] = []
-    combo_products: Optional[List[str]] = []
     frequently_bought_together: Optional[List[str]] = []
-    bundle_price: Optional[float] = None
     price: float
     mrp: float
     rating: Optional[float] = 5.0

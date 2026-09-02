@@ -12,9 +12,7 @@ export type Product = {
   image: string;
   gallery?: string[];
   related_products?: string[];
-  combo_products?: string[];
   frequently_bought_together?: string[];
-  bundle_price?: number;
   price: number;
   mrp: number;
   rating: number;

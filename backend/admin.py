@@ -169,19 +169,7 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
     payment_mode = "COD" if is_cod else "Pre-paid"
     cod_amount = order.get("total", 0) if is_cod else 0
 
-    resolved_items = []
-    for item in order.get("items", []):
-        prod = await db["products"].find_one({"slug": item.get("slug") or item.get("product_slug") or ""})
-        if prod and prod.get("combo_products"):
-            for sub_slug in prod["combo_products"]:
-                sub_prod = await db["products"].find_one({"slug": sub_slug})
-                if sub_prod:
-                    resolved_items.append({
-                        "name": sub_prod.get("name") or "Gummy Tube",
-                        "qty": (item.get("qty") or item.get("quantity") or 1)
-                    })
-        else:
-            resolved_items.append(item)
+    resolved_items = order.get("items", [])
 
     # Assuming default 500g for gummy tubes
     payload = {
