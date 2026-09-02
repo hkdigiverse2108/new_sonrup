@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { Heart, Minus, Plus, ShieldCheck, ShoppingBag, Truck, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { Heart, Minus, Plus, ShieldCheck, ShoppingBag, Truck, Undo2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Container, Crumbs, NotFoundBlock, RouteError } from "@/components/site/Page";
@@ -64,6 +64,14 @@ function ProductPage() {
   const { data: productReviewsAll = [] } = useProductReviews();
 
   const gallery = Array.from(new Set([product.image, ...(product.gallery || [])].filter(Boolean)));
+  
+  useEffect(() => {
+    if (gallery.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveImg((prev) => (prev + 1) % gallery.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [gallery.length]);
   const wished = wishlist.includes(product.slug);
   const related = (product.related_products && product.related_products.length > 0)
     ? allProducts.filter((p) => product.related_products!.includes(p.slug))
@@ -103,6 +111,25 @@ function ProductPage() {
               height={1024}
               className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out"
             />
+            
+            {gallery.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveImg((prev) => (prev - 1 + gallery.length) % gallery.length)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setActiveImg((prev) => (prev + 1) % gallery.length)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
           </div>
           <div className="mt-4 flex gap-3">
             {gallery.map((g, i) => (

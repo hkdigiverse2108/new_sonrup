@@ -101,7 +101,7 @@ function ShopPage() {
   const results = useShopFilters(search, products, maxPriceLimit);
 
   const set = (patch: Partial<ShopSearch>) =>
-    navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }) });
+    navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }), resetScroll: false });
 
   const active = Boolean(search.q || search.badge || (search.max !== 99999 && search.max !== maxPriceLimit) || search.sort !== "featured");
 
