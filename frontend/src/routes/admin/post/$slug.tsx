@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiUploadFile, apiAdminUpdatePost, apiAdminCreatePost, fetchJson } from "@/lib/api";
-import { CheckCircle2, ArrowLeft, Plus, Trash2, Image as ImageIcon, Type } from "lucide-react";
+import { apiUploadFile, apiAdminUpdatePost, apiAdminCreatePost, fetchJson, getImageUrl } from "@/lib/api";
+import { CheckCircle2, ArrowLeft, Plus, Trash2, Image as ImageIcon, Type, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { UploadCloud, CheckCircle, Trash2 as TrashIcon } from "lucide-react";
 
@@ -27,27 +27,29 @@ export function ImageUpload({ label, value, onChange }: { label: string, value: 
   return (
     <div className="flex h-full w-full flex-col">
       {value ? (
-        <div className="relative h-full w-full group">
-          <img src={value} alt="Uploaded" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+        <div className="relative h-full w-full group min-h-[160px]">
+          <img src={getImageUrl(value)} alt="Uploaded" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center gap-2">
             <button
+              type="button"
               onClick={() => onChange("")}
               className="rounded-full bg-red-500 p-2 text-white hover:bg-red-600 transition-colors shadow-lg"
+              title="Remove Image"
             >
               <TrashIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
       ) : (
-        <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors">
+        <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors min-h-[160px]">
           <div className="flex flex-col items-center justify-center pb-6 pt-5">
             {uploading ? (
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#3E332A] border-t-transparent" />
             ) : (
               <>
                 <UploadCloud className="mb-2 h-6 w-6 text-muted-foreground/50" />
                 <p className="text-xs font-semibold text-muted-foreground">Upload {label}</p>
-                <p className="text-[10px] text-muted-foreground/50 mt-1">PNG, JPG up to 5MB</p>
+                <p className="text-[10px] text-muted-foreground/50 mt-1">PNG, JPG, WEBP up to 5MB</p>
               </>
             )}
           </div>
@@ -82,6 +84,7 @@ function PostEditor() {
     read: "5 min read",
     excerpt: "",
     image: "",
+    detail_image: "",
     body: [{ type: "text", content: "" }],
     rank: 0,
   });
@@ -90,6 +93,7 @@ function PostEditor() {
     if (existingPost && !isNew) {
       setForm({
         ...existingPost,
+        detail_image: existingPost.detail_image || "",
         body: Array.isArray(existingPost.body) && existingPost.body.length > 0
           ? (typeof existingPost.body[0] === "string" 
               ? existingPost.body.map((t: string) => ({ type: "text", content: t }))
@@ -171,7 +175,7 @@ function PostEditor() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-[#e5e1dc] bg-white p-6 shadow-sm">
             <h2 className="mb-4 font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">POST SETTINGS</h2>
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               <label className="grid gap-1.5"><span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">TITLE</span><input className="w-full rounded-md border px-3 py-2 text-[13px] font-bold" value={form.title} onChange={(e) => {
                 const title = e.target.value;
                 setForm({ ...form, title, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') });
@@ -187,10 +191,27 @@ function PostEditor() {
                 </label>
               </div>
               
-              <div className="grid gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">COVER IMAGE (OPTIONAL)</span>
-                <div className="h-48 rounded overflow-hidden border border-dashed border-gray-300 relative">
-                  <ImageUpload label="Cover Image" value={form.image} onChange={(v) => setField("image", v)} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                {/* 1. Card Thumbnail Image */}
+                <div className="grid gap-1.5 rounded-xl border border-border p-4 bg-[#faf9f8]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#3E332A]">1. LIST / CARD THUMBNAIL IMAGE</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-2">Used on the main Journal list grid (`/blog`) and 'Keep reading' cards.</p>
+                  <div className="h-44 rounded-lg overflow-hidden border border-dashed border-gray-300 relative bg-white">
+                    <ImageUpload label="Card Thumbnail Image" value={form.image} onChange={(v) => setField("image", v)} />
+                  </div>
+                </div>
+
+                {/* 2. Detail Page Hero Banner Image */}
+                <div className="grid gap-1.5 rounded-xl border border-border p-4 bg-[#faf9f8]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#3E332A]">2. DETAIL PAGE HERO BANNER IMAGE</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-2">Used on the single article detail header (`/blog/$slug`). Falls back to Card Image if empty.</p>
+                  <div className="h-44 rounded-lg overflow-hidden border border-dashed border-gray-300 relative bg-white">
+                    <ImageUpload label="Detail Page Banner Image" value={form.detail_image || ""} onChange={(v) => setField("detail_image", v)} />
+                  </div>
                 </div>
               </div>
 

@@ -79,24 +79,41 @@ function ArticlePage() {
         />
       </div>
 
-      <section className="relative overflow-hidden bg-muted">
-        {post.image && <img src={getImageUrl(post.image)} alt="" className="absolute inset-0 h-full w-full object-cover mix-blend-overlay opacity-30" />}
+      <section className="relative overflow-hidden bg-muted/20 border-b border-border/40 min-h-[380px] sm:min-h-[440px] lg:min-h-[500px] flex items-center">
+        {(post.detail_image || post.image) && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <img
+              src={getImageUrl(post.detail_image || post.image)}
+              alt={post.title}
+              className="absolute inset-0 h-full w-full object-cover object-[center_20%] md:object-[right_center] lg:object-center opacity-90 contrast-[1.03] transition-all duration-700"
+            />
+            {/* Soft left overlay for high text contrast without washing out the right side */}
+            <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 md:via-background/50 to-transparent w-full md:w-[75%]" />
+            {/* Soft bottom edge blend into article */}
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </div>
+        )}
         <div className="spin-slow pointer-events-none absolute -right-24 -top-24 h-80 w-80 blob bg-card/40" />
         <div className="float-slow pointer-events-none absolute -bottom-24 left-1/4 h-64 w-64 blob bg-card/30" />
-        <Container className="relative py-14 lg:py-20">
+        <Container className="relative py-16 lg:py-24 w-full">
           <Crumbs items={[{ label: "Journal", to: "/blog" }, { label: post.title }]} />
-          <h1 className="mask-rise mt-8 max-w-4xl font-display text-[clamp(2.2rem,6.5vw,4.2rem)] font-extrabold leading-[0.94] tracking-[-0.05em]">
+          {post.category && (
+            <span className="mt-6 inline-block rounded-full bg-secondary/15 border border-secondary/30 px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-secondary backdrop-blur-sm">
+              {post.category}
+            </span>
+          )}
+          <h1 className="mask-rise mt-4 max-w-2xl lg:max-w-3xl font-display text-[clamp(2.2rem,6vw,3.6rem)] font-extrabold leading-[1.04] tracking-[-0.04em] text-foreground">
             {post.title}
           </h1>
-          <div className="mask-rise mt-8 flex flex-wrap items-center gap-5 text-[11px] font-bold uppercase tracking-[0.18em] text-ink/55 [--d:180ms]">
+          <div className="mask-rise mt-6 flex flex-wrap items-center gap-5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground [--d:180ms]">
             <span>{post.date}</span>
           </div>
         </Container>
       </section>
 
-      <Container className="py-14 lg:py-20">
-        <article className="mx-auto max-w-2xl">
-          <p className="font-display text-xl font-extrabold leading-snug tracking-[-0.02em] sm:text-2xl">
+      <Container className="py-12 lg:py-16">
+        <article className="mx-auto max-w-3xl">
+          <p className="font-display text-xl font-extrabold leading-snug tracking-[-0.02em] sm:text-2xl text-foreground">
             {post.excerpt}
           </p>
           <div className="mt-10 space-y-7">
@@ -155,15 +172,28 @@ function ArticlePage() {
                   params={{ slug: p.slug }}
                   className="group surface-card lift flex h-full flex-col overflow-hidden"
                 >
-                  <div className="h-24 bg-muted" />
-                  <div className="flex flex-1 flex-col p-6">
-                    <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="relative h-48 overflow-hidden bg-muted">
+                    {p.image ? (
+                      <img
+                        src={getImageUrl(p.image)}
+                        alt={p.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-muted/60" />
+                    )}
+                    <span className="absolute bottom-3 left-3 rounded-full bg-card/90 px-3 py-1 text-[9px] font-extrabold uppercase tracking-[0.2em] backdrop-blur-sm text-primary shadow-sm">
                       {p.category}
                     </span>
-                    <h3 className="mt-3 font-display text-lg font-extrabold leading-tight tracking-[-0.02em] transition-colors group-hover:text-secondary">
+                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <h3 className="font-display text-lg font-extrabold leading-tight tracking-[-0.02em] transition-colors group-hover:text-secondary">
                       {p.title}
                     </h3>
-                    <ArrowUpRight className="mt-auto h-4 w-4 pt-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                    <div className="mt-auto pt-4 flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                      <span>{p.date}</span>
+                      <ArrowUpRight className="h-4 w-4 text-foreground transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                    </div>
                   </div>
                 </Link>
               </Reveal>

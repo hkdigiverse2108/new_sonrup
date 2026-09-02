@@ -81,16 +81,6 @@ class FaqModel(BaseModel):
     q: str
     a: str
 
-class PostModel(BaseModel):
-    slug: str
-    title: str
-    category: str
-    date: str
-    read: str
-    excerpt: str
-    accent: Optional[str] = ""
-    body: List[str]
-
 class PolicySection(BaseModel):
     heading: str
     body: List[str]
@@ -429,6 +419,7 @@ class JournalPageHeroContent(BaseModel):
     title_black: Optional[str] = "Straight answers about"
     title_gold: Optional[str] = "what you swallow."
     sub: Optional[str] = "No mysticism, no miracle claims. Just clear writing on ingredients, doses and the small habits that make a routine stick."
+    image: Optional[str] = ""
 
 class JournalPageCtaContent(BaseModel):
     eyebrow: Optional[str] = "Read something you liked?"
@@ -453,6 +444,7 @@ class PostModel(BaseModel):
     excerpt: str
     accent: Optional[str] = ""
     image: Optional[str] = ""
+    detail_image: Optional[str] = ""
     body: List[PostBlock]
     rank: int = 0
 
