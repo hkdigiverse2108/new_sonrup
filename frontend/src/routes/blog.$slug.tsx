@@ -108,7 +108,12 @@ function ArticlePage() {
 
               return (
                 <Reveal key={i} delay={i * 60}>
-                  {isText ? (
+                  {block.type === "html" ? (
+                    <div 
+                      className="prose prose-sm sm:prose lg:prose-lg text-base leading-[1.85] text-foreground/85 prose-img:rounded-xl prose-img:shadow-sm" 
+                      dangerouslySetInnerHTML={{ __html: content }} 
+                    />
+                  ) : isText ? (
                     <p
                       className={cn(
                         "text-base leading-[1.85] text-foreground/85 whitespace-pre-wrap",

@@ -5,6 +5,7 @@ import { apiUploadFile, apiAdminUpdatePost, apiAdminCreatePost, fetchJson, getIm
 import { CheckCircle2, ArrowLeft, Plus, Trash2, Image as ImageIcon, Type, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { UploadCloud, CheckCircle, Trash2 as TrashIcon } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 export function ImageUpload({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
   const [uploading, setUploading] = useState(false);
@@ -91,14 +92,26 @@ function PostEditor() {
 
   useEffect(() => {
     if (existingPost && !isNew) {
+      let mergedBody = "";
+      if (Array.isArray(existingPost.body) && existingPost.body.length > 0) {
+        if (typeof existingPost.body[0] === "string") {
+          mergedBody = existingPost.body.map((t: string) => `<p>${t}</p>`).join("");
+        } else if (existingPost.body.length === 1 && existingPost.body[0].type === "html") {
+          mergedBody = existingPost.body[0].content;
+        } else {
+          // Convert legacy multi-block format to single HTML block
+          mergedBody = existingPost.body.map((block: any) => {
+            if (block.type === "text") return `<p>${block.content}</p>`;
+            if (block.type === "image") return `<img src="${block.content}" alt="Image" />`;
+            return block.content;
+          }).join("");
+        }
+      }
+      
       setForm({
         ...existingPost,
         detail_image: existingPost.detail_image || "",
-        body: Array.isArray(existingPost.body) && existingPost.body.length > 0
-          ? (typeof existingPost.body[0] === "string" 
-              ? existingPost.body.map((t: string) => ({ type: "text", content: t }))
-              : existingPost.body)
-          : [{ type: "text", content: "" }]
+        body: [{ type: "html", content: mergedBody }]
       });
     }
   }, [existingPost, isNew]);
@@ -220,39 +233,14 @@ function PostEditor() {
           </div>
 
           <div className="rounded-2xl border border-[#e5e1dc] bg-white p-6 shadow-sm space-y-6">
-            <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">CONTENT BLOCKS</h2>
+            <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">CONTENT</h2>
             <div className="space-y-4">
-              {form.body.map((block: any, i: number) => (
-                <div key={i} className="relative group rounded-xl border border-border p-4 bg-gray-50/50">
-                  <div className="absolute -left-3 top-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => moveBlock(i, -1)} className="grid h-6 w-6 place-items-center rounded-full bg-white border shadow text-xs hover:bg-gray-50" disabled={i === 0}>↑</button>
-                    <button onClick={() => moveBlock(i, 1)} className="grid h-6 w-6 place-items-center rounded-full bg-white border shadow text-xs hover:bg-gray-50" disabled={i === form.body.length - 1}>↓</button>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-                      {block.type === "text" ? <Type className="w-3 h-3"/> : <ImageIcon className="w-3 h-3"/>} {block.type.toUpperCase()} BLOCK
-                    </span>
-                    <button onClick={() => removeBlock(i)} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-3.5 h-3.5"/></button>
-                  </div>
-                  {block.type === "text" ? (
-                    <textarea 
-                      className="w-full rounded-md border px-3 py-2 text-[13px] min-h-[100px] font-mono leading-relaxed" 
-                      value={block.content} 
-                      onChange={(e) => updateBlock(i, e.target.value)} 
-                      placeholder="Write your paragraph here..." 
-                    />
-                  ) : (
-                    <div className="h-48 rounded overflow-hidden border border-dashed border-gray-300">
-                      <ImageUpload label="Block Image" value={block.content} onChange={(v) => updateBlock(i, v)} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex gap-2 justify-center pt-4 border-t">
-              <button onClick={() => addBlock("text")} className="flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold hover:bg-gray-50"><Type className="w-3 h-3"/> ADD TEXT</button>
-              <button onClick={() => addBlock("image")} className="flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold hover:bg-gray-50"><ImageIcon className="w-3 h-3"/> ADD IMAGE</button>
+              <RichTextEditor 
+                value={form.body[0]?.content || ""} 
+                onChange={(content) => {
+                  setField("body", [{ type: "html", content }]);
+                }} 
+              />
             </div>
           </div>
         </div>

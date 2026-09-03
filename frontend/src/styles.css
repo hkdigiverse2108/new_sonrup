@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -289,4 +290,14 @@
     linear-gradient(to bottom, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse at center, black, transparent 72%);
+}
+
+.prose li {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+}
+
+.prose li p {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
 }
