@@ -45,8 +45,12 @@ function PolicyEditorPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => (isNew ? apiAdminCreatePolicy(data) : apiAdminUpdatePolicy(data.slug, data)),
-    onSuccess: () => {
+    onSuccess: (respData: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
+      if (!isNew && variables?.slug) {
+        queryClient.invalidateQueries({ queryKey: ["policies", variables.slug] });
+        queryClient.invalidateQueries({ queryKey: ["policy", variables.slug] });
+      }
       toast.success(isNew ? "Policy created" : "Policy updated");
       if (isNew) {
         navigate({ to: "/admin/settings/policies" });

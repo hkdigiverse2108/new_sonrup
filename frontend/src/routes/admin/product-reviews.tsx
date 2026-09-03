@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import { Plus, Trash2, CheckCircle2, Edit2, X } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/product-reviews")({
   component: ProductReviewsPage,
@@ -27,12 +28,11 @@ function ProductReviewsPage() {
 
   const handleSaveReview = async () => {
     if (!editingReview.name || !editingReview.product_slug || !editingReview.text) {
-      setError("Please fill out all required fields.");
+      toast.error("Please fill out all required fields.");
       return;
     }
     
     setIsSubmitting(true);
-    setError("");
     
     try {
       if (editingReview._id) {
@@ -41,9 +41,10 @@ function ProductReviewsPage() {
         await apiAdminCreateProductReview(editingReview);
       }
       queryClient.invalidateQueries({ queryKey: ["product_reviews"] });
+      toast.success("Review saved successfully!");
       setEditingReview(null);
     } catch (err: any) {
-      setError(err.message || "Failed to save review");
+      toast.error(err.message || "Failed to save review");
     } finally {
       setIsSubmitting(false);
     }
@@ -61,8 +62,9 @@ function ProductReviewsPage() {
       try {
         await apiAdminDeleteProductReview(id);
         queryClient.invalidateQueries({ queryKey: ["product_reviews"] });
-      } catch (err) {
-        console.error("Failed to delete review:", err);
+        toast.success("Review deleted successfully");
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete review");
       }
     }
   };

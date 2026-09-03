@@ -124,8 +124,11 @@ function PostEditor() {
       }
       return isNew ? apiAdminCreatePost(payload) : apiAdminUpdatePost(slug, payload);
     },
-    onSuccess: () => {
+    onSuccess: (respData: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      if (!isNew && slug) {
+        queryClient.invalidateQueries({ queryKey: ["posts", slug] });
+      }
       toast.success(isNew ? "Post created!" : "Post updated!");
       navigate({ to: "/admin/settings/journal" });
     },

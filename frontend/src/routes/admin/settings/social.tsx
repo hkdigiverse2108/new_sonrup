@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent, getImageUrl } from "@/lib/api";
 import { Plus, CheckCircle2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { IMG } from "@/lib/products";
 
 export const Route = createFileRoute("/admin/settings/social")({
@@ -94,7 +95,8 @@ function SocialSettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Social section saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save social section"),
   });
 
   if (isLoading || !form) {

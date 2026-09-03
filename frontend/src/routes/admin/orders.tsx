@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiAdminGetOrders, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel } from "@/lib/api";
 import { CheckCircle, Clock, Truck, Package, Printer, Trash2 } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrders,
@@ -18,32 +19,32 @@ function AdminOrders() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => apiAdminUpdateOrderStatus(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
-    onError: (err: any) => alert(err.message || "Failed to update status"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_orders"] }); toast.success("Status updated"); },
+    onError: (err: any) => toast.error(err.message || "Failed to update status"),
   });
 
   const shipMutation = useMutation({
     mutationFn: (id: string) => apiAdminShipOrder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
-    onError: (err: any) => alert(err.message || "Failed to ship order"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_orders"] }); toast.success("Order shipped"); },
+    onError: (err: any) => toast.error(err.message || "Failed to ship order"),
   });
 
   const pickupMutation = useMutation({
     mutationFn: (id: string) => apiAdminPickupOrder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
-    onError: (err: any) => alert(err.message || "Failed to schedule pickup"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_orders"] }); toast.success("Pickup scheduled"); },
+    onError: (err: any) => toast.error(err.message || "Failed to schedule pickup"),
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => apiAdminCancelShipment(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
-    onError: (err: any) => alert(err.message || "Failed to cancel shipment"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_orders"] }); toast.success("Shipment canceled"); },
+    onError: (err: any) => toast.error(err.message || "Failed to cancel shipment"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiAdminDeleteOrder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_orders"] }),
-    onError: (err: any) => alert(err.message || "Failed to delete order"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_orders"] }); toast.success("Order deleted"); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete order"),
   });
 
   return (

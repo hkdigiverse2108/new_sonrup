@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useContactContent, apiAdminUpdateContactContent } from "@/lib/api";
+import { toast } from "sonner";
 import { CheckCircle2, Plus, Edit2, Trash2, X } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings/contact")({
@@ -22,7 +23,8 @@ function ContactSettingsPage() {
 
   const saveContentMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateContactContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contact_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["contact_content"] }); toast.success("Content saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save content"),
   });
 
   if (isLoading || !form) {

@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent, getImageUrl } from "@/lib/api";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, CheckCircle2, Save, Image as ImageIcon } from "lucide-react";
 import { IMG } from "@/lib/products";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm";
 
 export const Route = createFileRoute("/admin/settings/hero")({
   component: HeroSettingsPage,
@@ -102,7 +104,8 @@ function HeroSettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Hero section saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save Hero section"),
   });
 
   if (isLoading || !form) {

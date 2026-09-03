@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiAdminUpdateHomeContent, apiAdminCreateFlavour, apiAdminUpdateFlavour, apiAdminDeleteFlavour, useFlavours, apiUploadFile, getImageUrl } from "@/lib/api";
 import { Plus, Trash2, GripVertical, CheckCircle2, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/settings/flavours")({
   component: FlavoursSettingsPage,
@@ -36,7 +37,8 @@ function FlavoursSettingsPage() {
 
   const saveHeaderMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent({ ...homeContent, flavour_section: data }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Header saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save header"),
   });
 
   const saveFlavourMutation = useMutation({
@@ -67,7 +69,8 @@ function FlavoursSettingsPage() {
         }
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["flavours"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["flavours"] }); toast.success("Flavours saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save flavours"),
   });
 
   if (isHomeLoading || isFlavoursLoading || !headerForm) {

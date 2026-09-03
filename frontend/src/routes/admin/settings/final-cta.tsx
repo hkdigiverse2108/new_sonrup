@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent, getImageUrl } from "@/lib/api";
 import { CheckCircle2, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { IMG } from "@/lib/products";
 
 export const Route = createFileRoute("/admin/settings/final-cta")({
@@ -82,7 +83,8 @@ function FinalCtaSettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Final CTA saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save Final CTA"),
   });
 
   if (isLoading || !form) {

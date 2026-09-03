@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAboutContent, apiAdminUpdateAboutContent, useBrandValues, apiAdminCreateBrandValue, apiAdminUpdateBrandValue, apiAdminDeleteBrandValue, useMilestones, apiAdminCreateMilestone, apiAdminUpdateMilestone, apiAdminDeleteMilestone, apiUploadFile, getImageUrl } from "@/lib/api";
-import { CheckCircle2, Plus, Edit2, Trash2, X } from "lucide-react";
-import { IMG } from "@/lib/products";
+import { Plus, Trash2, Edit2, CheckCircle2, ChevronRight, Save, Image as ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm";
+import { IMG } from "@/lib/products";
 
 export const Route = createFileRoute("/admin/settings/about")({
   component: AboutSettingsPage,
@@ -112,35 +113,42 @@ function AboutSettingsPage() {
   // Mutations
   const saveContentMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateAboutContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["about_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["about_content"] }); toast.success("Content saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save content"),
   });
 
   // Brand Values Mutations
   const createValueMutation = useMutation({
     mutationFn: (data: any) => apiAdminCreateBrandValue(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["brandValues"] }); setIsAddingValue(false); setEditingValue(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["brandValues"] }); setIsAddingValue(false); setEditingValue(null); toast.success("Value created"); },
+    onError: (err: any) => toast.error(err.message || "Failed to create value"),
   });
   const updateValueMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateBrandValue(data.originalTitle, { title: data.title, body: data.body }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["brandValues"] }); setEditingValue(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["brandValues"] }); setEditingValue(null); toast.success("Value updated"); },
+    onError: (err: any) => toast.error(err.message || "Failed to update value"),
   });
   const deleteValueMutation = useMutation({
     mutationFn: (title: string) => apiAdminDeleteBrandValue(title),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["brandValues"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["brandValues"] }); toast.success("Value deleted"); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete value"),
   });
 
   // Milestones Mutations
   const createMilestoneMutation = useMutation({
     mutationFn: (data: any) => apiAdminCreateMilestone(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["milestones"] }); setIsAddingMilestone(false); setEditingMilestone(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["milestones"] }); setIsAddingMilestone(false); setEditingMilestone(null); toast.success("Milestone created"); },
+    onError: (err: any) => toast.error(err.message || "Failed to create milestone"),
   });
   const updateMilestoneMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateMilestone(data.originalYear, { year: data.year, text: data.text }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["milestones"] }); setEditingMilestone(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["milestones"] }); setEditingMilestone(null); toast.success("Milestone updated"); },
+    onError: (err: any) => toast.error(err.message || "Failed to update milestone"),
   });
   const deleteMilestoneMutation = useMutation({
     mutationFn: (year: string) => apiAdminDeleteMilestone(year),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["milestones"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["milestones"] }); toast.success("Milestone deleted"); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete milestone"),
   });
 
   if (isContentLoading || !form) {

@@ -10,7 +10,7 @@ import {
   useHomeContent
 } from "@/lib/api";
 import { Plus, Trash2, CheckCircle2, Edit2, X } from "lucide-react";
-
+import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm";
 
 export const Route = createFileRoute("/admin/settings/reviews")({
@@ -41,7 +41,8 @@ function ReviewsSettingsPage() {
 
   const saveHeaderMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Header saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save header"),
   });
 
   const createReviewMutation = useMutation({
@@ -50,7 +51,9 @@ function ReviewsSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       setIsAdding(false);
       setEditingReview(null);
-    }
+      toast.success("Review created");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to create review"),
   });
 
   const updateReviewMutation = useMutation({
@@ -64,12 +67,15 @@ function ReviewsSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       setEditingReview(null);
-    }
+      toast.success("Review updated");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update review"),
   });
 
   const deleteReviewMutation = useMutation({
     mutationFn: (name: string) => apiAdminDeleteReview(name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reviews"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["reviews"] }); toast.success("Review deleted"); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete review"),
   });
 
   if (isContentLoading || !form) {

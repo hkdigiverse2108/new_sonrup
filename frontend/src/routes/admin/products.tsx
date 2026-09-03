@@ -6,6 +6,7 @@ import { apiAdminCreateProduct, apiAdminUpdateProduct, apiAdminDeleteProduct, ap
 import { Product } from "@/lib/products";
 import { BrandButton } from "@/components/site/Primitives";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProducts,
@@ -50,8 +51,15 @@ function AdminProducts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      if (editing?.slug) {
+        queryClient.invalidateQueries({ queryKey: ["products", editing.slug] });
+      }
+      toast.success("Product saved successfully!");
       setEditing(null);
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to save product");
+    }
   });
 
   return (

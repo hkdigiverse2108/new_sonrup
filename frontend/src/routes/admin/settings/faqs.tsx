@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { 
   useHomeContent,
   apiAdminUpdateHomeContent, 
@@ -75,7 +76,8 @@ function FaqsSettingsPage() {
   // Mutations
   const saveHeaderMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Header saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save header"),
   });
 
   const createFaqMutation = useMutation({
@@ -84,7 +86,9 @@ function FaqsSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["faqs"] });
       setIsAdding(false);
       setEditingFaq(null);
-    }
+      toast.success("FAQ created");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to create FAQ"),
   });
 
   const updateFaqMutation = useMutation({
@@ -96,12 +100,15 @@ function FaqsSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faqs"] });
       setEditingFaq(null);
-    }
+      toast.success("FAQ updated");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update FAQ"),
   });
 
   const deleteFaqMutation = useMutation({
     mutationFn: (q: string) => apiAdminDeleteFaq(q),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["faqs"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["faqs"] }); toast.success("FAQ deleted"); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete FAQ"),
   });
 
   if (isContentLoading || !form) {

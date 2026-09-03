@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHomeContent, apiUploadFile, apiAdminUpdateHomeContent, getImageUrl } from "@/lib/api";
 import { Plus, Trash2, GripVertical, CheckCircle2 } from "lucide-react";
 import { IMG } from "@/lib/products";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/settings/ingredients")({
   component: IngredientsSettingsPage,
@@ -77,7 +78,8 @@ function IngredientsSettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => apiAdminUpdateHomeContent(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["home_content"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["home_content"] }); toast.success("Ingredients section saved"); },
+    onError: (err: any) => toast.error(err.message || "Failed to save ingredients"),
   });
 
   if (isLoading || !form) {
