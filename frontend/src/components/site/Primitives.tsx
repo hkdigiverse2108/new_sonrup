@@ -16,32 +16,8 @@ export function Reveal({
   delay?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.12 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   return (
-    <div
-      ref={ref}
-      className={cn("reveal", className)}
-      data-visible={visible}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
+    <div className={className}>
       {children}
     </div>
   );
@@ -242,7 +218,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
         <img
           src={getImageUrl(product.image)}
           alt={product.name}
-          loading="lazy"
+          loading="eager"
           className="relative aspect-square w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
         />
       </Link>

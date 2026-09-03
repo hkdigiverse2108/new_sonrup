@@ -150,7 +150,7 @@ function ProductPage() {
                   activeImg === i ? "border-secondary" : "border-transparent opacity-60 hover:opacity-100",
                 )}
               >
-                <img src={getImageUrl(g)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img src={getImageUrl(g)} alt="" loading="eager" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

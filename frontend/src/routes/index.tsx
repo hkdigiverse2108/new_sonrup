@@ -52,29 +52,38 @@ export const Route = createFileRoute("/")({
     ]);
     return { homeContent, products, flavours, reviews, faqs };
   },
-  head: () => ({
-    meta: [
-      { title: "Sonrup Gummies — Goodness That Tastes This Good" },
-      {
-        name: "description",
-        content:
-          "Premium daily gummies from Sonrup: biotin multivitamin, Himalayan shilajit and kids' immunity — real fruit flavours, 60 gummies per tube.",
-      },
-      { property: "og:title", content: "Sonrup Gummies — Goodness That Tastes This Good" },
-      {
-        property: "og:description",
-        content: "Delicious daily gummies made to make your everyday routine a little sweeter.",
-      },
-    ],
-    links: [
-      {
-        rel: "preload",
-        as: "image",
-        href: getImageUrl("/uploads/54436ed47f214de29576ab69177e482c.webp"),
-        type: "image/webp",
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const hero = loaderData?.homeContent?.hero || {};
+    return {
+      meta: [
+        { title: "Sonrup Gummies — Goodness That Tastes This Good" },
+        {
+          name: "description",
+          content:
+            "Premium daily gummies from Sonrup: biotin multivitamin, Himalayan shilajit and kids' immunity — real fruit flavours, 60 gummies per tube.",
+        },
+        { property: "og:title", content: "Sonrup Gummies — Goodness That Tastes This Good" },
+        {
+          property: "og:description",
+          content: "Delicious daily gummies made to make your everyday routine a little sweeter.",
+        },
+      ],
+      links: [
+        {
+          rel: "preload",
+          as: "image",
+          href: getImageUrl(hero.main_image || IMG.multi),
+          fetchPriority: "high",
+        },
+        {
+          rel: "preload",
+          as: "image",
+          href: getImageUrl(hero.left_image || IMG.shilajit),
+          fetchPriority: "high",
+        }
+      ],
+    };
+  },
   component: Home,
 });
 
@@ -747,15 +756,26 @@ function SocialGrid({ content }: { content: any }) {
   };
 
   const rawTiles = Array.isArray(section.images) && section.images.length > 0 ? section.images : [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
-  const tiles = rawTiles.filter(Boolean);
+  
+  const validTiles: string[] = [];
+  const validLinks: string[] = [];
+  rawTiles.forEach((src: string, i: number) => {
+    if (src) {
+      validTiles.push(src);
+      validLinks.push(section.image_links?.[i] || "#");
+    }
+  });
 
-  let displayTiles = [...tiles];
-  if (tiles.length > 0) {
+  let displayTiles = [...validTiles];
+  let displayLinks = [...validLinks];
+  if (validTiles.length > 0) {
     while (displayTiles.length < 12) {
-      displayTiles = [...displayTiles, ...tiles];
+      displayTiles = [...displayTiles, ...validTiles];
+      displayLinks = [...displayLinks, ...validLinks];
     }
   }
   const marqueeTiles = [...displayTiles, ...displayTiles];
+  const marqueeLinks = [...displayLinks, ...displayLinks];
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -798,7 +818,7 @@ function SocialGrid({ content }: { content: any }) {
       el.removeEventListener("mouseenter", onMouseEnter);
       el.removeEventListener("mouseleave", onMouseLeave);
     };
-  }, [tiles, isMouseDown, marqueeTiles.length]);
+  }, [isMouseDown, marqueeTiles.length]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsMouseDown(true);
@@ -879,31 +899,23 @@ function SocialGrid({ content }: { content: any }) {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {marqueeTiles.map((src: string, index: number) => {
-            const originalIndex = index % tiles.length;
-            const link = section.image_links?.[originalIndex] || "#";
+            let link = (marqueeLinks[index] || "").trim();
+            if (link !== "#" && link !== "" && !link.startsWith("http")) {
+              link = "https://" + link;
+            }
             const isLink = link !== "#" && link !== "";
             
-            const ImageWrapper = ({ children }: { children: React.ReactNode }) => 
-              isLink ? (
-                <a 
-                  href={link} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="block h-full w-full"
-                  onClick={(e) => {
-                    if (dragged) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  {children}
-                </a>
-              ) : (
-                <div className="h-full w-full">{children}</div>
-              );
-
-            // Stagger pattern based on the index to make it wave-like!
             const staggerClass = index % 3 === 0 ? "-translate-y-4" : index % 3 === 1 ? "translate-y-4" : "translate-y-0";
+
+            const innerContent = (
+              <img
+                src={getImageUrl(src)}
+                alt="Sonrup gummies lifestyle"
+                loading="eager"
+                draggable="false"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
+              />
+            );
 
             return (
               <div 
@@ -911,15 +923,23 @@ function SocialGrid({ content }: { content: any }) {
                 className={cn("shrink-0 w-[220px] md:w-[280px] transition-transform duration-500", staggerClass)}
               >
                 <div className="group overflow-hidden rounded-3xl bg-muted/20 w-full aspect-[4/5] shadow-md hover:shadow-xl transition-all duration-300">
-                  <ImageWrapper>
-                    <img
-                      src={getImageUrl(src)}
-                      alt="Sonrup gummies lifestyle"
-                      loading="lazy"
-                      draggable="false"
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 select-none"
-                    />
-                  </ImageWrapper>
+                  {isLink ? (
+                    <a 
+                      href={link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block h-full w-full"
+                      onClick={(e) => {
+                        if (dragged) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {innerContent}
+                    </a>
+                  ) : (
+                    <div className="h-full w-full">{innerContent}</div>
+                  )}
                 </div>
               </div>
             );
