@@ -122,20 +122,24 @@ function ProductPage() {
             
             {gallery.length > 1 && (
               <>
-                <button
-                  onClick={() => setActiveImg((prev) => (prev - 1 + gallery.length) % gallery.length)}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setActiveImg((prev) => (prev + 1) % gallery.length)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
+                {activeImg > 0 && (
+                  <button
+                    onClick={() => setActiveImg((prev) => prev - 1)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                )}
+                {activeImg < gallery.length - 1 && (
+                  <button
+                    onClick={() => setActiveImg((prev) => prev + 1)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white transition z-20"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                )}
               </>
             )}
           </div>
