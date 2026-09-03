@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAboutContent, apiAdminUpdateAboutContent, useBrandValues, apiAdminCreateBrandValue, apiAdminUpdateBrandValue, apiAdminDeleteBrandValue, useMilestones, apiAdminCreateMilestone, apiAdminUpdateMilestone, apiAdminDeleteMilestone, apiUploadFile, getImageUrl } from "@/lib/api";
-import { Plus, Trash2, Edit2, CheckCircle2, ChevronRight, Save, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, ChevronRight, Save, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/confirm";
 import { IMG } from "@/lib/products";
