@@ -247,10 +247,14 @@ function AdminLayout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <p className="font-display text-xl font-extrabold tracking-tight text-primary">
-            sonrup<span className="text-secondary">.</span>
-            <span className="ml-1.5 text-xs font-normal text-muted-foreground uppercase tracking-widest">Admin</span>
-          </p>
+          <Link to="/admin" className="flex items-center -ml-4">
+            <img 
+              src="/logo.png" 
+              alt="Sonrup" 
+              className="h-10 w-auto object-contain object-left" 
+              style={{ filter: "drop-shadow(0px 1px 0px rgba(0,0,0,0.55)) drop-shadow(0px 2px 6px rgba(0,0,0,0.35))" }} 
+            />
+          </Link>
         </div>
 
         <button
@@ -444,9 +448,9 @@ function AdminLayout() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto min-w-0">
         <div className="pt-16 lg:pt-0">
-          <div className="p-6 lg:p-10 xl:p-12">
+          <div className="p-4 sm:p-6 lg:p-10 xl:p-12">
             <Outlet />
           </div>
         </div>

@@ -73,7 +73,7 @@ function AdminProducts() {
         />
       ) : (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h1 className="text-3xl font-display font-extrabold tracking-tight">Products</h1>
             <BrandButton onClick={() => setEditing({
               categories: [],
@@ -105,7 +105,7 @@ function AdminProducts() {
             <div>Loading products...</div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border bg-card">
-              <table className="w-full min-w-[600px] text-left text-sm">
+              <table className="w-full min-w-[800px] text-left text-sm">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 font-medium">Product</th>

@@ -57,11 +57,37 @@ function PolicyPage() {
               <section>
                 <h2 className="font-display text-2xl font-extrabold tracking-[-0.03em]">{s.heading}</h2>
                 <div className="mt-4 space-y-4">
-                  {s.body?.map((p: string, j: number) => (
-                    <p key={j} className="text-sm leading-[1.85] text-muted-foreground">
-                      {p}
-                    </p>
-                  ))}
+                  {typeof s.body === "string" ? (
+                    <div 
+                      className="prose prose-sm sm:prose-base max-w-none text-muted-foreground prose-p:leading-relaxed prose-li:marker:text-muted-foreground"
+                      dangerouslySetInnerHTML={{ 
+                        __html: s.body.replace(
+                          /<p>\s*([●•\-\*◦○■□▪▫➢➣➤✓✔])\s*(.*?)<\/p>/gs, 
+                          '<div class="flex gap-3 leading-relaxed mb-4"><span class="shrink-0 mt-[1px]">$1</span><div class="flex-1">$2</div></div>'
+                        ) 
+                      }}
+                    />
+                  ) : (
+                    Array.isArray(s.body) && s.body.map((p: string, j: number) => {
+                      // Match optional leading spaces, bullet character, optional spaces, and the rest of the text
+                      const bulletMatch = p.match(/^\s*([●•\-\*◦○■□▪▫➢➣➤✓✔])\s*(.*)/s);
+                      
+                      if (bulletMatch) {
+                        return (
+                          <div key={j} className="flex gap-3 text-sm leading-[1.85] text-muted-foreground whitespace-pre-wrap">
+                            <span className="shrink-0 mt-[1px]">{bulletMatch[1]}</span>
+                            <div className="flex-1">{bulletMatch[2]}</div>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <p key={j} className="text-sm leading-[1.85] text-muted-foreground whitespace-pre-wrap">
+                          {p}
+                        </p>
+                      );
+                    })
+                  )}
                 </div>
               </section>
             </Reveal>

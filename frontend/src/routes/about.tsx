@@ -120,7 +120,7 @@ function About() {
               <Reveal key={v.title} delay={i * 80}>
                 <div className="surface-card lift h-full p-7">
                   <p className="font-display text-2xl font-extrabold">{v.title}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{v.body}</p>
+                  <div className="mt-3 text-sm leading-relaxed text-muted-foreground rich-text-content" dangerouslySetInnerHTML={{ __html: v.body }} />
                 </div>
               </Reveal>
             ))}
@@ -136,7 +136,7 @@ function About() {
               <div className="relative pb-12">
                 <span className="absolute -left-[31px] top-1 grid h-4 w-4 place-items-center rounded-full bg-[image:var(--gradient-gold)] sm:-left-[47px]" />
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">{m.year}</p>
-                <p className="mt-2 max-w-2xl font-display text-xl font-extrabold leading-snug">{m.text}</p>
+                <div className="mt-2 max-w-2xl font-display text-xl font-extrabold leading-snug rich-text-content" dangerouslySetInnerHTML={{ __html: m.text }} />
               </div>
             </Reveal>
           ))}

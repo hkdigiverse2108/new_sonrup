@@ -173,7 +173,7 @@ function JournalSettingsPage() {
       </div>
 
       <div className="space-y-6 pt-6 border-t border-border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-[14px] font-extrabold uppercase tracking-widest text-muted-foreground">ALL JOURNAL POSTS</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Click any post to edit its title, content, cover image, and detail page banner image.</p>

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 class Ingredient(BaseModel):
     name: str
@@ -84,13 +84,13 @@ class FaqModel(BaseModel):
 
 class PolicySection(BaseModel):
     heading: str
-    body: List[str]
+    body: Any
 
 class PolicyModel(BaseModel):
     slug: str
     title: str
-    updated: str
-    intro: str
+    updated: Optional[str] = ""
+    intro: Optional[str] = ""
     sections: List[PolicySection]
 
 class FlavourModel(BaseModel):
@@ -453,16 +453,6 @@ class PostModel(BaseModel):
 # POLICIES CMS
 # -------------------------------------------------------------------
 
-class PolicySection(BaseModel):
-    heading: str
-    body: List[str]
-
-class PolicyModel(BaseModel):
-    slug: str
-    title: str
-    updated: Optional[str] = ""
-    intro: str
-    sections: List[PolicySection]
 
 # -------------------------------------------------------------------
 # CONTACT SUBMISSIONS

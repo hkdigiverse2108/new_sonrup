@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiAdminUpdatePolicy, fetchJson, apiAdminCreatePolicy } from "@/lib/api";
 import { ArrowLeft, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 export const Route = createFileRoute("/admin/policy/$slug")({
   component: PolicyEditorPage,
@@ -37,8 +38,11 @@ function PolicyEditorPage() {
         intro: initialData.intro || "",
         updated: initialData.updated || initialData.updatedAt || "",
         sections: initialData.sections && initialData.sections.length > 0 
-          ? initialData.sections 
-          : [{ heading: "", body: [""] }],
+          ? initialData.sections.map((s: any) => ({
+              ...s,
+              body: Array.isArray(s.body) ? s.body.map((p: string) => `<p>${p}</p>`).join("") : s.body
+            }))
+          : [{ heading: "", body: "" }],
       });
     }
   }, [initialData, isNew]);
@@ -64,7 +68,7 @@ function PolicyEditorPage() {
   const setField = (k: string, v: string) => setForm({ ...form, [k]: v });
 
   const addSection = () => {
-    setForm({ ...form, sections: [...form.sections, { heading: "", body: [""] }] });
+    setForm({ ...form, sections: [...form.sections, { heading: "", body: "" }] });
   };
 
   const updateSection = (idx: number, k: string, v: any) => {
@@ -76,24 +80,6 @@ function PolicyEditorPage() {
   const removeSection = (idx: number) => {
     const newSections = [...form.sections];
     newSections.splice(idx, 1);
-    setForm({ ...form, sections: newSections });
-  };
-
-  const updateParagraph = (sIdx: number, pIdx: number, v: string) => {
-    const newSections = [...form.sections];
-    newSections[sIdx].body[pIdx] = v;
-    setForm({ ...form, sections: newSections });
-  };
-
-  const addParagraph = (sIdx: number) => {
-    const newSections = [...form.sections];
-    newSections[sIdx].body.push("");
-    setForm({ ...form, sections: newSections });
-  };
-
-  const removeParagraph = (sIdx: number, pIdx: number) => {
-    const newSections = [...form.sections];
-    newSections[sIdx].body.splice(pIdx, 1);
     setForm({ ...form, sections: newSections });
   };
 
@@ -208,29 +194,11 @@ function PolicyEditorPage() {
               />
             </label>
             <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 block">PARAGRAPHS</span>
-              {sec.body.map((pText: string, pIdx: number) => (
-                <div key={pIdx} className="flex gap-2">
-                  <textarea
-                    className="flex-1 rounded-md border px-3 py-2 text-[13px] min-h-[60px]"
-                    value={pText}
-                    onChange={(e) => updateParagraph(sIdx, pIdx, e.target.value)}
-                    placeholder="Paragraph text..."
-                  />
-                  <button
-                    onClick={() => removeParagraph(sIdx, pIdx)}
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-md border bg-white text-red-500 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => addParagraph(sIdx)}
-                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-              >
-                <Plus className="h-3 w-3" /> Add Paragraph
-              </button>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 block">BODY CONTENT</span>
+              <RichTextEditor
+                value={sec.body || ""}
+                onChange={(html) => updateSection(sIdx, "body", html)}
+              />
             </div>
           </div>
         ))}

@@ -40,7 +40,7 @@ function PoliciesSettingsPage() {
 
   return (
     <div className="space-y-12 pb-20 pt-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#3E332A]">Legal Policies</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage footer policies like Privacy Policy and Terms & Conditions.</p>
