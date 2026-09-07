@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShoppingBag, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton, FreeShipBar, QtyStepper } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
@@ -22,8 +23,14 @@ export const Route = createFileRoute("/cart")({
 function CartPage() {
   const { lines, setQty, remove, subtotal } = useStore();
   const { data: settings } = useIntegrationsSettings();
-  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
-  const SHIPPING_CHARGE = settings?.shipping_charge ?? 59;
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const FREE_SHIPPING_THRESHOLD = isMounted && settings?.free_shipping_amount ? settings.free_shipping_amount : 499;
+  const SHIPPING_CHARGE = isMounted && settings?.shipping_charge ? settings.shipping_charge : 59;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_CHARGE;
 
   return (

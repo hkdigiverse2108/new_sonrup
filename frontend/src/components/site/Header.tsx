@@ -18,13 +18,18 @@ const DEFAULT_ANNOUNCEMENTS = ["FREE SHIPPING ON ORDERS ABOVE ₹499"];
 
 export function AnnouncementBar() {
   const { data: settings } = useIntegrationsSettings();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const rawItems = settings?.announcement_bar_items;
   const validItems = rawItems && rawItems.length > 0 
     ? rawItems.filter((l: string) => l && l.trim().length > 0)
     : DEFAULT_ANNOUNCEMENTS;
   
-  const items = validItems.length > 0 ? validItems : DEFAULT_ANNOUNCEMENTS;
+  const items = isMounted && validItems.length > 0 ? validItems : DEFAULT_ANNOUNCEMENTS;
       
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">
