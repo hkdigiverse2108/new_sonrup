@@ -94,7 +94,7 @@ export function Header() {
       >
         <div className="mx-auto flex max-w-[1400px] flex-nowrap items-center justify-between gap-x-2 px-4 lg:gap-x-6 lg:px-10">
           <Link to="/" className="flex shrink-0 items-center pl-10 lg:pl-0">
-            <img 
+            <img loading="lazy" 
               src="/logo.png" 
               alt="Sonrup" 
               className="h-12 w-auto object-contain object-left lg:h-15" 
@@ -269,7 +269,7 @@ export function Header() {
                       }}
                       className="flex items-center gap-4 rounded-xl p-3 transition-colors hover:bg-muted"
                     >
-                      <img src={getImageUrl(p.image)} alt={p.name} className="h-12 w-10 shrink-0 rounded-md object-cover" />
+                      <img loading="lazy" src={getImageUrl(p.image)} alt={p.name} className="h-12 w-10 shrink-0 rounded-md object-cover" />
                       <div>
                         <p className="font-display text-sm font-extrabold">{p.name}</p>
                         <p className="text-xs text-muted-foreground">{p.tagline}</p>

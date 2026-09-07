@@ -332,7 +332,7 @@ function TrackOrderPage() {
                 </h4>
                 {order.items?.map((item: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 border-b border-border/60 pb-4 last:border-0 last:pb-0">
-                    <img 
+                    <img loading="lazy" 
                       src={getImageUrl(item.image)} 
                       alt={item.name} 
                       className="h-16 w-16 rounded-xl object-cover bg-sand/30 border border-border" 

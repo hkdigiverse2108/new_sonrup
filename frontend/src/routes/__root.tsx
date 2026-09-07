@@ -88,12 +88,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context: { queryClient } }) => {
-    try {
-      await queryClient.ensureQueryData(integrationsSettingsQueryOptions());
-    } catch (e) {
-      // Ignore errors for global settings
-    }
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(integrationsSettingsQueryOptions());
   },
   head: () => ({
     meta: [

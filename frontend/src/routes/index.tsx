@@ -42,15 +42,13 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context: { queryClient } }) => {
-    const [homeContent, products, flavours, reviews, faqs] = await Promise.all([
-      queryClient.ensureQueryData(homeContentQueryOptions()),
-      queryClient.ensureQueryData(productsQueryOptions()),
-      queryClient.ensureQueryData(flavoursQueryOptions()),
-      queryClient.ensureQueryData(reviewsQueryOptions()),
-      queryClient.ensureQueryData(faqsQueryOptions()),
-    ]);
-    return { homeContent, products, flavours, reviews, faqs };
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(homeContentQueryOptions());
+    queryClient.prefetchQuery(productsQueryOptions());
+    queryClient.prefetchQuery(flavoursQueryOptions());
+    queryClient.prefetchQuery(reviewsQueryOptions());
+    queryClient.prefetchQuery(faqsQueryOptions());
+    return {};
   },
   head: ({ loaderData }) => {
     const hero = loaderData?.homeContent?.hero || {};
@@ -101,37 +99,9 @@ function Home() {
   const currentReviews = reviews ?? loaderData?.reviews ?? [];
   const currentFaqs = faqs ?? loaderData?.faqs ?? [];
 
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 1000); // Force load after 1s max
-    if (document.readyState === "complete") {
-      setLoaded(true);
-      clearTimeout(timer);
-    } else {
-      const handleLoad = () => {
-        setLoaded(true);
-        clearTimeout(timer);
-      };
-      window.addEventListener("load", handleLoad);
-      return () => {
-        window.removeEventListener("load", handleLoad);
-        clearTimeout(timer);
-      };
-    }
-  }, []);
-
   return (
     <>
-      <div 
-        className={cn(
-          "fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-all duration-700 ease-in-out", 
-          loaded ? "opacity-0 pointer-events-none" : "opacity-100"
-        )}
-      >
-        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-      </div>
-      <main className={cn("transition-opacity duration-1000", loaded ? "opacity-100" : "opacity-0")}>
+      <main>
         <Hero content={currentContent} />
         <TrustStrip content={currentContent} />
         <BestSellers products={currentProducts} />
@@ -212,15 +182,15 @@ function Hero({ content }: { content: any }) {
       <div className="relative mx-auto grid max-w-[1400px] items-center gap-16 px-5 pb-28 pt-16 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:px-10 lg:pb-36 lg:pt-24">
         {/* Copy */}
         <div className="relative z-10">
-          <div className="mask-rise">
+          <div>
             <Eyebrow className="border-cream/15 bg-cream/[0.06] text-cream/70 backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-primary" /> {hero.eyebrow}
             </Eyebrow>
           </div>
 
           <h1 className="mt-8 font-display text-[clamp(2.2rem,9vw,5.9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
-            <span className="mask-rise block [--d:80ms]">{hero.headline_line1}</span>
-            <span className="mask-rise block [--d:200ms]">
+            <span className="block">{hero.headline_line1}</span>
+            <span className="block">
               {hero.headline_line2.includes(" ") ? (
                 <>
                   {hero.headline_line2.split(" ").slice(0, -1).join(" ")}{" "}
@@ -228,7 +198,7 @@ function Hero({ content }: { content: any }) {
                 </>
               ) : <span className="italic font-semibold tracking-[-0.02em]">{hero.headline_line2}</span>}
             </span>
-            <span className="mask-rise mt-2 flex flex-wrap items-baseline gap-x-4 [--d:320ms]">
+            <span className="mt-2 flex flex-wrap items-baseline gap-x-4">
               <span className="text-[0.42em] font-bold uppercase tracking-[0.3em] text-cream/45">{hero.headline_for_your}</span>
               <span className="relative inline-block h-[1.02em] min-w-[7.5em] overflow-hidden align-bottom">
                 {rotate.map((w, i) => (
@@ -247,11 +217,11 @@ function Hero({ content }: { content: any }) {
             </span>
           </h1>
 
-          <p className="mask-rise mt-8 max-w-md text-base leading-relaxed text-cream/65 sm:text-lg [--d:460ms]">
+          <p className="mt-8 max-w-md text-base leading-relaxed text-cream/65 sm:text-lg">
             {hero.subtext}
           </p>
 
-          <div className="mask-rise mt-10 flex flex-wrap items-center gap-3 [--d:580ms]">
+          <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link to={hero.cta1_href?.startsWith("/") ? hero.cta1_href : "/shop"}>
               <BrandButton variant="gold" size="lg" className="group">
                 {hero.cta1_text}
@@ -269,7 +239,7 @@ function Hero({ content }: { content: any }) {
             </a>
           </div>
 
-          <dl className="mask-rise mt-14 grid max-w-lg grid-cols-1 md:grid-cols-3 divide-y divide-cream/10 md:divide-y-0 md:divide-x md:divide-cream/10 overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur [--d:700ms]">
+          <dl className="mt-14 grid max-w-lg grid-cols-1 md:grid-cols-3 divide-y divide-cream/10 md:divide-y-0 md:divide-x md:divide-cream/10 overflow-hidden rounded-2xl border border-cream/10 bg-cream/[0.04] backdrop-blur">
             {stats.map((s) => (
               <div key={s.k} className="px-4 py-4 md:py-5 text-center md:text-left">
                 <dt className="font-display text-xl font-extrabold text-primary sm:text-2xl">{s.k}</dt>
@@ -464,7 +434,7 @@ function FlavourExperience({ content, flavours: initialFlavours }: { content: an
                 )}
               >
                 {/* Background Image with Brightness Effect */}
-                <img
+                <img loading="lazy"
                   src={getImageUrl(f.image)}
                   alt={f.name}
                   className={cn(
@@ -564,7 +534,7 @@ function WhyOurGummies({ content }: { content: any }) {
       <div className="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <Reveal className="relative">
           <div className="relative overflow-hidden rounded-[2.5rem] bg-[image:var(--gradient-gold)] p-8">
-            <img
+            <img loading="lazy"
               src={getImageUrl(why.image)}
               alt="Sonrup multivitamin gummies packaging"
               className="w-full aspect-[4/5] rounded-[1.8rem] object-cover shadow-[var(--shadow-lift)]"
@@ -645,7 +615,7 @@ function IngredientStory({ content }: { content: any }) {
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-ink/10" />
 
           <div className="relative mx-auto w-[min(70vw,320px)]">
-            <img
+            <img loading="lazy"
               src={getImageUrl(story.image)}
               alt="Sonrup gummies ingredients"
               className="float-slow w-full aspect-[3/4] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
@@ -721,12 +691,12 @@ function BrandStory({ content }: { content: any }) {
         </Reveal>
 
         <Reveal delay={140} className="relative">
-          <img
+          <img loading="lazy"
             src={getImageUrl(story.main_image)}
             alt="Sonrup main story image"
             className="ml-auto w-[76%] aspect-[3/4] rounded-[2.5rem] object-cover shadow-[var(--shadow-lift)]"
           />
-          <img
+          <img loading="lazy"
             src={getImageUrl(story.floating_image)}
             alt="Sonrup floating story image"
             className="float-slow absolute bottom-[-3rem] left-0 w-[46%] aspect-square rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
@@ -1061,13 +1031,13 @@ function FinalCta({ content }: { content: any }) {
       <div className="relative overflow-hidden rounded-[3rem] bg-ink px-6 py-20 text-center text-cream sm:px-16">
         <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 blob bg-primary/25 blur-[80px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-80 w-80 blob bg-secondary/25 blur-[80px]" />
-        <img
+        <img loading="lazy"
           src={getImageUrl(imgLeft)}
           alt=""
           aria-hidden
           className="float-slow pointer-events-none absolute -left-10 bottom-0 hidden w-48 rotate-[-12deg] rounded-3xl opacity-90 lg:block object-cover h-64"
         />
-        <img
+        <img loading="lazy"
           src={getImageUrl(imgRight)}
           alt=""
           aria-hidden

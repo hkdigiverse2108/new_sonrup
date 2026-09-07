@@ -7,9 +7,9 @@ import { faqsQueryOptions, useFaqs } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/faq")({
-  loader: async ({ context: { queryClient } }) => {
-    const faqs = await queryClient.ensureQueryData(faqsQueryOptions());
-    return { faqs };
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(faqsQueryOptions());
+    return {};
   },
   head: () => ({
     meta: [

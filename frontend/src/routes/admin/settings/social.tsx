@@ -38,7 +38,7 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
         className="flex flex-col h-full items-center justify-center gap-3 rounded-xl border border-[#e5e1dc] bg-[#faf9f8] p-2 transition-colors hover:border-[#3E332A]/50 cursor-pointer relative overflow-hidden min-h-[140px]"
       >
         {value ? (
-          <img src={getImageUrl(value)} alt="Preview" className="absolute inset-0 h-full w-full object-cover transition-opacity group-hover:opacity-40" />
+          <img loading="lazy" src={getImageUrl(value)} alt="Preview" className="absolute inset-0 h-full w-full object-cover transition-opacity group-hover:opacity-40" />
         ) : (
           <div className="h-10 w-10 shrink-0 rounded-xl border border-dashed border-border flex items-center justify-center bg-white text-muted-foreground/50">
             <Plus className="h-4 w-4" />

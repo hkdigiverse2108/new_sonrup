@@ -75,7 +75,7 @@ function WishlistPage() {
                       className="relative shrink-0 overflow-hidden rounded-2xl"
                     >
                       <div className="absolute inset-0 bg-[image:var(--gradient-glow)] opacity-60" />
-                      <img
+                      <img loading="lazy"
                         src={getImageUrl(p.image)}
                         alt={p.name}
                         className="relative h-40 w-32 object-cover transition-transform duration-700 group-hover:scale-[1.07]"

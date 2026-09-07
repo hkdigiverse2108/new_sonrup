@@ -283,6 +283,19 @@
   animation: spin-slow-kf 26s linear infinite;
 }
 
+@keyframes float-kf {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@utility float-slow {
+  animation: float-kf 6s ease-in-out infinite;
+}
+
+@utility float-fast {
+  animation: float-kf 4s ease-in-out infinite;
+}
+
 @utility hero-grid {
   background-image:
     linear-gradient(to right, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px),

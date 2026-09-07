@@ -298,7 +298,7 @@ function OrdersPanel() {
                   params={{ slug: p.slug }}
                   className="group flex items-center gap-4"
                 >
-                  <img
+                  <img loading="lazy"
                     src={getImageUrl(p.image)}
                     alt={p.name}
                     className="h-16 w-14 rounded-xl object-cover transition-transform duration-500 group-hover:scale-105"
@@ -493,7 +493,7 @@ function SavedPanel() {
             params={{ slug: p.slug }}
             className="surface-card lift flex items-center gap-5 p-5"
           >
-            <img src={getImageUrl(p.image)} alt={p.name} className="h-20 w-16 rounded-xl object-cover" />
+            <img loading="lazy" src={getImageUrl(p.image)} alt={p.name} className="h-20 w-16 rounded-xl object-cover" />
             <div>
               <p className="font-display text-lg font-extrabold">{p.name}</p>
               <p className="text-sm text-muted-foreground">{p.tagline}</p>

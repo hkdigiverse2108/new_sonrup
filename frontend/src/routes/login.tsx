@@ -105,7 +105,7 @@ function LoginPage() {
         {/* Left Side (Brand/Image) */}
         <div className="bg-ink p-8 lg:p-10 flex flex-col justify-between lg:w-[45%]">
           <div>
-            <img 
+            <img loading="lazy" 
               src="/logo.png" 
               alt="Sonrup" 
               className="h-16 w-auto object-contain object-left" 
@@ -114,7 +114,7 @@ function LoginPage() {
           </div>
           
           <div className="my-6 flex justify-center">
-            <img
+            <img loading="lazy"
               src={loginContent.image}
               alt="Sonrup Gummies"
               className="w-full max-w-[280px] object-cover rounded-3xl shadow-xl shadow-black/20"

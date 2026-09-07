@@ -57,7 +57,7 @@ export function CartDrawer() {
 
           {lines.map(({ product, qty }) => (
             <div key={product.slug} className="flex gap-4 rounded-2xl border border-border/70 bg-card p-3">
-              <img src={getImageUrl(product.image)} alt={product.name} className="h-24 w-20 rounded-xl object-cover" />
+              <img loading="lazy" src={getImageUrl(product.image)} alt={product.name} className="h-24 w-20 rounded-xl object-cover" />
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-2">
                   <Link

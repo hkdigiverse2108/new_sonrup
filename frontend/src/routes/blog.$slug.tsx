@@ -125,7 +125,7 @@ function ArticlePage() {
                     </p>
                   ) : (
                     <div className="my-10 overflow-hidden rounded-2xl border bg-muted shadow-sm">
-                      <img src={getImageUrl(content)} alt="Blog post visual" className="w-full object-cover" />
+                      <img loading="lazy" src={getImageUrl(content)} alt="Blog post visual" className="w-full object-cover" />
                     </div>
                   )}
                 </Reveal>
@@ -161,7 +161,7 @@ function ArticlePage() {
                 >
                   <div className="relative h-48 overflow-hidden bg-muted">
                     {p.image ? (
-                      <img
+                      <img loading="lazy"
                         src={getImageUrl(p.image)}
                         alt={p.title}
                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -8,12 +8,10 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/blog/")({
-  loader: async ({ context: { queryClient } }) => {
-    const [posts, journalContent] = await Promise.all([
-      queryClient.ensureQueryData(postsQueryOptions()),
-      queryClient.ensureQueryData(journalContentQueryOptions()),
-    ]);
-    return { posts, journalContent };
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(postsQueryOptions());
+    queryClient.prefetchQuery(journalContentQueryOptions());
+    return {};
   },
   head: () => ({
     meta: [
@@ -89,7 +87,7 @@ function JournalPage() {
               className="group mt-10 grid overflow-hidden rounded-[2.5rem] border border-border/70 bg-card shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)] lg:grid-cols-[1.1fr_1fr]"
             >
               <div className="relative flex min-h-64 items-end overflow-hidden bg-muted">
-                {lead.image && <img src={getImageUrl(lead.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                {lead.image && <img loading="lazy" src={getImageUrl(lead.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                 <div className="float-slow absolute -right-16 -top-16 h-64 w-64 blob bg-card/45" />
                 <div className="spin-slow absolute -bottom-24 -left-24 h-56 w-56 blob bg-card/30" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -123,7 +121,7 @@ function JournalPage() {
                 className="group surface-card lift flex h-full flex-col overflow-hidden"
               >
                 <div className="relative h-48 overflow-hidden bg-muted">
-                  {p.image && <img src={getImageUrl(p.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                  {p.image && <img loading="lazy" src={getImageUrl(p.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                   <div className="float-slow absolute -right-8 -top-8 h-32 w-32 blob bg-card/45" />
                   <span className="absolute bottom-4 left-4 rounded-full bg-card/90 px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.2em] backdrop-blur-sm text-primary">
                     {p.category}

@@ -327,7 +327,7 @@ function AdminOrders() {
                                           ${data.cl || data.snm || ""}
                                         </div>
                                         <div class="header-col-right">
-                                          <img class="delhivery-logo" src="https://track.delhivery.com/static/images/new_logo.png" alt="DELHIVERY" />
+                                          <img loading="lazy" class="delhivery-logo" src="https://track.delhivery.com/static/images/new_logo.png" alt="DELHIVERY" />
                                         </div>
                                       </div>
                                       

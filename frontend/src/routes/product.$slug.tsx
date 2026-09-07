@@ -109,7 +109,7 @@ function ProductPage() {
               style={{ transform: `translateX(-${activeImg * 100}%)` }}
             >
               {gallery.map((g, i) => (
-                <img
+                <img loading="lazy"
                   key={i}
                   src={getImageUrl(g)}
                   alt={`${product.name} ${i + 1}`}

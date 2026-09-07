@@ -31,7 +31,7 @@ function ImageUpload({ label, value, onChange }: { label: string, value: string,
       <div className="flex items-center gap-3 rounded-xl border border-[#e5e1dc] bg-[#faf9f8] p-2.5 pr-4 transition-colors focus-within:border-[#3E332A]/50 focus-within:ring-1 focus-within:ring-[#3E332A]/20">
         {value ? (
           <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-white">
-            <img src={getImageUrl(value)} alt="Preview" className="h-full w-full object-cover" />
+            <img loading="lazy" src={getImageUrl(value)} alt="Preview" className="h-full w-full object-cover" />
           </div>
         ) : (
           <div className="h-12 w-16 shrink-0 rounded-lg border border-dashed border-border flex items-center justify-center bg-white text-muted-foreground/50">
@@ -208,7 +208,7 @@ function JournalSettingsPage() {
               <div key={p.slug} className="group relative rounded-2xl border bg-card overflow-hidden shadow-sm transition hover:shadow-md flex flex-col">
                 <div className="relative h-40 bg-muted overflow-hidden">
                   {p.image ? (
-                    <img src={getImageUrl(p.image)} alt={p.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img loading="lazy" src={getImageUrl(p.image)} alt={p.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-muted-foreground/40 bg-muted/60">
                       <ImageIcon className="h-8 w-8" />

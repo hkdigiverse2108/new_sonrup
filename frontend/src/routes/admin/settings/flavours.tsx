@@ -194,7 +194,7 @@ function FlavoursSettingsPage() {
                       <div className="flex items-center gap-4 mt-1">
                         <div className="h-16 w-16 shrink-0 rounded-xl border border-[#e5e1dc] bg-white overflow-hidden flex items-center justify-center shadow-sm">
                           {flavour.image ? (
-                            <img src={getImageUrl(flavour.image)} alt={flavour.name} className="h-full w-full object-cover" />
+                            <img loading="lazy" src={getImageUrl(flavour.image)} alt={flavour.name} className="h-full w-full object-cover" />
                           ) : (
                             <span className="text-[10px] text-muted-foreground font-medium">No Image</span>
                           )}

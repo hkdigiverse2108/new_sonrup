@@ -89,7 +89,7 @@ function AdminLayout() {
         <div className="mb-6 flex flex-col gap-2">
           <div>
             <Link to="/admin" className="flex items-center">
-              <img 
+              <img loading="lazy" 
                 src="/logo.png" 
                 alt="Sonrup" 
                 className="h-15 w-auto object-contain object-left" 
@@ -248,7 +248,7 @@ function AdminLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <Link to="/admin" className="flex items-center -ml-4">
-            <img 
+            <img loading="lazy" 
               src="/logo.png" 
               alt="Sonrup" 
               className="h-10 w-auto object-contain object-left" 
@@ -503,7 +503,7 @@ function AdminLoginPage({ onLogin }: { onLogin: () => void }) {
       <div className="relative w-full max-w-lg">
         {/* Logo */}
         <div className="mb-8 text-center flex flex-col items-center gap-3">
-          <img src="/logo.png" alt="Sonrup" className="h-28 w-auto object-contain" />
+          <img loading="lazy" src="/logo.png" alt="Sonrup" className="h-28 w-auto object-contain" />
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.35em] text-cream/40">Admin Panel</p>
         </div>
 

@@ -29,7 +29,7 @@ export function ImageUpload({ label, value, onChange }: { label: string, value: 
     <div className="flex h-full w-full flex-col">
       {value ? (
         <div className="relative h-full w-full group min-h-[160px]">
-          <img src={getImageUrl(value)} alt="Uploaded" className="h-full w-full object-cover" />
+          <img loading="lazy" src={getImageUrl(value)} alt="Uploaded" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center gap-2">
             <button
               type="button"
@@ -102,7 +102,7 @@ function PostEditor() {
           // Convert legacy multi-block format to single HTML block
           mergedBody = existingPost.body.map((block: any) => {
             if (block.type === "text") return `<p>${block.content}</p>`;
-            if (block.type === "image") return `<img src="${block.content}" alt="Image" />`;
+            if (block.type === "image") return `<img loading="lazy" src="${block.content}" alt="Image" />`;
             return block.content;
           }).join("");
         }

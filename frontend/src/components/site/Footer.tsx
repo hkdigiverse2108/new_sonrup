@@ -56,7 +56,7 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>
             <Link to="/" className="flex items-center">
-              <img 
+              <img loading="lazy" 
                 src="/logo.png" 
                 alt="Sonrup" 
                 className="h-15 w-auto object-contain object-left" 

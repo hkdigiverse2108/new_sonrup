@@ -119,7 +119,7 @@ function AdminProducts() {
                     <tr key={p.slug} className="hover:bg-muted/30">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          {p.image && <img src={getImageUrl(p.image)} className="h-10 w-10 rounded-lg object-cover" />}
+                          {p.image && <img loading="lazy" src={getImageUrl(p.image)} className="h-10 w-10 rounded-lg object-cover" />}
                           <span className="font-semibold">{p.name}</span>
                         </div>
                       </td>
@@ -398,7 +398,7 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
                   i === 0 ? "border-primary ring-2 ring-primary/10" : "border-border hover:border-muted-foreground/30"
                 )}>
                   <div className="relative h-16 w-16 rounded-md overflow-hidden border border-border">
-                    <img src={getImageUrl(imgUrl)} className="h-full w-full object-cover" />
+                    <img loading="lazy" src={getImageUrl(imgUrl)} className="h-full w-full object-cover" />
                     {i === 0 && (
                       <span className="absolute bottom-0.5 left-0.5 right-0.5 text-center bg-primary/95 text-primary-foreground text-[8px] font-bold py-0.5 rounded uppercase tracking-wider shadow">
                         Cover
@@ -664,7 +664,7 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
                 if (!p) return null;
                 return (
                   <div key={slug} className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2.5 pr-1.5 shadow-sm">
-                    {p.image && <img src={getImageUrl(p.image)} className="h-5 w-5 rounded-full object-cover shrink-0" />}
+                    {p.image && <img loading="lazy" src={getImageUrl(p.image)} className="h-5 w-5 rounded-full object-cover shrink-0" />}
                     <span className="text-sm font-semibold">{p.name}</span>
                     <button
                       type="button"

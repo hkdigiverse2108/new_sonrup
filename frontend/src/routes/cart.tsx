@@ -61,7 +61,7 @@ function CartPage() {
               {lines.map(({ product, qty }) => (
                 <div key={product.slug} className="surface-card flex gap-4 p-4 sm:gap-6 sm:p-5">
                   <Link to="/product/$slug" params={{ slug: product.slug }} className="shrink-0">
-                    <img
+                    <img loading="lazy"
                       src={getImageUrl(product.image)}
                       alt={product.name}
                       className="h-28 w-24 rounded-2xl object-cover sm:h-32 sm:w-28"

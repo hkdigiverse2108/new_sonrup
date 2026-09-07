@@ -15,13 +15,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/about")({
-  loader: async ({ context: { queryClient } }) => {
-    const [aboutContent, brandValues, milestones] = await Promise.all([
-      queryClient.ensureQueryData(aboutContentQueryOptions()),
-      queryClient.ensureQueryData(brandValuesQueryOptions()),
-      queryClient.ensureQueryData(milestonesQueryOptions()),
-    ]);
-    return { aboutContent, brandValues, milestones };
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(aboutContentQueryOptions());
+    queryClient.prefetchQuery(brandValuesQueryOptions());
+    queryClient.prefetchQuery(milestonesQueryOptions());
+    return {};
   },
   head: () => ({
     meta: [
@@ -79,7 +77,7 @@ function About() {
           <Reveal>
             <div className="relative">
               <div className="absolute -inset-6 blob bg-primary/15 blur-2xl" />
-              <img
+              <img loading="lazy"
                 src={getImageUrl(why.image || IMG.multi)}
                 alt="Sonrup gummies range"
                 className="relative w-full aspect-[4/5] rounded-[2rem] object-cover shadow-[var(--shadow-lift)]"
