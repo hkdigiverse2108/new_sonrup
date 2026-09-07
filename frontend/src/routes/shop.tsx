@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { z } from "zod";
 import { Container, EmptyState, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, ProductCard, Reveal } from "@/components/site/Primitives";
@@ -103,6 +103,21 @@ function ShopPage() {
   const set = (patch: Partial<ShopSearch>) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }), resetScroll: false });
 
+  const [localMax, setLocalMax] = useState(search.max === 99999 ? maxPriceLimit : search.max);
+
+  useEffect(() => {
+    setLocalMax(search.max === 99999 ? maxPriceLimit : search.max);
+  }, [search.max, maxPriceLimit]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localMax !== (search.max === 99999 ? maxPriceLimit : search.max)) {
+        set({ max: localMax });
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [localMax, search.max, maxPriceLimit]);
+
   const active = Boolean(search.q || search.badge || (search.max !== 99999 && search.max !== maxPriceLimit) || search.sort !== "featured");
 
   return (
@@ -126,16 +141,23 @@ function ShopPage() {
                 {/* Max Price Filter moved here */}
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                    Max: ₹{search.max === 99999 ? maxPriceLimit : search.max}
+                    Max: ₹{localMax}
                   </span>
                   <input
                     type="range"
                     min={299}
                     max={maxPriceLimit}
                     step={50}
-                    value={search.max === 99999 ? maxPriceLimit : search.max}
-                    onChange={(e) => set({ max: Number(e.target.value) })}
-                    className="w-32 accent-[var(--secondary)] sm:w-48"
+                    value={localMax}
+                    onChange={(e) => setLocalMax(Number(e.target.value))}
+                    className="w-32 sm:w-48 appearance-none h-1.5 rounded-full outline-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--secondary)] [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--secondary)]"
+                    style={{
+                      background: `linear-gradient(to right, var(--secondary) ${
+                        (localMax - 299) / (maxPriceLimit - 299) * 100
+                      }%, var(--border) ${
+                        (localMax - 299) / (maxPriceLimit - 299) * 100
+                      }%)`
+                    }}
                   />
                 </div>
 
