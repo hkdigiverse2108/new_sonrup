@@ -7,6 +7,7 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
+  ScrollRestoration,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -19,7 +20,7 @@ import { Footer } from "../components/site/Footer";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { Toaster } from "../components/ui/sonner";
 import { ConfirmProvider } from "../components/ui/confirm";
-import { useIntegrationsSettings, useHomeContent, useProducts, useFlavours } from "../lib/api";
+import { useIntegrationsSettings, useHomeContent, useProducts, useFlavours, integrationsSettingsQueryOptions } from "../lib/api";
 
 
 function NotFoundComponent() {
@@ -87,6 +88,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: async ({ context: { queryClient } }) => {
+    try {
+      await queryClient.ensureQueryData(integrationsSettingsQueryOptions());
+    } catch (e) {
+      // Ignore errors for global settings
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -124,6 +132,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <ScrollRestoration />
         <Scripts />
       </body>
     </html>

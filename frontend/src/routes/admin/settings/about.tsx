@@ -98,7 +98,8 @@ function AboutSettingsPage() {
         },
         journey_header: {
           eyebrow: journeyHeaderData.eyebrow || "The journey",
-          title: journeyHeaderData.title || "How we got here"
+          title: journeyHeaderData.title || "How we got here",
+          show: journeyHeaderData.show !== undefined ? journeyHeaderData.show : true
         },
         cta: {
           title: ctaData.title || "Ready to make it a habit?",
@@ -286,7 +287,18 @@ function AboutSettingsPage() {
               <h2 className="font-display text-[12px] font-extrabold uppercase tracking-widest text-muted-foreground/80">THE JOURNEY</h2>
               <p className="text-[10px] text-muted-foreground mt-1">Manage headers and timeline milestones</p>
             </div>
-            <button onClick={() => { setIsAddingMilestone(true); setEditingMilestone({ year: "", text: "" }); }} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold hover:bg-primary/20"><Plus className="w-3 h-3" /> ADD MILESTONE</button>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 accent-primary"
+                  checked={form.journey_header.show} 
+                  onChange={(e) => setJourneyHeader({ show: e.target.checked })} 
+                />
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">Show Section</span>
+              </label>
+              <button onClick={() => { setIsAddingMilestone(true); setEditingMilestone({ year: "", text: "" }); }} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold hover:bg-primary/20"><Plus className="w-3 h-3" /> ADD MILESTONE</button>
+            </div>
           </div>
           <div className="grid gap-4 grid-cols-2 mb-6">
             <label className="grid gap-1"><span className="text-[9px] font-bold uppercase">EYEBROW</span><input className="w-full rounded-md border px-3 py-1.5 text-xs" value={form.journey_header.eyebrow} onChange={(e) => setJourneyHeader({ eyebrow: e.target.value })} /></label>

@@ -344,6 +344,7 @@ class AboutValuesHeaderContent(BaseModel):
 class AboutJourneyHeaderContent(BaseModel):
     eyebrow: Optional[str] = "The journey"
     title: Optional[str] = "How we got here"
+    show: Optional[bool] = True
 
 class AboutBottomCtaContent(BaseModel):
     title: Optional[str] = "Ready to make it a habit?"

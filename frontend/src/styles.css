@@ -227,8 +227,8 @@
 
 @keyframes rise-in {
   from {
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -241,8 +241,8 @@
 }
 
 @utility reveal {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 0;
+  transform: translateY(24px);
   transition:
     opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
@@ -253,9 +253,8 @@
 }
 
 @utility mask-rise {
-  animation: none !important;
-  opacity: 1 !important;
-  transform: none !important;
+  animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
 }
 
 @utility no-scrollbar {

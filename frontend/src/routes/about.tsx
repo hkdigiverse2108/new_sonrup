@@ -58,7 +58,7 @@ function About() {
   const hero = aboutContent?.hero || { eyebrow: "Our story", title_black: "Supplements you actually ", title_gold: "look forward to.", sub: "Sonrup began with a simple frustration: the best formulas in the world do nothing if the tub stays shut. So we built a brand around the one thing most supplements ignore — the experience of taking them." };
   const why = aboutContent?.why || { eyebrow: "Why we exist", title: "Flavour first. Science always.", sub: "Every batch has to pass two tests before it ships: does it work at a meaningful dose, and would you happily take it every morning for a year?", image: "", benefits: [{ icon: "Leaf", t: "Pectin based, 100% vegetarian", d: "No gelatin, ever. Real fruit concentrates for flavour." }, { icon: "ShieldCheck", t: "Tested every batch", d: "Third-party lab checks for potency, purity and heavy metals." }, { icon: "Sparkles", t: "Doses that matter", d: "No fairy dusting — actives at levels backed by research." }] };
   const valuesHeader = aboutContent?.values_header || { eyebrow: "What we stand for", title: "Our values" };
-  const journeyHeader = aboutContent?.journey_header || { eyebrow: "The journey", title: "How we got here" };
+  const journeyHeader = aboutContent?.journey_header || { eyebrow: "The journey", title: "How we got here", show: true };
   const cta = aboutContent?.cta || { title: "Ready to make it a habit?", sub: "Start with a best seller — free shipping on orders above ₹499.", button_text: "Shop the range", button_link: "/shop" };
 
   return (
@@ -129,20 +129,24 @@ function About() {
       </section>
 
       <Container className="py-16 sm:py-24">
-        <SectionTitle eyebrow={journeyHeader.eyebrow} title={journeyHeader.title} />
-        <div className="mt-12 border-l border-border pl-6 sm:pl-10">
-          {milestones.map((m: { year: string; text: string }, i: number) => (
-            <Reveal key={m.year} delay={i * 70}>
-              <div className="relative pb-12">
-                <span className="absolute -left-[31px] top-1 grid h-4 w-4 place-items-center rounded-full bg-[image:var(--gradient-gold)] sm:-left-[47px]" />
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">{m.year}</p>
-                <div className="mt-2 max-w-2xl font-display text-xl font-extrabold leading-snug rich-text-content" dangerouslySetInnerHTML={{ __html: m.text }} />
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        {journeyHeader.show !== false && (
+          <div className="mb-16">
+            <SectionTitle eyebrow={journeyHeader.eyebrow} title={journeyHeader.title} />
+            <div className="mt-12 border-l border-border pl-6 sm:pl-10">
+              {milestones.map((m: { year: string; text: string }, i: number) => (
+                <Reveal key={m.year} delay={i * 70}>
+                  <div className="relative pb-12">
+                    <span className="absolute -left-[31px] top-1 grid h-4 w-4 place-items-center rounded-full bg-[image:var(--gradient-gold)] sm:-left-[47px]" />
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-secondary">{m.year}</p>
+                    <div className="mt-2 max-w-2xl font-display text-xl font-extrabold leading-snug rich-text-content" dangerouslySetInnerHTML={{ __html: m.text }} />
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <div className="surface-card mt-8 flex flex-col items-center gap-5 px-6 py-14 text-center">
+        <div className="surface-card flex flex-col items-center gap-5 px-6 py-14 text-center">
           <h3 className="display-xl text-3xl sm:text-4xl">{cta.title}</h3>
           <p className="max-w-md text-sm text-muted-foreground">
             {cta.sub}

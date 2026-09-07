@@ -101,21 +101,51 @@ function Home() {
   const currentReviews = reviews ?? loaderData?.reviews ?? [];
   const currentFaqs = faqs ?? loaderData?.faqs ?? [];
 
-  return (
-    <main>
-      <Hero content={currentContent} />
-      <TrustStrip content={currentContent} />
-      <BestSellers products={currentProducts} />
-      <FlavourExperience content={currentContent} flavours={currentFlavours} />
-      <WhyOurGummies content={currentContent} />
-      <IngredientStory content={currentContent} />
+  const [loaded, setLoaded] = useState(false);
 
-      <BrandStory content={currentContent} />
-      <Reviews content={currentContent} reviews={currentReviews} />
-      <SocialGrid content={currentContent} />
-      <FaqTeaser content={currentContent} faqs={currentFaqs} />
-      <FinalCta content={currentContent} />
-    </main>
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 1000); // Force load after 1s max
+    if (document.readyState === "complete") {
+      setLoaded(true);
+      clearTimeout(timer);
+    } else {
+      const handleLoad = () => {
+        setLoaded(true);
+        clearTimeout(timer);
+      };
+      window.addEventListener("load", handleLoad);
+      return () => {
+        window.removeEventListener("load", handleLoad);
+        clearTimeout(timer);
+      };
+    }
+  }, []);
+
+  return (
+    <>
+      <div 
+        className={cn(
+          "fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-all duration-700 ease-in-out", 
+          loaded ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}
+      >
+        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      </div>
+      <main className={cn("transition-opacity duration-1000", loaded ? "opacity-100" : "opacity-0")}>
+        <Hero content={currentContent} />
+        <TrustStrip content={currentContent} />
+        <BestSellers products={currentProducts} />
+        <FlavourExperience content={currentContent} flavours={currentFlavours} />
+        <WhyOurGummies content={currentContent} />
+        <IngredientStory content={currentContent} />
+
+        <BrandStory content={currentContent} />
+        <Reviews content={currentContent} reviews={currentReviews} />
+        <SocialGrid content={currentContent} />
+        <FaqTeaser content={currentContent} faqs={currentFaqs} />
+        <FinalCta content={currentContent} />
+      </main>
+    </>
   );
 }
 
@@ -268,37 +298,46 @@ function Hero({ content }: { content: any }) {
               <div className="sheen pointer-events-none absolute inset-0 rounded-t-[999px] rounded-b-[2.5rem]" />
             </div>
 
-            <div
-              className="absolute left-2 md:-left-5 top-24 z-20 rounded-2xl border border-cream/10 bg-ink/85 px-4 py-3 shadow-[var(--shadow-lift)] backdrop-blur sm:-left-10"
-              style={{ transform: `translate3d(${tilt.x * -46}px, ${tilt.y * -36}px, 0)` }}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{hero.badge1_label}</p>
-              <p className="font-display text-sm md:text-base font-extrabold text-cream">{hero.badge1_value}</p>
-            </div>
-
-            <div
-              className="absolute right-2 md:-right-4 bottom-20 z-20 flex items-center gap-2 md:gap-3 rounded-2xl bg-cream px-3 py-2 md:px-4 md:py-3 text-ink shadow-[var(--shadow-lift)] sm:-right-9"
-              style={{ transform: `translate3d(${tilt.x * -62}px, ${tilt.y * -48}px, 0)` }}
-            >
-              <Leaf className="h-4 w-4 md:h-5 md:w-5 text-leaf shrink-0" />
-              <div>
-                <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{hero.badge2_label}</p>
-                <p className="font-display text-sm md:text-base font-extrabold">{hero.badge2_value}</p>
+            <div className="absolute left-2 md:-left-5 top-24 z-20 sm:-left-10 [animation:rise-in_0.8s_500ms_both]">
+              <div
+                className="rounded-2xl border border-cream/10 bg-ink/85 px-4 py-3 shadow-[var(--shadow-lift)] backdrop-blur"
+                style={{ transform: `translate3d(${tilt.x * -46}px, ${tilt.y * -36}px, 0)` }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{hero.badge1_label}</p>
+                <p className="font-display text-sm md:text-base font-extrabold text-cream">{hero.badge1_value}</p>
               </div>
             </div>
 
-            <img
-              src={getImageUrl(hero.left_image || IMG.shilajit)}
-              alt="Sonrup Himalayan Shilajit gummies"
-              loading="eager"
-              className="float-fast absolute -left-8 bottom-2 z-20 hidden h-32 w-24 rotate-[-8deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block"
-            />
-            <img
-              src={getImageUrl(hero.right_image || IMG.kids)}
-              alt="Sonrup Kid's Multivitamin gummies"
-              loading="eager"
-              className="float-slow absolute -right-6 -top-4 z-20 hidden h-32 w-24 rotate-[9deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] lg:block [animation-delay:-2.5s]"
-            />
+            <div className="absolute right-2 md:-right-4 bottom-20 z-20 sm:-right-9 [animation:rise-in_0.8s_700ms_both]">
+              <div
+                className="flex items-center gap-2 md:gap-3 rounded-2xl bg-cream px-3 py-2 md:px-4 md:py-3 text-ink shadow-[var(--shadow-lift)]"
+                style={{ transform: `translate3d(${tilt.x * -62}px, ${tilt.y * -48}px, 0)` }}
+              >
+                <Leaf className="h-4 w-4 md:h-5 md:w-5 text-leaf shrink-0" />
+                <div>
+                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{hero.badge2_label}</p>
+                  <p className="font-display text-sm md:text-base font-extrabold">{hero.badge2_value}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute -left-8 bottom-2 z-20 hidden lg:block [animation:rise-in_1s_600ms_both]">
+              <img
+                src={getImageUrl(hero.left_image || IMG.shilajit)}
+                alt="Sonrup Himalayan Shilajit gummies"
+                loading="eager"
+                className="float-fast h-32 w-24 rotate-[-8deg] rounded-2xl object-cover shadow-[var(--shadow-lift)]"
+              />
+            </div>
+            
+            <div className="absolute -right-6 -top-4 z-20 hidden lg:block [animation:rise-in_1s_800ms_both]">
+              <img
+                src={getImageUrl(hero.right_image || IMG.kids)}
+                alt="Sonrup Kid's Multivitamin gummies"
+                loading="eager"
+                className="float-slow h-32 w-24 rotate-[9deg] rounded-2xl object-cover shadow-[var(--shadow-lift)] [animation-delay:-2.5s]"
+              />
+            </div>
           </div>
         </div>
       </div>

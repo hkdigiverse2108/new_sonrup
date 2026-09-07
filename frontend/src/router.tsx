@@ -8,9 +8,6 @@ export const getRouter = () => {
       queries: {
         staleTime: 1000 * 60 * 10, // 10 minutes cache
         gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
-        refetchOnReconnect: false,
         retry: 1,
       },
     },

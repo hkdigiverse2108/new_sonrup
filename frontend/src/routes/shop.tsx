@@ -52,7 +52,7 @@ export function normalizeBadge(b: string): string {
 
 export function useShopFilters(search: ShopSearch, products: Product[], maxPriceLimit: number) {
   return useMemo(() => {
-    const limit = search.max === 99999 ? maxPriceLimit : search.max;
+    const limit = search.max === 99999 ? Infinity : search.max;
     let list = products.filter((p) => p.price <= limit);
     if (search.badge) {
       list = list.filter((p) =>
