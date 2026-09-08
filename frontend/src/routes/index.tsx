@@ -42,8 +42,9 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(homeContentQueryOptions());
+  loader: async ({ context: { queryClient } }) => {
+    // Await home content to prevent flash of hardcoded images in Hero
+    await queryClient.ensureQueryData(homeContentQueryOptions());
     queryClient.prefetchQuery(productsQueryOptions());
     queryClient.prefetchQuery(flavoursQueryOptions());
     queryClient.prefetchQuery(reviewsQueryOptions());
