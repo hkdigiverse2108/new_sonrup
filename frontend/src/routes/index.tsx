@@ -42,13 +42,15 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(homeContentQueryOptions());
-    queryClient.prefetchQuery(productsQueryOptions());
-    queryClient.prefetchQuery(flavoursQueryOptions());
-    queryClient.prefetchQuery(reviewsQueryOptions());
-    queryClient.prefetchQuery(faqsQueryOptions());
-    return {};
+  loader: async ({ context: { queryClient } }) => {
+    const [homeContent, products, flavours, reviews, faqs] = await Promise.all([
+      queryClient.ensureQueryData(homeContentQueryOptions()),
+      queryClient.ensureQueryData(productsQueryOptions()),
+      queryClient.ensureQueryData(flavoursQueryOptions()),
+      queryClient.ensureQueryData(reviewsQueryOptions()),
+      queryClient.ensureQueryData(faqsQueryOptions()),
+    ]);
+    return { homeContent, products, flavours, reviews, faqs };
   },
   head: ({ loaderData }) => {
     const hero = loaderData?.homeContent?.hero || {};
