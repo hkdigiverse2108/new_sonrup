@@ -12,9 +12,7 @@ export const getApiUrl = () => {
     return "";
   }
   // Server-side (SSR / Node / Nitro)
-  // Default to localhost with dynamic port to avoid hairpin NAT/loopback timeouts on production servers
-  const port = process.env.BACKEND_PORT || "8000";
-  return process.env.VITE_API_URL || process.env.BACKEND_URL || `http://127.0.0.1:${port}`;
+  return process.env.VITE_API_URL || process.env.BACKEND_URL || (process.env.NODE_ENV === "production" ? "https://api.sonrup.com" : "http://localhost:8000");
 };
 
 export const getImageUrl = (url?: string | null): string => {
