@@ -43,14 +43,15 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    const [homeContent, products, flavours, reviews, faqs] = await Promise.all([
-      queryClient.ensureQueryData(homeContentQueryOptions()),
-      queryClient.ensureQueryData(productsQueryOptions()),
-      queryClient.ensureQueryData(flavoursQueryOptions()),
-      queryClient.ensureQueryData(reviewsQueryOptions()),
-      queryClient.ensureQueryData(faqsQueryOptions()),
-    ]);
-    return { homeContent, products, flavours, reviews, faqs };
+    // Await home content to prevent flash of hardcoded images in Hero
+    await queryClient.ensureQueryData(homeContentQueryOptions());
+    
+    // Prefetch others to not block the whole page load too much
+    queryClient.prefetchQuery(productsQueryOptions());
+    queryClient.prefetchQuery(flavoursQueryOptions());
+    queryClient.prefetchQuery(reviewsQueryOptions());
+    queryClient.prefetchQuery(faqsQueryOptions());
+    return {};
   },
   head: ({ loaderData }) => {
     const hero = loaderData?.homeContent?.hero || {};
