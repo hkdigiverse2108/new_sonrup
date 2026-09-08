@@ -142,9 +142,9 @@ const HERO_DEFAULTS = {
   badge1_value: "Every single batch",
   badge2_label: "Pectin based",
   badge2_value: "100% vegetarian",
-  main_image: "/uploads/54436ed47f214de29576ab69177e482c.webp",
-  left_image: "/uploads/331b66f6350d47f2a59b533f77d63fe2.webp",
-  right_image: "/uploads/1133fd2a246b4a049a9a686d7dad15db.webp",
+  main_image: IMG.multi,
+  left_image: IMG.shilajit,
+  right_image: IMG.kids,
 };
 
 function Hero({ content }: { content: any }) {
