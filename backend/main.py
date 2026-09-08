@@ -14,6 +14,7 @@ import random
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.database import connect_to_mongo, close_mongo_connection, get_database
 from backend.models import (
@@ -24,11 +25,45 @@ from backend.models import (
 
 load_dotenv()
 
+import time
+
+_CACHE = {}
+
+def get_from_cache(key: str):
+    if key in _CACHE:
+        val, exp = _CACHE[key]
+        if time.time() < exp:
+            return val
+        del _CACHE[key]
+    return None
+
+def set_in_cache(key: str, value, ttl: int = 60):
+    _CACHE[key] = (value, time.time() + ttl)
+
+def clear_cache(key_prefix: str = None):
+    global _CACHE
+    if key_prefix is None:
+        _CACHE.clear()
+    else:
+        keys_to_del = [k for k in _CACHE if k.startswith(key_prefix)]
+        for k in keys_to_del:
+            del _CACHE[k]
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Connect to MongoDB
     await connect_to_mongo()
+    db = get_database()
+    if db is not None:
+        try:
+            await db["product_reviews"].create_index("product_slug")
+            await db["products"].create_index("slug", unique=True)
+            await db["posts"].create_index("slug", unique=True)
+            await db["policies"].create_index("slug", unique=True)
+        except Exception as e:
+            print(f"[INDEX] Index creation note: {e}")
     yield
+    await close_mongo_connection()
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "sonrup_fallback_secret_key_2026_super_secure")
 JWT_ALGORITHM = "HS256"
@@ -75,6 +110,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 @app.get("/")
 async def root():
@@ -145,45 +181,101 @@ async def test_db_interaction(db=Depends(get_database)):
 
 @app.get("/api/products")
 async def get_products(db=Depends(get_database)):
+    cached = get_from_cache("products")
+    if cached is not None:
+        return cached
+
     cursor = db["products"].find({}, {"_id": 0})
     products = await cursor.to_list(length=100)
-    for p in products:
-        reviews_cursor = db["product_reviews"].find({"product_slug": p["slug"]})
-        reviews = await reviews_cursor.to_list(length=1000)
-        p["reviews"] = len(reviews)
-        if len(reviews) > 0:
-            p["rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
+    if products:
+        slugs = [p["slug"] for p in products if "slug" in p]
+        if slugs:
+            pipeline = [
+                {"$match": {"product_slug": {"$in": slugs}}},
+                {"$group": {
+                    "_id": "$product_slug",
+                    "count": {"$sum": 1},
+                    "avg_rating": {"$avg": "$rating"}
+                }}
+            ]
+            stats_cursor = db["product_reviews"].aggregate(pipeline)
+            stats_list = await stats_cursor.to_list(length=len(slugs))
+            stats_map = {s["_id"]: (s["count"], s["avg_rating"]) for s in stats_list}
+
+            for p in products:
+                slug = p.get("slug")
+                if slug in stats_map:
+                    count, avg = stats_map[slug]
+                    p["reviews"] = count
+                    p["rating"] = round(avg, 1)
+                else:
+                    p["reviews"] = 0
+                    p["rating"] = 5.0
         else:
-            p["rating"] = 5.0
+            for p in products:
+                p["reviews"] = 0
+                p["rating"] = 5.0
+
+    set_in_cache("products", products, ttl=60)
     return products
 
 @app.get("/api/products/{slug}")
 async def get_product(slug: str, db=Depends(get_database)):
+    cache_key = f"product:{slug}"
+    cached = get_from_cache(cache_key)
+    if cached is not None:
+        return cached
+
     product = await db["products"].find_one({"slug": slug}, {"_id": 0})
     if product:
-        reviews_cursor = db["product_reviews"].find({"product_slug": slug})
-        reviews = await reviews_cursor.to_list(length=1000)
-        product["reviews"] = len(reviews)
-        if len(reviews) > 0:
-            product["rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
+        pipeline = [
+            {"$match": {"product_slug": slug}},
+            {"$group": {
+                "_id": "$product_slug",
+                "count": {"$sum": 1},
+                "avg_rating": {"$avg": "$rating"}
+            }}
+        ]
+        stats_cursor = db["product_reviews"].aggregate(pipeline)
+        stats_list = await stats_cursor.to_list(length=1)
+        if stats_list:
+            product["reviews"] = stats_list[0]["count"]
+            product["rating"] = round(stats_list[0]["avg_rating"], 1)
         else:
+            product["reviews"] = 0
             product["rating"] = 5.0
+        set_in_cache(cache_key, product, ttl=60)
     return product
 
 @app.get("/api/flavours")
 async def get_flavours(db=Depends(get_database)):
+    cached = get_from_cache("flavours")
+    if cached is not None:
+        return cached
     cursor = db["flavours"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("flavours", res, ttl=60)
+    return res
 
 @app.get("/api/goals")
 async def get_goals(db=Depends(get_database)):
+    cached = get_from_cache("goals")
+    if cached is not None:
+        return cached
     cursor = db["goals"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("goals", res, ttl=60)
+    return res
 
 @app.get("/api/reviews")
 async def get_reviews(db=Depends(get_database)):
+    cached = get_from_cache("reviews")
+    if cached is not None:
+        return cached
     cursor = db["reviews"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("reviews", res, ttl=60)
+    return res
 
 @app.get("/api/product-reviews")
 async def get_product_reviews(db=Depends(get_database)):
@@ -196,26 +288,55 @@ async def get_product_reviews(db=Depends(get_database)):
 
 @app.get("/api/faqs")
 async def get_faqs(db=Depends(get_database)):
+    cached = get_from_cache("faqs")
+    if cached is not None:
+        return cached
     cursor = db["faqs"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("faqs", res, ttl=60)
+    return res
 
 @app.get("/api/posts")
 async def get_posts(db=Depends(get_database)):
+    cached = get_from_cache("posts")
+    if cached is not None:
+        return cached
     cursor = db["posts"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("posts", res, ttl=60)
+    return res
 
 @app.get("/api/posts/{slug}")
 async def get_post(slug: str, db=Depends(get_database)):
-    return await db["posts"].find_one({"slug": slug}, {"_id": 0})
+    cache_key = f"post:{slug}"
+    cached = get_from_cache(cache_key)
+    if cached is not None:
+        return cached
+    res = await db["posts"].find_one({"slug": slug}, {"_id": 0})
+    if res:
+        set_in_cache(cache_key, res, ttl=60)
+    return res
 
 @app.get("/api/policies")
 async def get_policies(db=Depends(get_database)):
+    cached = get_from_cache("policies")
+    if cached is not None:
+        return cached
     cursor = db["policies"].find({}, {"_id": 0})
-    return await cursor.to_list(length=100)
+    res = await cursor.to_list(length=100)
+    set_in_cache("policies", res, ttl=60)
+    return res
 
 @app.get("/api/policies/{slug}")
 async def get_policy(slug: str, db=Depends(get_database)):
-    return await db["policies"].find_one({"slug": slug}, {"_id": 0})
+    cache_key = f"policy:{slug}"
+    cached = get_from_cache(cache_key)
+    if cached is not None:
+        return cached
+    res = await db["policies"].find_one({"slug": slug}, {"_id": 0})
+    if res:
+        set_in_cache(cache_key, res, ttl=60)
+    return res
 
 from datetime import datetime
 
@@ -239,21 +360,25 @@ async def get_milestones(db=Depends(get_database)):
 @app.put("/api/admin/content/home")
 async def update_home_content(content: HomePageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
     await db["home_content"].replace_one({}, content.dict(), upsert=True)
+    clear_cache("home_content")
     return {"message": "Home content updated successfully"}
 
 @app.put("/api/admin/content/about")
 async def update_about_content(content: AboutPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
     await db["about_content"].replace_one({}, content.dict(), upsert=True)
+    clear_cache("about_content")
     return {"message": "About content updated successfully"}
 
 @app.put("/api/admin/content/contact")
 async def update_contact_content(content: ContactPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
     await db["contact_content"].replace_one({}, content.dict(), upsert=True)
+    clear_cache("contact_content")
     return {"message": "Contact content updated successfully"}
 
 @app.put("/api/admin/content/journal")
 async def update_journal_content(content: JournalPageContentModel, db=Depends(get_database), current_user=Depends(get_current_user)):
     await db["journal_content"].replace_one({}, content.dict(), upsert=True)
+    clear_cache("journal_content")
     return {"message": "Journal content updated successfully"}
 
 @app.post("/api/admin/posts")
@@ -387,22 +512,33 @@ async def get_login_content(db=Depends(get_database)):
 
 @app.get("/api/content/home")
 async def get_home_content(db=Depends(get_database)):
+    cached = get_from_cache("home_content")
+    if cached is not None:
+        return cached
     content = await db["home_content"].find_one({}, {"_id": 0})
     if not content:
         raise HTTPException(status_code=404, detail="Home content not found")
+    set_in_cache("home_content", content, ttl=60)
     return content
 
 @app.get("/api/content/about")
 async def get_about_content(db=Depends(get_database)):
+    cached = get_from_cache("about_content")
+    if cached is not None:
+        return cached
     content = await db["about_content"].find_one({}, {"_id": 0})
     if not content:
         content = AboutPageContentModel().dict()
         await db["about_content"].insert_one(content)
         content = await db["about_content"].find_one({}, {"_id": 0})
+    set_in_cache("about_content", content, ttl=60)
     return content
 
 @app.get("/api/content/contact")
 async def get_contact_content(db=Depends(get_database)):
+    cached = get_from_cache("contact_content")
+    if cached is not None:
+        return cached
     content = await db["contact_content"].find_one({}, {"_id": 0})
     if not content:
         content = ContactPageContentModel().dict()
@@ -411,19 +547,27 @@ async def get_contact_content(db=Depends(get_database)):
     else:
         # Repopulate default fields (like socials) if they expand in schema
         content = ContactPageContentModel(**content).dict()
+    set_in_cache("contact_content", content, ttl=60)
     return content
 
 @app.get("/api/content/journal")
 async def get_journal_content(db=Depends(get_database)):
+    cached = get_from_cache("journal_content")
+    if cached is not None:
+        return cached
     content = await db["journal_content"].find_one({}, {"_id": 0})
     if not content:
         content = JournalPageContentModel().dict()
         await db["journal_content"].insert_one(content)
         content = await db["journal_content"].find_one({}, {"_id": 0})
+    set_in_cache("journal_content", content, ttl=60)
     return content
 
 @app.get("/api/settings/integrations")
 async def get_integrations_settings(db=Depends(get_database)):
+    cached = get_from_cache("integrations")
+    if cached is not None:
+        return cached
     content = await db["integrations"].find_one({}, {"_id": 0})
     if not content:
         content = IntegrationsModel().model_dump()
@@ -432,6 +576,7 @@ async def get_integrations_settings(db=Depends(get_database)):
     dump = IntegrationsModel(**content).model_dump()
     dump["delhivery_api_token"] = "***" if dump.get("delhivery_api_token") else ""
     dump["razorpay_key_secret"] = "***" if dump.get("razorpay_key_secret") else ""
+    set_in_cache("integrations", dump, ttl=60)
     return dump
 
 @app.get("/api/posts")
