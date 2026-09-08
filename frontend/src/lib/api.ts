@@ -22,25 +22,32 @@ export const getImageUrl = (url?: string | null): string => {
   if (url.includes("localhost:8000/uploads/") || url.includes("127.0.0.1:8000/uploads/")) {
     const filename = url.split("/uploads/").pop();
     const apiUrl = getApiUrl();
-    return `${apiUrl ? apiUrl.replace(/\/$/, "") : "https://api.sonrup.com"}/uploads/${filename}`;
+    const base = apiUrl ? apiUrl.replace(/\/$/, "") : "https://api.sonrup.com";
+    return `${base}/uploads/${filename}`;
   }
 
-  // If it's already an absolute URL
+  // If it's already an absolute URL (e.g. http://, https://, data:, blob:)
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
     return url;
   }
   
-  // If it's an uploaded file from backend
+  // If it's an uploaded file path from backend (e.g. /uploads/..., uploads/...)
   if (url.startsWith("/uploads/") || url.startsWith("uploads/")) {
     const cleanPath = url.startsWith("/") ? url : `/${url}`;
     const apiUrl = getApiUrl();
-    if (apiUrl) {
-      return `${apiUrl.replace(/\/$/, "")}${cleanPath}`;
-    }
-    return `https://api.sonrup.com${cleanPath}`;
+    const base = apiUrl ? apiUrl.replace(/\/$/, "") : "https://api.sonrup.com";
+    return `${base}${cleanPath}`;
+  }
+
+  // If it's a relative static asset path starting with / (e.g. /kids.jpg, /shilajit.jpg, /logo.png)
+  if (url.startsWith("/")) {
+    return url;
   }
   
-  return url;
+  // Otherwise, it's a bare uploaded filename (e.g. "54436ed47f214de29576ab69177e482c.webp")
+  const apiUrl = getApiUrl();
+  const base = apiUrl ? apiUrl.replace(/\/$/, "") : "https://api.sonrup.com";
+  return `${base}/uploads/${url}`;
 };
 
 export const TOKEN_KEY = "sonrup_token";
