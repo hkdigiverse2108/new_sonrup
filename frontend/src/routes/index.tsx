@@ -43,13 +43,12 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    // Await home content to prevent flash of hardcoded images in Hero
-    await queryClient.ensureQueryData(homeContentQueryOptions());
-    queryClient.prefetchQuery(productsQueryOptions());
-    queryClient.prefetchQuery(flavoursQueryOptions());
-    queryClient.prefetchQuery(reviewsQueryOptions());
-    queryClient.prefetchQuery(faqsQueryOptions());
-    return {};
+    const homeContent = await queryClient.ensureQueryData(homeContentQueryOptions());
+    const products = await queryClient.ensureQueryData(productsQueryOptions());
+    const flavours = await queryClient.ensureQueryData(flavoursQueryOptions());
+    const reviews = await queryClient.ensureQueryData(reviewsQueryOptions());
+    const faqs = await queryClient.ensureQueryData(faqsQueryOptions());
+    return { homeContent, products, flavours, reviews, faqs };
   },
   head: ({ loaderData }) => {
     const hero = loaderData?.homeContent?.hero || {};
@@ -88,11 +87,11 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const loaderData = Route.useLoaderData();
-  const { data: homeContent } = useHomeContent();
-  const { data: products } = useProducts();
-  const { data: flavours } = useFlavours();
-  const { data: reviews } = useReviews();
-  const { data: faqs } = useFaqs();
+  const { data: homeContent } = useHomeContent(loaderData?.homeContent);
+  const { data: products } = useProducts(loaderData?.products);
+  const { data: flavours } = useFlavours(loaderData?.flavours);
+  const { data: reviews } = useReviews(loaderData?.reviews);
+  const { data: faqs } = useFaqs(loaderData?.faqs);
 
   const currentContent = homeContent ?? loaderData?.homeContent;
   const currentProducts = products ?? loaderData?.products ?? [];
@@ -122,42 +121,19 @@ function Home() {
 
 /* ---------------- HERO ---------------- */
 
-// Fallback defaults (used while loading or if DB is empty)
-const HERO_DEFAULTS = {
-  rotate: ["glow", "energy", "immunity", "focus", "calm"],
-  stats: [
-    { k: "5000 mcg", v: "Biotin per serving" },
-    { k: "60", v: "Gummies per tube" },
-    { k: "4.8/5", v: "From 4,356 reviews" },
-  ],
-  eyebrow: "Est. 2023 · Made in India",
-  headline_line1: "A daily ritual",
-  headline_line2: "worth savouring",
-  headline_for_your: "for your",
-  subtext: "Chef-crafted gummies with real fruit flavour and actives listed to the milligram. Nutrition you look forward to, not nutrition you endure.",
-  cta1_text: "Shop the range",
-  cta1_href: "/shop",
-  cta2_text: "Taste the flavours",
-  cta2_href: "#flavours",
-  badge1_label: "Third-party tested",
-  badge1_value: "Every single batch",
-  badge2_label: "Pectin based",
-  badge2_value: "100% vegetarian",
-  main_image: "/uploads/54436ed47f214de29576ab69177e482c.webp",
-  left_image: "/uploads/331b66f6350d47f2a59b533f77d63fe2.webp",
-  right_image: "/uploads/1133fd2a246b4a049a9a686d7dad15db.webp",
-};
+
 
 function Hero({ content }: { content: any }) {
   const [word, setWord] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   
-  const hero = content?.hero ? { ...HERO_DEFAULTS, ...content.hero } : HERO_DEFAULTS;
+  const hero = content?.hero || {};
 
-  const rotate: string[] = hero.rotate?.length ? hero.rotate : HERO_DEFAULTS.rotate;
-  const stats: any[] = hero.stats?.length ? hero.stats : HERO_DEFAULTS.stats;
+  const rotate: string[] = hero.rotate || [];
+  const stats: any[] = hero.stats || [];
 
   useEffect(() => {
+    if (rotate.length === 0) return;
     const id = setInterval(() => setWord((i) => (i + 1) % rotate.length), 2400);
     return () => clearInterval(id);
   }, [rotate.length]);
@@ -192,7 +168,7 @@ function Hero({ content }: { content: any }) {
           <h1 className="mt-8 font-display text-[clamp(2.2rem,9vw,5.9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
             <span className="block">{hero.headline_line1}</span>
             <span className="block">
-              {hero.headline_line2.includes(" ") ? (
+              {hero.headline_line2?.includes(" ") ? (
                 <>
                   {hero.headline_line2.split(" ").slice(0, -1).join(" ")}{" "}
                   <span className="italic font-semibold tracking-[-0.02em]">{hero.headline_line2.split(" ").at(-1)}</span>
@@ -319,20 +295,14 @@ function Hero({ content }: { content: any }) {
 
 /* ---------------- TRUST ---------------- */
 
-const trust = [
-  { icon: Leaf, label: "Premium Ingredients" },
-  { icon: Sparkles, label: "Delicious Flavours" },
-  { icon: BadgeCheck, label: "Quality Assured" },
-  { icon: Truck, label: "Fast Delivery" },
-  { icon: Heart, label: "Loved by Customers" },
-];
+
 
 const iconMap: Record<string, any> = {
   Leaf, Sparkles, BadgeCheck, Truck, Heart, Clock, FlaskConical, PackageCheck, Star, Shield, Check, ThumbsUp
 };
 
 function TrustStrip({ content }: { content: any }) {
-  const rawItems = content?.trust_strip?.length ? content.trust_strip : trust;
+  const rawItems = content?.trust_strip || [];
   // Normalize legacy string arrays from DB to object format
   const displayItems = typeof rawItems[0] === 'string' 
     ? rawItems.map((t: string) => ({ icon: "BadgeCheck", label: t }))
@@ -399,11 +369,7 @@ function FlavourExperience({ content, flavours: initialFlavours }: { content: an
   const { data: flavoursData } = useFlavours();
   const flavours = flavoursData || initialFlavours || [];
 
-  const section = content?.flavour_section ?? {
-    eyebrow: "Flavour experience",
-    title_black: "Five flavours.",
-    title_gold: "Zero compromise."
-  };
+  const section = content?.flavour_section || {};
 
   return (
     <section id="flavours" className="relative overflow-hidden bg-ink py-24 text-cream">
@@ -508,27 +474,11 @@ function FlavourExperience({ content, flavours: initialFlavours }: { content: an
 
 /* ---------------- WHY ---------------- */
 
-const whys = [
-  { icon: Leaf, title: "Premium Ingredients", text: "Actives at doses that matter, sourced from suppliers we can name." },
-  { icon: Sparkles, title: "Delicious Taste", text: "Real fruit concentrates. No chalky aftertaste, ever." },
-  { icon: Clock, title: "Easy Daily Routine", text: "One or two gummies. No water, no measuring, no excuses." },
-  { icon: FlaskConical, title: "Carefully Crafted", text: "Small-batch formulation with in-house pharmacists." },
-  { icon: BadgeCheck, title: "Quality Assured", text: "Every batch third-party tested for purity and potency." },
-  { icon: PackageCheck, title: "Convenient Format", text: "A tube that travels, seals tight and looks good on the counter." },
-];
+
 
 
 function WhyOurGummies({ content }: { content: any }) {
-  const rawWhy = content?.why || {};
-  const why = {
-    eyebrow: rawWhy.eyebrow || "WHY OUR GUMMIES",
-    title: rawWhy.title || "BUILT TO BE TAKEN, NOT JUST BOUGHT.",
-    sub: rawWhy.sub || "Most supplements fail on the shelf, not in the lab. We designed ours to be the part of your day you actually look forward to.",
-    image: rawWhy.image || IMG.multi,
-    stat_value: rawWhy.stat_value || "98%",
-    stat_text: rawWhy.stat_text || "of customers say they'd never go back to tablets.",
-    features: rawWhy.features || whys
-  };
+  const why = content?.why || { features: [] };
 
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 lg:px-10">
@@ -557,7 +507,7 @@ function WhyOurGummies({ content }: { content: any }) {
           </Reveal>
 
           <div className="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2">
-            {why.features.map((feature: any, i: number) => {
+            {(why.features || []).map((feature: any, i: number) => {
               const Icon = typeof feature.icon === "string" ? (iconMap[feature.icon] || BadgeCheck) : (feature.icon || BadgeCheck);
               const desc = feature.text || feature.desc || "Description missing.";
               return (
@@ -580,22 +530,10 @@ function WhyOurGummies({ content }: { content: any }) {
 
 /* ---------------- INGREDIENTS ---------------- */
 
-const ringItems = [
-  { name: "Himalayan Shilajit", note: "500 mg purified resin", pos: "left-0 top-6" },
-  { name: "Ashwagandha", note: "Traditional adaptogen", pos: "left-0 bottom-24" },
-  { name: "Vitamin B12", note: "Energy metabolism", pos: "right-0 top-16" },
-  { name: "Tamarind", note: "Real imli flavour", pos: "right-0 bottom-16" },
-];
+
 
 function IngredientStory({ content }: { content: any }) {
-  const rawStory = content?.ingredient_story || {};
-  const story = {
-    eyebrow: rawStory.eyebrow || "Ingredient story",
-    title: rawStory.title || "What's inside the tube",
-    sub: rawStory.sub || "Every gummy is a short ingredient list you could read out loud without flinching.",
-    image: rawStory.image || IMG.shilajit,
-    ingredients: rawStory.ingredients || ringItems,
-  };
+  const story = content?.ingredient_story || { ingredients: [] };
 
   const positions = ["left-0 top-6", "left-0 bottom-24", "right-0 top-16", "right-0 bottom-16"];
 
@@ -624,7 +562,7 @@ function IngredientStory({ content }: { content: any }) {
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:absolute lg:inset-0 lg:mt-0 lg:block">
-            {story.ingredients.map((it: any, i: number) => (
+            {(story.ingredients || []).map((it: any, i: number) => (
               <Reveal key={i} delay={i * 120} className={cn("lg:absolute lg:w-56", positions[i] || "left-0 top-0")}>
                 <div className="surface-card p-4">
                   <p className="text-sm font-extrabold">{it.name}</p>
@@ -643,24 +581,7 @@ function IngredientStory({ content }: { content: any }) {
 /* ---------------- BRAND STORY ---------------- */
 
 function BrandStory({ content }: { content: any }) {
-  const rawStory = content?.brand_story || {};
-  const story = {
-    eyebrow: rawStory.eyebrow || "Our story",
-    title_black1: rawStory.title_black1 || "We started with a",
-    title_gold: rawStory.title_gold || " half-empty ",
-    title_black2: rawStory.title_black2 || "bottle of vitamins.",
-    paragraph1: rawStory.paragraph1 || "Every household has one — bought with the best intentions, abandoned by week three. Sonrup began by asking a simpler question: what if taking your vitamins was the nicest thirty seconds of your morning?",
-    paragraph2: rawStory.paragraph2 || "So we formulate backwards. Taste first, then texture, then the actives — never sacrificing the dose to get there. Small batches, honest labels, and packaging you don't have to hide in a cupboard.",
-    cta_text: rawStory.cta_text || "Read our story",
-    cta_link: rawStory.cta_link || "/about",
-    main_image: rawStory.main_image || IMG.kids,
-    floating_image: rawStory.floating_image || IMG.multi,
-    stats: rawStory.stats?.length ? rawStory.stats : [
-      { value: "4.8★", label: "Average rating" },
-      { value: "120k+", label: "Tubes shipped" },
-      { value: "100%", label: "Vegetarian" },
-    ]
-  };
+  const story = content?.brand_story || { stats: [] };
 
   return (
     <section className="relative overflow-hidden py-24 pb-32 md:pb-24">
@@ -677,7 +598,7 @@ function BrandStory({ content }: { content: any }) {
             <p>{story.paragraph2}</p>
           </div>
           <div className="mt-10 grid grid-cols-3 gap-6">
-            {story.stats.map((s: any, i: number) => (
+            {(story.stats || []).map((s: any, i: number) => (
               <div key={i}>
                 <p className="font-display text-3xl font-extrabold">{s.value || s[0]}</p>
                 <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">{s.label || s[1]}</p>
@@ -714,10 +635,7 @@ function Reviews({ content, reviews: initialReviews }: { content: any; reviews?:
   const { data: reviewsData } = useReviews();
   const reviewsList = reviewsData || initialReviews || [];
 
-  const section = content?.reviews_section || {
-    eyebrow: "Reviews",
-    title: "Loved by 120,000+ mornings"
-  };
+  const section = content?.reviews_section || {};
 
   return (
     <section className="bg-muted/50 py-24">
@@ -757,15 +675,9 @@ function Reviews({ content, reviews: initialReviews }: { content: any; reviews?:
 /* ---------------- SOCIAL ---------------- */
 
 function SocialGrid({ content }: { content: any }) {
-  const section = content?.social_section || {
-    eyebrow: "@sonrup",
-    title: "Join the gummy club",
-    cta_text: "Follow us",
-    cta_link: "#",
-    images: []
-  };
+  const section = content?.social_section || { images: [] };
 
-  const rawTiles = Array.isArray(section.images) && section.images.length > 0 ? section.images : [IMG.multi, IMG.kids, IMG.shilajit, IMG.kids, IMG.multi, IMG.shilajit];
+  const rawTiles = Array.isArray(section.images) && section.images.length > 0 ? section.images : [];
   
   const validTiles: string[] = [];
   const validLinks: string[] = [];
@@ -967,11 +879,7 @@ function FaqTeaser({ content, faqs: initialFaqs }: { content: any; faqs?: any[] 
   const { data: faqsData } = useFaqs();
   const faqs = faqsData || initialFaqs || [];
 
-  const section = content?.faq_settings?.home_section || {
-    eyebrow: "FAQ",
-    title: "Good questions, straight answers",
-    cta_text: "All FAQs"
-  };
+  const section = content?.faq_settings?.home_section || {};
 
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-16 lg:px-10">
@@ -1013,16 +921,7 @@ function FaqTeaser({ content, faqs: initialFaqs }: { content: any; faqs?: any[] 
 /* ---------------- FINAL CTA ---------------- */
 
 function FinalCta({ content }: { content: any }) {
-  const section = content?.final_cta || {
-    title_white: "Ready to make your day a little ",
-    title_gold: "sweeter?",
-    button_1_text: "Shop all gummies",
-    button_1_link: "/shop",
-    button_2_text: "Best sellers",
-    button_2_link: "/shop?sort=bestsellers",
-    image_left: "",
-    image_right: ""
-  };
+  const section = content?.final_cta || {};
 
   const imgLeft = section.image_left || IMG.multi;
   const imgRight = section.image_right || IMG.kids;

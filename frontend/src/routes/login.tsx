@@ -7,9 +7,13 @@ import { RouteError } from "@/components/site/Page";
 import { useAuth } from "@/lib/auth";
 import { IMG } from "@/lib/products";
 import { cn } from "@/lib/utils";
-import { useLoginContent, fetchJson } from "@/lib/api";
+import { useLoginContent, fetchJson, loginContentQueryOptions } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({
+  loader: async ({ context: { queryClient } }) => {
+    const loginContent = await queryClient.ensureQueryData(loginContentQueryOptions());
+    return { loginContent };
+  },
   head: () => ({
     meta: [
       { title: "Sign In — Sonrup Nutrition" },
@@ -29,12 +33,9 @@ const PERKS = [
 ];
 
 function LoginPage() {
-  const { data: content } = useLoginContent();
-  const loginContent = content || {
-    image: IMG.multi,
-    subtitle: "Delicious Nutrition.",
-    description: "Formulated with care to make taking your vitamins the best part of your day. Your wellness journey starts here."
-  };
+  const loaderData = Route.useLoaderData() as any;
+  const { data: content } = useLoginContent(loaderData?.loginContent);
+  const loginContent = content || {};
 
   const [mode, setMode] = useState<"login" | "register" | "forgot" | "otp" | "reset">("login");
   const [show, setShow] = useState(false);

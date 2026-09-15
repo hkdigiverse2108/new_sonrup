@@ -28,9 +28,9 @@ const SORTS = [
 
 export const Route = createFileRoute("/shop")({
   validateSearch: shopSearchSchema,
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(productsQueryOptions());
-    return {};
+  loader: async ({ context: { queryClient } }) => {
+    const products = await queryClient.ensureQueryData(productsQueryOptions());
+    return { products };
   },
   head: () => ({
     meta: [

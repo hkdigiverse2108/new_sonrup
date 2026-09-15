@@ -3,11 +3,15 @@ import { Clock, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { apiSubmitContact, useContactContent } from "@/lib/api";
+import { apiSubmitContact, useContactContent, contactContentQueryOptions } from "@/lib/api";
 import { Container, PageHero, RouteError } from "@/components/site/Page";
 import { BrandButton, Reveal } from "@/components/site/Primitives";
 
 export const Route = createFileRoute("/contact")({
+  loader: async ({ context: { queryClient } }) => {
+    const contactContent = await queryClient.ensureQueryData(contactContentQueryOptions());
+    return { contactContent };
+  },
   head: () => ({
     meta: [
       { title: "Contact Sonrup — We Reply Within a Day" },
@@ -36,20 +40,16 @@ function Contact() {
   const [sent, setSent] = useState(false);
   const [formState, setFormState] = useState({ name: "", email: "", phone: "", message: "" });
 
-  const { data: contactContent, isLoading } = useContactContent();
+  const loaderData = Route.useLoaderData() as any;
+  const { data: contactContent, isLoading } = useContactContent(loaderData?.contactContent);
 
   const set = (k: keyof typeof formState) => (e: { target: { value: string } }) =>
     setFormState((f) => ({ ...f, [k]: e.target.value }));
 
-  const hero = contactContent?.hero || { eyebrow: "Contact", title_black: "Talk to", title_gold: "real humans.", sub: "No bots, no ticket queues you never hear back from. Our small care team handles every message." };
-  const channels = contactContent?.channels || [
-    { icon: "Mail", label: "Email us", value: "care@sonrup.in", note: "Replies within one working day" },
-    { icon: "Phone", label: "Call us", value: "+91 98200 00000", note: "Mon–Sat, 10am – 7pm IST" },
-    { icon: "MessageCircle", label: "WhatsApp", value: "+91 98200 00000", note: "Fastest for order updates" },
-    { icon: "MapPin", label: "Visit", value: "Andheri East, Mumbai 400069", note: "By appointment only" },
-  ];
-  const supportHours = contactContent?.support_hours || { text: "Support hours: Monday to Saturday, 10am – 7pm IST." };
-  const formContent = contactContent?.form || { title: "Send us a message" };
+  const hero = contactContent?.hero || {};
+  const channels = contactContent?.channels || [];
+  const supportHours = contactContent?.support_hours || {};
+  const formContent = contactContent?.form || {};
 
   return (
     <main>
@@ -67,7 +67,7 @@ function Contact() {
       <Container className="py-14 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr]">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            {channels.map(({ icon, label, value, note }: any, i: number) => {
+            {(channels || []).map(({ icon, label, value, note }: any, i: number) => {
               const Icon = getIcon(icon);
               return (
                 <Reveal key={label} delay={i * 70}>

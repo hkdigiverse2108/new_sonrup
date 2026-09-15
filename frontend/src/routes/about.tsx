@@ -15,11 +15,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/about")({
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(aboutContentQueryOptions());
-    queryClient.prefetchQuery(brandValuesQueryOptions());
-    queryClient.prefetchQuery(milestonesQueryOptions());
-    return {};
+  loader: async ({ context: { queryClient } }) => {
+    const aboutContent = await queryClient.ensureQueryData(aboutContentQueryOptions());
+    const brandValues = await queryClient.ensureQueryData(brandValuesQueryOptions());
+    const milestones = await queryClient.ensureQueryData(milestonesQueryOptions());
+    return { aboutContent, brandValues, milestones };
   },
   head: () => ({
     meta: [
@@ -49,15 +49,15 @@ function getIcon(name: string) {
 
 function About() {
   const loaderData = Route.useLoaderData();
-  const { data: brandValues = loaderData?.brandValues || [] } = useBrandValues();
-  const { data: milestones = loaderData?.milestones || [] } = useMilestones();
-  const { data: aboutContent = loaderData?.aboutContent } = useAboutContent();
+  const { data: brandValues = [] } = useBrandValues(loaderData?.brandValues);
+  const { data: milestones = [] } = useMilestones(loaderData?.milestones);
+  const { data: aboutContent } = useAboutContent(loaderData?.aboutContent);
 
-  const hero = aboutContent?.hero || { eyebrow: "Our story", title_black: "Supplements you actually ", title_gold: "look forward to.", sub: "Sonrup began with a simple frustration: the best formulas in the world do nothing if the tub stays shut. So we built a brand around the one thing most supplements ignore — the experience of taking them." };
-  const why = aboutContent?.why || { eyebrow: "Why we exist", title: "Flavour first. Science always.", sub: "Every batch has to pass two tests before it ships: does it work at a meaningful dose, and would you happily take it every morning for a year?", image: "", benefits: [{ icon: "Leaf", t: "Pectin based, 100% vegetarian", d: "No gelatin, ever. Real fruit concentrates for flavour." }, { icon: "ShieldCheck", t: "Tested every batch", d: "Third-party lab checks for potency, purity and heavy metals." }, { icon: "Sparkles", t: "Doses that matter", d: "No fairy dusting — actives at levels backed by research." }] };
-  const valuesHeader = aboutContent?.values_header || { eyebrow: "What we stand for", title: "Our values" };
-  const journeyHeader = aboutContent?.journey_header || { eyebrow: "The journey", title: "How we got here", show: true };
-  const cta = aboutContent?.cta || { title: "Ready to make it a habit?", sub: "Start with a best seller — free shipping on orders above ₹499.", button_text: "Shop the range", button_link: "/shop" };
+  const hero = aboutContent?.hero || {};
+  const why = aboutContent?.why || { benefits: [] };
+  const valuesHeader = aboutContent?.values_header || {};
+  const journeyHeader = aboutContent?.journey_header || {};
+  const cta = aboutContent?.cta || {};
 
   return (
     <main>
@@ -91,7 +91,7 @@ function About() {
               sub={why.sub}
             />
             <div className="mt-8 grid gap-4">
-              {why.benefits.map(({ icon, t, d }: any) => {
+              {(why.benefits || []).map(({ icon, t, d }: any) => {
                 const Icon = getIcon(icon);
                 return (
                   <div key={t} className="surface-card flex gap-4 p-5">

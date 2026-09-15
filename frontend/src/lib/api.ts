@@ -97,7 +97,7 @@ export const productsQueryOptions = () =>
   queryOptions({
     queryKey: ["products"],
     queryFn: () => fetchJson<Product[]>("/api/products"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const productDetailQueryOptions = (slug: string) =>
@@ -105,42 +105,42 @@ export const productDetailQueryOptions = (slug: string) =>
     queryKey: ["products", slug],
     queryFn: () => fetchJson<Product>(`/api/products/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const flavoursQueryOptions = () =>
   queryOptions({
     queryKey: ["flavours"],
     queryFn: () => fetchJson<{ name: string; token: string; note: string; image?: string }[]>("/api/flavours"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const goalsQueryOptions = () =>
   queryOptions({
     queryKey: ["goals"],
     queryFn: () => fetchJson<{ name: string }[]>("/api/goals"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const reviewsQueryOptions = () =>
   queryOptions({
     queryKey: ["reviews"],
     queryFn: () => fetchJson<{ name: string; city: string; rating: number; text: string; product: string }[]>("/api/reviews"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const faqsQueryOptions = () =>
   queryOptions({
     queryKey: ["faqs"],
     queryFn: () => fetchJson<{ category: string; q: string; a: string }[]>("/api/faqs"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const postsQueryOptions = () =>
   queryOptions({
     queryKey: ["posts"],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }[]>("/api/posts"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const postDetailQueryOptions = (slug: string) =>
@@ -148,14 +148,14 @@ export const postDetailQueryOptions = (slug: string) =>
     queryKey: ["posts", slug],
     queryFn: () => fetchJson<{ slug: string; title: string; category: string; date: string; read: string; excerpt: string; accent: string; image?: string; body: {type: string; content: string}[] }>(`/api/posts/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const policiesQueryOptions = () =>
   queryOptions({
     queryKey: ["policies"],
     queryFn: () => fetchJson<any[]>("/api/policies"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const policyDetailQueryOptions = (slug: string) =>
@@ -163,84 +163,84 @@ export const policyDetailQueryOptions = (slug: string) =>
     queryKey: ["policies", slug],
     queryFn: () => fetchJson<any>(`/api/policies/${slug}`),
     enabled: !!slug,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const homeContentQueryOptions = () =>
   queryOptions({
     queryKey: ["home_content"],
     queryFn: () => fetchJson<any>("/api/content/home"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const loginContentQueryOptions = () =>
   queryOptions({
     queryKey: ["login_content"],
     queryFn: () => fetchJson<any>("/api/content/login"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const aboutContentQueryOptions = () =>
   queryOptions({
     queryKey: ["about_content"],
     queryFn: () => fetchJson<any>("/api/content/about"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const contactContentQueryOptions = () =>
   queryOptions({
     queryKey: ["contact_content"],
     queryFn: () => fetchJson<any>("/api/content/contact"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const journalContentQueryOptions = () =>
   queryOptions({
     queryKey: ["journal_content"],
     queryFn: () => fetchJson<any>("/api/content/journal"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const brandValuesQueryOptions = () =>
   queryOptions({
     queryKey: ["brand_values"],
     queryFn: () => fetchJson<any[]>("/api/brand-values"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const milestonesQueryOptions = () =>
   queryOptions({
     queryKey: ["milestones"],
     queryFn: () => fetchJson<any[]>("/api/milestones"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 export const integrationsSettingsQueryOptions = () =>
   queryOptions({
     queryKey: ["integrations_settings"],
     queryFn: () => fetchJson<any>("/api/settings/integrations"),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
   });
 
 // ─── React Query Hooks (delegating to Query Options) ─────────────────────────
 
-export const useProducts = () => useQuery(productsQueryOptions());
-export const useProduct = (slug: string) => useQuery(productDetailQueryOptions(slug));
-export const useFlavours = () => useQuery(flavoursQueryOptions());
-export const useGoals = () => useQuery(goalsQueryOptions());
-export const useReviews = () => useQuery(reviewsQueryOptions());
-export const useFaqs = () => useQuery(faqsQueryOptions());
-export const usePosts = () => useQuery(postsQueryOptions());
-export const usePost = (slug: string) => useQuery(postDetailQueryOptions(slug));
-export const usePolicies = () => useQuery(policiesQueryOptions());
-export const usePolicy = (slug: string) => useQuery(policyDetailQueryOptions(slug));
-export const useHomeContent = () => useQuery(homeContentQueryOptions());
-export const useLoginContent = () => useQuery(loginContentQueryOptions());
-export const useAboutContent = () => useQuery(aboutContentQueryOptions());
-export const useContactContent = () => useQuery(contactContentQueryOptions());
-export const useJournalContent = () => useQuery(journalContentQueryOptions());
-export const useBrandValues = () => useQuery(brandValuesQueryOptions());
-export const useMilestones = () => useQuery(milestonesQueryOptions());
+export const useProducts = (initialData?: any) => useQuery({ ...productsQueryOptions(), initialData });
+export const useProduct = (slug: string, initialData?: any) => useQuery({ ...productDetailQueryOptions(slug), initialData });
+export const useFlavours = (initialData?: any) => useQuery({ ...flavoursQueryOptions(), initialData });
+export const useGoals = (initialData?: any) => useQuery({ ...goalsQueryOptions(), initialData });
+export const useReviews = (initialData?: any) => useQuery({ ...reviewsQueryOptions(), initialData });
+export const useFaqs = (initialData?: any) => useQuery({ ...faqsQueryOptions(), initialData });
+export const usePosts = (initialData?: any) => useQuery({ ...postsQueryOptions(), initialData });
+export const usePost = (slug: string, initialData?: any) => useQuery({ ...postDetailQueryOptions(slug), initialData });
+export const usePolicies = (initialData?: any) => useQuery({ ...policiesQueryOptions(), initialData });
+export const usePolicy = (slug: string, initialData?: any) => useQuery({ ...policyDetailQueryOptions(slug), initialData });
+export const useHomeContent = (initialData?: any) => useQuery({ ...homeContentQueryOptions(), initialData });
+export const useLoginContent = (initialData?: any) => useQuery({ ...loginContentQueryOptions(), initialData });
+export const useAboutContent = (initialData?: any) => useQuery({ ...aboutContentQueryOptions(), initialData });
+export const useContactContent = (initialData?: any) => useQuery({ ...contactContentQueryOptions(), initialData });
+export const useJournalContent = (initialData?: any) => useQuery({ ...journalContentQueryOptions(), initialData });
+export const useBrandValues = (initialData?: any) => useQuery({ ...brandValuesQueryOptions(), initialData });
+export const useMilestones = (initialData?: any) => useQuery({ ...milestonesQueryOptions(), initialData });
 
 
 
@@ -346,7 +346,7 @@ export const useAdminSubscribers = () => {
   });
 };
 
-export const useIntegrationsSettings = () => useQuery(integrationsSettingsQueryOptions());
+export const useIntegrationsSettings = (initialData?: any) => useQuery({ ...integrationsSettingsQueryOptions(), initialData });
 
 export const useAdminIntegrationsSettings = () => {
   return useQuery({

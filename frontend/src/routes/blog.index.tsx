@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/blog/")({
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(postsQueryOptions());
-    queryClient.prefetchQuery(journalContentQueryOptions());
-    return {};
+  loader: async ({ context: { queryClient } }) => {
+    const posts = await queryClient.ensureQueryData(postsQueryOptions());
+    const journalContent = await queryClient.ensureQueryData(journalContentQueryOptions());
+    return { posts, journalContent };
   },
   head: () => ({
     meta: [
@@ -31,8 +31,8 @@ export const Route = createFileRoute("/blog/")({
 
 function JournalPage() {
   const loaderData = Route.useLoaderData();
-  const { data: posts = loaderData?.posts || [] } = usePosts();
-  const { data: journalContent = loaderData?.journalContent } = useJournalContent();
+  const { data: posts = [] } = usePosts(loaderData?.posts);
+  const { data: journalContent } = useJournalContent(loaderData?.journalContent);
 
   const sortedPosts = [...posts].sort((a, b) => {
     const rA = a.rank ?? 0;
@@ -50,8 +50,8 @@ function JournalPage() {
   const list = cat === "All" ? sortedPosts : sortedPosts.filter((p) => p.category === cat);
   const [lead, ...rest] = list;
 
-  const hero = journalContent?.hero || { eyebrow: "The Journal", title_black: "Straight answers about", title_gold: "what you swallow.", sub: "No mysticism, no miracle claims. Just clear writing on ingredients, doses and the small habits that make a routine stick." };
-  const cta = journalContent?.cta || { eyebrow: "Read something you liked?", title: "Put it into practice today.", cta_text: "Shop the range", cta_link: "/shop" };
+  const hero = journalContent?.hero || {};
+  const cta = journalContent?.cta || {};
 
   return (
     <main>

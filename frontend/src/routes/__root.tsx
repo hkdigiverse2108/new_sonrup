@@ -7,7 +7,6 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
-  ScrollRestoration,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -88,8 +87,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(integrationsSettingsQueryOptions());
+  loader: async ({ context: { queryClient } }) => {
+    const integrationsSettings = await queryClient.ensureQueryData(integrationsSettingsQueryOptions());
+    return { integrationsSettings };
   },
   head: () => ({
     meta: [
@@ -141,7 +141,6 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        <ScrollRestoration />
         <Scripts />
       </body>
     </html>

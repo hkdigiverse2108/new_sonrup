@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Heart, Search, ShoppingBag, User, X, Menu } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,22 +14,16 @@ const NAV = [
   { label: "Contact", to: "/contact" },
 ] as const;
 
-const DEFAULT_ANNOUNCEMENTS = ["FREE SHIPPING ON ORDERS ABOVE ₹499"];
-
 export function AnnouncementBar() {
-  const { data: settings } = useIntegrationsSettings();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const loaderData = useRouterState({ select: (s) => s.matches[0]?.loaderData }) as any;
+  const { data: settings } = useIntegrationsSettings(loaderData?.integrationsSettings);
   
   const rawItems = settings?.announcement_bar_items;
-  const validItems = rawItems && rawItems.length > 0 
+  const items = rawItems && rawItems.length > 0 
     ? rawItems.filter((l: string) => l && l.trim().length > 0)
-    : DEFAULT_ANNOUNCEMENTS;
+    : [];
   
-  const items = isMounted && validItems.length > 0 ? validItems : DEFAULT_ANNOUNCEMENTS;
+  if (items.length === 0) return null;
       
   return (
     <div className="overflow-hidden bg-ink py-2.5 text-cream">
