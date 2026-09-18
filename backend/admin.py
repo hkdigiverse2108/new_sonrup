@@ -427,7 +427,7 @@ async def cancel_shipment(order_id: str, admin=Depends(require_admin), db=Depend
 
     await db["orders"].update_one(
         {"id": order_id},
-        {"$set": {"delhivery_awb": None, "delhivery_status": None, "status": "Processing"}}
+        {"$set": {"delhivery_awb": None, "delhivery_status": None, "status": "Cancelled"}}
     )
     return {"success": True}
 
