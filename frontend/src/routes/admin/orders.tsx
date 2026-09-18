@@ -106,10 +106,10 @@ function AdminOrders() {
                         <div className="flex items-start gap-2 mt-1.5">
                           <button 
                             onClick={() => pickupMutation.mutate(order.id)}
-                            disabled={pickupMutation.isPending}
-                            className="inline-flex h-7 items-center rounded-full bg-[#788a6d] px-3.5 text-[11px] font-bold tracking-wide text-white hover:bg-[#687a5d] disabled:opacity-50"
+                            disabled={pickupMutation.isPending || order.delhivery_status === 'Pickup Scheduled'}
+                            className="inline-flex h-7 items-center rounded-full bg-[#788a6d] px-3.5 text-[11px] font-bold tracking-wide text-white hover:bg-[#687a5d] disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            PICKUP
+                            {order.delhivery_status === 'Pickup Scheduled' ? 'SCHEDULED' : 'PICKUP'}
                           </button>
                           <button 
                             onClick={async () => {

@@ -303,11 +303,13 @@ async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(g
     if not token or not warehouse:
         raise HTTPException(status_code=400, detail="Delhivery credentials not configured")
 
-    # Pickup date is tomorrow
-    pickup_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    # Pickup date and time is right now
+    now = datetime.now()
+    pickup_date = now.strftime("%Y-%m-%d")
+    pickup_time = now.strftime("%H:%M:%S")
     
     payload = {
-        "pickup_time": "15:00:00",
+        "pickup_time": pickup_time,
         "pickup_date": pickup_date,
         "pickup_location": warehouse,
         "expected_package_count": "1"
@@ -321,13 +323,16 @@ async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(g
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "https://track.delhivery.com/fm/request/pb/generate", 
+                "https://track.delhivery.com/fm/request/new/",
                 json=payload, 
                 headers=headers,
                 timeout=15.0
             )
             
-            res_data = response.json() if response.text else {}
+            try:
+                res_data = response.json() if response.text else {}
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Delhivery Error (Non-JSON): {response.text}")
             
             if response.status_code >= 400:
                 error_msg = res_data.get("error") or res_data.get("message") or response.text
