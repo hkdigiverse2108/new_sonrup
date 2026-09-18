@@ -336,10 +336,25 @@ async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(g
             
             if response.status_code >= 400:
                 error_msg = res_data.get("error") or res_data.get("message") or response.text
-                raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_msg}")
+                is_balance_warning = False
+                if isinstance(error_msg, dict) and "prepaid" in error_msg and "wallet balance" in str(error_msg["prepaid"]).lower():
+                    is_balance_warning = True
+                elif isinstance(error_msg, str) and "wallet balance" in error_msg.lower():
+                    is_balance_warning = True
                 
-            if res_data.get("error"):
-                raise HTTPException(status_code=400, detail=f"Delhivery Error: {res_data['error']}")
+                if not is_balance_warning:
+                    raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_msg}")
+                
+            error_val = res_data.get("error")
+            if error_val:
+                is_balance_warning = False
+                if isinstance(error_val, dict) and "prepaid" in error_val and "wallet balance" in str(error_val["prepaid"]).lower():
+                    is_balance_warning = True
+                elif isinstance(error_val, str) and "wallet balance" in error_val.lower():
+                    is_balance_warning = True
+                
+                if not is_balance_warning:
+                    raise HTTPException(status_code=400, detail=f"Delhivery Error: {error_val}")
                 
             await db["orders"].update_one(
                 {"id": order_id},
