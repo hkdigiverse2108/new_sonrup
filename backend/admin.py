@@ -303,8 +303,8 @@ async def pickup_order(order_id: str, admin=Depends(require_admin), db=Depends(g
     if not token or not warehouse:
         raise HTTPException(status_code=400, detail="Delhivery credentials not configured")
 
-    # Pickup date and time is right now
-    now = datetime.now()
+    # Pickup date and time is right now + 2 minutes to avoid past time error
+    now = datetime.now() + timedelta(minutes=2)
     pickup_date = now.strftime("%Y-%m-%d")
     pickup_time = now.strftime("%H:%M:%S")
     
