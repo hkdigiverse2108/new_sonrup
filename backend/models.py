@@ -62,6 +62,10 @@ class ProductModel(BaseModel):
     returns_info: Optional[str] = "Unopened tubes can be returned within 7 days of delivery. Refunds are processed within 5-7 working days."
     accordions: Optional[List[AccordionItem]] = []
     trust_badges: Optional[List[TrustBadge]] = []
+    order: Optional[int] = 0
+
+class ReorderProductsModel(BaseModel):
+    slugs: List[str]
 
 class ReviewModel(BaseModel):
     name: str

@@ -272,6 +272,7 @@ export const apiAdminDeleteOrder = (orderId: string) => fetchJson(`/api/admin/or
 export const apiAdminCreateProduct = (data: any) => fetchJson("/api/admin/products", { method: "POST", body: JSON.stringify(data) });
 export const apiAdminUpdateProduct = (slug: string, data: any) => fetchJson(`/api/admin/products/${slug}`, { method: "PUT", body: JSON.stringify(data) });
 export const apiAdminDeleteProduct = (slug: string) => fetchJson(`/api/admin/products/${slug}`, { method: "DELETE" });
+export const apiAdminReorderProducts = (slugs: string[]) => fetchJson("/api/admin/products/reorder", { method: "POST", body: JSON.stringify({ slugs }) });
 
 export const apiAdminUpdateHomeContent = (data: any) =>
   fetchJson<any>("/api/admin/content/home", {

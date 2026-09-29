@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ArrowLeft, ArrowRight, Star, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from "lucide-react";
-import { apiAdminCreateProduct, apiAdminUpdateProduct, apiAdminDeleteProduct, apiUploadFile, getImageUrl } from "@/lib/api";
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ArrowLeft, ArrowRight, Star, ChevronDown, ChevronUp, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { apiAdminCreateProduct, apiAdminUpdateProduct, apiAdminDeleteProduct, apiAdminReorderProducts, apiUploadFile, fetchJson, getImageUrl } from "@/lib/api";
 import { Product } from "@/lib/products";
 import { BrandButton } from "@/components/site/Primitives";
 import { cn } from "@/lib/utils";
@@ -32,14 +32,34 @@ function AdminProducts() {
   const queryClient = useQueryClient();
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["products"],
-    queryFn: () => fetch("/api/products").then((r) => r.json()),
+    queryFn: () => fetchJson<Product[]>("/api/products"),
   });
 
+  const [items, setItems] = useState<Product[]>([]);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      setItems(products);
+    }
+  }, [products]);
 
   const deleteMutation = useMutation({
     mutationFn: (slug: string) => apiAdminDeleteProduct(slug),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: (slugs: string[]) => apiAdminReorderProducts(slugs),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Products order saved successfully!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update product order");
+    }
   });
 
   const saveMutation = useMutation({
@@ -62,6 +82,26 @@ function AdminProducts() {
     }
   });
 
+  const handleDrop = (dropIndex: number) => {
+    if (draggedIdx === null || draggedIdx === dropIndex) return;
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(draggedIdx, 1);
+    newItems.splice(dropIndex, 0, movedItem);
+    setItems(newItems);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+    reorderMutation.mutate(newItems.map((p) => p.slug));
+  };
+
+  const moveItem = (fromIdx: number, toIdx: number) => {
+    if (toIdx < 0 || toIdx >= items.length) return;
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(fromIdx, 1);
+    newItems.splice(toIdx, 0, movedItem);
+    setItems(newItems);
+    reorderMutation.mutate(newItems.map((p) => p.slug));
+  };
+
   return (
     <div className="space-y-6">
       {editing ? (
@@ -74,7 +114,10 @@ function AdminProducts() {
       ) : (
         <>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-3xl font-display font-extrabold tracking-tight">Products</h1>
+            <div>
+              <h1 className="text-3xl font-display font-extrabold tracking-tight">Products</h1>
+              <p className="text-xs text-muted-foreground mt-1">Drag and drop rows to reorder products as displayed on website.</p>
+            </div>
             <BrandButton onClick={() => setEditing({
               categories: [],
               benefits: [],
@@ -105,9 +148,10 @@ function AdminProducts() {
             <div>Loading products...</div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border bg-card">
-              <table className="w-full min-w-[800px] text-left text-sm">
+              <table className="w-full min-w-[800px] text-left text-sm select-none">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
+                    <th className="px-4 py-4 w-12 text-center font-medium">Reorder</th>
                     <th className="px-6 py-4 font-medium">Product</th>
                     <th className="px-6 py-4 font-medium">Price</th>
                     <th className="px-6 py-4 font-medium">Pack Size</th>
@@ -115,23 +159,81 @@ function AdminProducts() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {products.map((p) => (
-                    <tr key={p.slug} className="hover:bg-muted/30">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {p.image && <img loading="lazy" src={getImageUrl(p.image)} className="h-10 w-10 rounded-lg object-cover" />}
-                          <span className="font-semibold">{p.name}</span>
+                  {items.map((p, idx) => (
+                    <tr 
+                      key={p.slug} 
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedIdx(idx);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (dragOverIdx !== idx) setDragOverIdx(idx);
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverIdx === idx) setDragOverIdx(null);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedIdx(null);
+                        setDragOverIdx(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleDrop(idx);
+                      }}
+                      className={cn(
+                        "hover:bg-muted/30 transition-colors cursor-grab active:cursor-grabbing",
+                        draggedIdx === idx && "opacity-40 bg-primary/5",
+                        dragOverIdx === idx && draggedIdx !== idx && "border-y-2 border-primary bg-primary/10"
+                      )}
+                    >
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <GripVertical className="h-5 w-5 text-muted-foreground hover:text-primary cursor-grab" />
+                          <div className="flex flex-col">
+                            <button
+                              type="button"
+                              onClick={() => moveItem(idx, idx - 1)}
+                              disabled={idx === 0}
+                              className="p-0.5 text-muted-foreground hover:text-primary disabled:opacity-20"
+                              title="Move Up"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveItem(idx, idx + 1)}
+                              disabled={idx === items.length - 1}
+                              className="p-0.5 text-muted-foreground hover:text-primary disabled:opacity-20"
+                              title="Move Down"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">₹{p.price}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {p.image && <img loading="lazy" src={getImageUrl(p.image)} className="h-10 w-10 rounded-lg object-cover border border-border" />}
+                          <div>
+                            <span className="font-semibold block">{p.name}</span>
+                            <span className="text-xs text-muted-foreground">{p.slug}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-medium">₹{p.price}</td>
                       <td className="px-6 py-4">{p.count}</td>
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => setEditing(p)} className="p-2 text-muted-foreground hover:text-primary">
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => deleteMutation.mutate(p.slug)} className="p-2 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => setEditing(p)} className="p-2 text-muted-foreground hover:text-primary rounded-md hover:bg-muted">
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => deleteMutation.mutate(p.slug)} className="p-2 text-muted-foreground hover:text-destructive rounded-md hover:bg-muted">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -274,12 +376,12 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
     e.preventDefault();
     onSave({
       ...formData,
+      price: Number(formData.price || 0),
+      mrp: Number(formData.mrp || 0),
       image: imagesList[0] || "",
       gallery: imagesList.slice(1)
     });
   };
-
-
 
   const addAccordionTab = () => setFormData({ ...formData, accordions: [...(formData.accordions || []), { title: '', content: '' }] });
   const removeAccordionTab = (idx: number) => setFormData({ ...formData, accordions: (formData.accordions || []).filter((_: any, i: number) => i !== idx) });
@@ -338,12 +440,14 @@ function ProductForm({ product, onClose, onSave, allProducts }: { product: Parti
                 onChange={e => {
                   const nameVal = e.target.value;
                   const newFormData = { ...formData, name: nameVal };
-                  newFormData.slug = nameVal
-                    .toLowerCase()
-                    .trim()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/[\s_]+/g, '-')
-                    .replace(/-+/g, '-');
+                  if (!product.slug) {
+                    newFormData.slug = nameVal
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^\w\s-]/g, '')
+                      .replace(/[\s_]+/g, '-')
+                      .replace(/-+/g, '-');
+                  }
                   setFormData(newFormData);
                 }}
               />

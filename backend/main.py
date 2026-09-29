@@ -185,7 +185,7 @@ async def get_products(db=Depends(get_database)):
     if cached is not None:
         return cached
 
-    cursor = db["products"].find({}, {"_id": 0})
+    cursor = db["products"].find({}, {"_id": 0}).sort([("order", 1)])
     products = await cursor.to_list(length=100)
     if products:
         slugs = [p["slug"] for p in products if "slug" in p]

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel
+from backend.models import ProductModel, ReorderProductsModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel
 from backend.main import get_current_user
 from typing import Any, Dict
 import os
@@ -57,17 +57,31 @@ async def upload_file(file: UploadFile = File(...), admin=Depends(require_admin)
 # ---------------------------------------------------------
 @router.post("/products")
 async def create_product(product: ProductModel, admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import clear_cache
     await db["products"].insert_one(product.model_dump())
+    clear_cache("products")
     return {"success": True}
 
 @router.put("/products/{slug}")
 async def update_product(slug: str, product: ProductModel, admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import clear_cache
     await db["products"].replace_one({"slug": slug}, product.model_dump())
+    clear_cache("products")
     return {"success": True}
 
 @router.delete("/products/{slug}")
 async def delete_product(slug: str, admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import clear_cache
     await db["products"].delete_one({"slug": slug})
+    clear_cache("products")
+    return {"success": True}
+
+@router.post("/products/reorder")
+async def reorder_products(data: ReorderProductsModel, admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import clear_cache
+    for idx, slug in enumerate(data.slugs):
+        await db["products"].update_one({"slug": slug}, {"$set": {"order": idx}})
+    clear_cache("products")
     return {"success": True}
 
 # ---------------------------------------------------------
