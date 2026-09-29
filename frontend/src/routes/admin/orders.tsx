@@ -65,6 +65,7 @@ function AdminOrders() {
                 <th className="px-6 py-4 font-medium">Customer</th>
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Total</th>
+                <th className="px-6 py-4 font-medium">Payment</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 text-right font-medium">Action</th>
               </tr>
@@ -79,6 +80,9 @@ function AdminOrders() {
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{order.date}</td>
                   <td className="px-6 py-4 font-semibold">₹{order.total}</td>
+                  <td className="px-6 py-4 font-medium">
+                    {order.payment_method === 'cod' ? 'COD' : 'Razorpay'}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       order.status === "Processing" ? "bg-amber-100 text-amber-800" :

@@ -155,6 +155,9 @@ class OrderModel(BaseModel):
     customer_phone: str
     shipping_address: ShippingAddress
     payment_method: str
+    payment_status: Optional[str] = "Pending"
+    razorpay_payment_id: Optional[str] = None
+    razorpay_order_id: Optional[str] = None
     delhivery_awb: Optional[str] = None
     delhivery_status: Optional[str] = None
 
