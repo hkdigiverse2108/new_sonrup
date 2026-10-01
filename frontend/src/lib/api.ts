@@ -262,6 +262,7 @@ export const apiUploadFile = async (file: File) => {
 };
 
 export const apiAdminGetOrders = () => fetchJson("/api/admin/orders");
+export const apiAdminCreateOfflineOrder = (data: any) => fetchJson("/api/admin/orders/offline", { method: "POST", body: JSON.stringify(data) });
 export const apiAdminUpdateOrderStatus = (id: string, status: string) => fetchJson(`/api/admin/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
 export const apiAdminShipOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/ship`, { method: "POST" });
 export const apiAdminPickupOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/pickup`, { method: "POST" });

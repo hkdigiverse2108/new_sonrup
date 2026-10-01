@@ -130,12 +130,12 @@ class AddressModel(BaseModel):
     isDefault: Optional[bool] = False
 
 class OrderItemModel(BaseModel):
-    slug: str
+    slug: Optional[str] = "custom"
     name: str
-    image: str
+    image: Optional[str] = ""
     price: float
-    count: str
-    qty: int
+    count: Optional[str] = "1 Unit"
+    qty: Optional[int] = 1
 
 class ShippingAddress(BaseModel):
     line1: str
@@ -160,6 +160,25 @@ class OrderModel(BaseModel):
     razorpay_order_id: Optional[str] = None
     delhivery_awb: Optional[str] = None
     delhivery_status: Optional[str] = None
+    is_offline: Optional[bool] = False
+    notes: Optional[str] = None
+
+class CreateOfflineOrderModel(BaseModel):
+    customer_name: str
+    customer_phone: str
+    customer_email: Optional[str] = ""
+    line1: str
+    city: str
+    state: str
+    pincode: str
+    landmark: Optional[str] = ""
+    items: List[OrderItemModel]
+    payment_method: str = "upi" # "upi" or "cod"
+    payment_status: Optional[str] = "Paid" # "Paid" or "Pending"
+    status: Optional[str] = "Processing"
+    shipping_fee: Optional[float] = 0.0
+    notes: Optional[str] = ""
+
 
 class UserModel(BaseModel):
     email: str

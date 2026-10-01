@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReorderProductsModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel
-from backend.main import get_current_user
+from backend.models import ProductModel, ReorderProductsModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel, CreateOfflineOrderModel
 from typing import Any, Dict
 import os
 import uuid
 import shutil
 import random
+import string
 import httpx
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+from backend.main import get_current_user
 
 def require_admin(current_user=Depends(get_current_user)):
     if current_user.get("role") != "admin":
@@ -150,6 +152,40 @@ async def get_all_orders(admin=Depends(require_admin), db=Depends(get_database))
     orders = await cursor.to_list(length=1000)
     return orders
 
+@router.post("/orders/offline")
+async def create_offline_order(payload: CreateOfflineOrderModel, admin=Depends(require_admin), db=Depends(get_database)):
+    random_digits = ''.join(random.choices(string.digits, k=6))
+    order_id = f"OFF-{random_digits}"
+    
+    items_total = sum(float(item.price) * int(item.qty) for item in payload.items)
+    grand_total = items_total + float(payload.shipping_fee or 0.0)
+    
+    order_doc = {
+        "id": order_id,
+        "date": datetime.now().strftime("%b %d, %Y"),
+        "created_at": datetime.now().isoformat(),
+        "status": payload.status or "Processing",
+        "total": round(grand_total, 2),
+        "items": [item.model_dump() for item in payload.items],
+        "customer_name": payload.customer_name,
+        "customer_email": payload.customer_email or "",
+        "customer_phone": payload.customer_phone,
+        "shipping_address": {
+            "line1": payload.line1,
+            "city": payload.city,
+            "state": payload.state,
+            "pincode": payload.pincode,
+            "landmark": payload.landmark or ""
+        },
+        "payment_method": payload.payment_method.lower(), # "upi" or "cod"
+        "payment_status": payload.payment_status or ("Paid" if payload.payment_method.lower() == "upi" else "Pending"),
+        "is_offline": True,
+        "notes": payload.notes or ""
+    }
+    
+    await db["orders"].insert_one(order_doc)
+    return {"success": True, "order_id": order_id}
+
 @router.put("/orders/{order_id}/status")
 async def update_order_status(order_id: str, payload: Dict[str, str], admin=Depends(require_admin), db=Depends(get_database)):
     status = payload.get("status")
@@ -201,7 +237,7 @@ async def ship_order(order_id: str, admin=Depends(require_admin), db=Depends(get
     if not token or not warehouse:
         raise HTTPException(status_code=400, detail="Delhivery credentials not configured in Integrations settings")
 
-    is_cod = order.get("payment_method") == "cod"
+    is_cod = str(order.get("payment_method", "")).lower() == "cod"
     payment_mode = "COD" if is_cod else "Pre-paid"
     cod_amount = order.get("total", 0) if is_cod else 0
 
