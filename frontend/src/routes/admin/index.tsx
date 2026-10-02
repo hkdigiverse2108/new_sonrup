@@ -22,6 +22,7 @@ import {
   useAdminContacts,
   useAdminCustomers
 } from "@/lib/api";
+import { formatOrderDateTime } from "./orders";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
@@ -198,7 +199,7 @@ function AdminDashboard() {
                       </td>
                       <td className="py-3.5">
                         <div className="font-medium text-foreground">{o.customer_name}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">{o.date}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">{formatOrderDateTime(o)}</div>
                       </td>
                       <td className="py-3.5">
                         <span className={cn(

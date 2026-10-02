@@ -8,7 +8,7 @@ import shutil
 import random
 import string
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -160,10 +160,11 @@ async def create_offline_order(payload: CreateOfflineOrderModel, admin=Depends(r
     items_total = sum(float(item.price) * int(item.qty) for item in payload.items)
     grand_total = items_total + float(payload.shipping_fee or 0.0)
     
+    now_utc = datetime.now(timezone.utc)
     order_doc = {
         "id": order_id,
-        "date": datetime.now().strftime("%b %d, %Y, %I:%M %p"),
-        "created_at": datetime.now().isoformat(),
+        "date": payload.date or now_utc.strftime("%b %d, %Y, %I:%M %p"),
+        "created_at": payload.created_at or now_utc.isoformat().replace("+00:00", "Z"),
         "status": payload.status or "Processing",
         "total": round(grand_total, 2),
         "items": [item.model_dump() for item in payload.items],

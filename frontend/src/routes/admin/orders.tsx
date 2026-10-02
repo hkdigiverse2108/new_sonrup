@@ -10,9 +10,14 @@ import { format } from "date-fns";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-function formatOrderDateTime(order: any) {
+export function formatOrderDateTime(order: any) {
+  if (!order) return "N/A";
   if (order.created_at) {
-    const d = new Date(order.created_at);
+    let str = String(order.created_at).trim();
+    if (str.includes("T") && !str.endsWith("Z") && !str.includes("+") && !/-\d\d:\d\d$/.test(str)) {
+      str += "Z";
+    }
+    const d = new Date(str);
     if (!isNaN(d.getTime())) {
       return d.toLocaleDateString("en-US", {
         month: "short",
@@ -25,7 +30,22 @@ function formatOrderDateTime(order: any) {
       });
     }
   }
-  return order.date || "N/A";
+  if (order.date) {
+    const d = new Date(order.date);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      }) + ", " + d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+    }
+    return order.date;
+  }
+  return "N/A";
 }
 
 export const Route = createFileRoute("/admin/orders")({
@@ -97,7 +117,11 @@ function AdminOrders() {
     if (dateRange?.from) {
       const orderDateStr = order.created_at || order.date;
       if (orderDateStr) {
-        const orderDate = new Date(orderDateStr);
+        let str = String(orderDateStr).trim();
+        if (str.includes("T") && !str.endsWith("Z") && !str.includes("+") && !/-\d\d:\d\d$/.test(str)) {
+          str += "Z";
+        }
+        const orderDate = new Date(str);
         if (!isNaN(orderDate.getTime())) {
           const from = new Date(dateRange.from);
           from.setHours(0, 0, 0, 0);
@@ -874,7 +898,9 @@ function AddOfflineOrderModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
       payment_status: paymentStatus,
       status: "Processing",
       shipping_fee: 0,
-      notes: ""
+      notes: "",
+      date: formatOrderDateTime({ created_at: new Date().toISOString() }),
+      created_at: new Date().toISOString()
     };
 
     createMutation.mutate(payload);

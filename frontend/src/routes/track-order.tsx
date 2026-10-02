@@ -21,6 +21,7 @@ import { useAuth } from "@/lib/auth";
 import { apiTrackOrder, getImageUrl } from "@/lib/api";
 import { inr } from "@/lib/products";
 import { toast } from "sonner";
+import { formatOrderDateTime } from "./admin/orders";
 
 const trackSearchSchema = z.object({
   query: z.string().optional(),
@@ -181,7 +182,7 @@ function TrackOrderPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5 mb-6">
                 <div>
                   <div className="font-display font-extrabold text-xl text-foreground">{order.id}</div>
-                  {order.date && <div className="text-sm text-muted-foreground mt-0.5">{order.date}</div>}
+                  <div className="text-sm text-muted-foreground mt-0.5">{formatOrderDateTime(order)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs sm:text-sm font-semibold ${

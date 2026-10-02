@@ -178,6 +178,8 @@ class CreateOfflineOrderModel(BaseModel):
     status: Optional[str] = "Processing"
     shipping_fee: Optional[float] = 0.0
     notes: Optional[str] = ""
+    date: Optional[str] = None
+    created_at: Optional[str] = None
 
 
 class UserModel(BaseModel):
