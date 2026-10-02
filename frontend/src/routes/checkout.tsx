@@ -128,9 +128,13 @@ function Checkout() {
                 landmark: formData.get("landmark") as string || "",
               };
 
+              const now = new Date();
+              const formattedDate = now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) + ", " + now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+
               const newOrder = {
                 id,
-                date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+                date: formattedDate,
+                created_at: now.toISOString(),
                 status: "Processing",
                 total: subtotal + shipping,
                 items: lines.map((l) => ({

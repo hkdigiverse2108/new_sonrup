@@ -162,7 +162,7 @@ async def create_offline_order(payload: CreateOfflineOrderModel, admin=Depends(r
     
     order_doc = {
         "id": order_id,
-        "date": datetime.now().strftime("%b %d, %Y"),
+        "date": datetime.now().strftime("%b %d, %Y, %I:%M %p"),
         "created_at": datetime.now().isoformat(),
         "status": payload.status or "Processing",
         "total": round(grand_total, 2),

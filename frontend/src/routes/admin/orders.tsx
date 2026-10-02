@@ -2,9 +2,31 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiAdminGetOrders, apiAdminCreateOfflineOrder, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel, fetchJson } from "@/lib/api";
-import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard, Search, Calendar as CalendarIcon, FilterX, Filter } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
 import { toast } from "sonner";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+function formatOrderDateTime(order: any) {
+  if (order.created_at) {
+    const d = new Date(order.created_at);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      }) + ", " + d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+    }
+  }
+  return order.date || "N/A";
+}
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrders,
@@ -14,6 +36,11 @@ function AdminOrders() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const [typeFilter, setTypeFilter] = useState<"all" | "online" | "offline">("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: orders = [], isLoading } = useQuery<any[]>({
     queryKey: ["admin_orders"],
@@ -50,6 +77,58 @@ function AdminOrders() {
     onError: (err: any) => toast.error(err.message || "Failed to delete order"),
   });
 
+  const filteredOrders = orders.filter((order) => {
+    // 1. Channel Filter (Online vs Offline)
+    if (typeFilter === "online" && order.is_offline) return false;
+    if (typeFilter === "offline" && !order.is_offline) return false;
+
+    // 2. Status Filter
+    if (statusFilter !== "all") {
+      const mainStatus = (order.status || "").toLowerCase();
+      const delhiveryStatus = (order.delhivery_status || "").toLowerCase();
+      const targetStatus = statusFilter.toLowerCase();
+
+      if (!mainStatus.includes(targetStatus) && !delhiveryStatus.includes(targetStatus)) {
+        return false;
+      }
+    }
+
+    // 3. Date Filter (Interactive Calendar Range Picker)
+    if (dateRange?.from) {
+      const orderDateStr = order.created_at || order.date;
+      if (orderDateStr) {
+        const orderDate = new Date(orderDateStr);
+        if (!isNaN(orderDate.getTime())) {
+          const from = new Date(dateRange.from);
+          from.setHours(0, 0, 0, 0);
+
+          const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+          to.setHours(23, 59, 59, 999);
+
+          if (orderDate < from || orderDate > to) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // 4. Search Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const id = (order.id || "").toLowerCase();
+      const name = (order.customer_name || "").toLowerCase();
+      const email = (order.customer_email || "").toLowerCase();
+      const phone = (order.customer_phone || "").toLowerCase();
+      const awb = (order.delhivery_awb || "").toLowerCase();
+
+      if (!id.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !awb.includes(q)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -63,6 +142,119 @@ function AdminOrders() {
         >
           <Plus className="h-4 w-4" /> Add Offline Order
         </button>
+      </div>
+
+      {/* Filters Toolbar */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          {/* Search Box */}
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by Order ID, Customer Name, Phone, AWB..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background pl-9 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Online / Offline Filter */}
+            <div className="flex items-center rounded-xl border border-border bg-muted/40 p-1">
+              <button
+                type="button"
+                onClick={() => setTypeFilter("all")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  typeFilter === "all" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                All ({orders.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter("online")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  typeFilter === "online" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Online ({orders.filter((o) => !o.is_offline).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter("offline")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  typeFilter === "offline" ? "bg-purple-100 text-purple-800 shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Offline ({orders.filter((o) => o.is_offline).length})
+              </button>
+            </div>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">All Statuses</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Pickup Scheduled">Pickup Scheduled</option>
+              <option value="Manifested">Manifested</option>
+            </select>
+
+            {/* Interactive Date Range Calendar Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-bold text-foreground hover:bg-accent transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <span>
+                        {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                      </span>
+                    ) : (
+                      <span>{format(dateRange.from, "dd/MM/yyyy")} - ...</span>
+                    )
+                  ) : (
+                    <span>Select Date Range</span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border border-border bg-card shadow-2xl rounded-2xl overflow-hidden" align="end">
+                <CalendarPicker
+                  mode="range"
+                  defaultMonth={dateRange?.from || new Date()}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Clear Filters Button */}
+            {(typeFilter !== "all" || statusFilter !== "all" || dateRange?.from || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTypeFilter("all");
+                  setStatusFilter("all");
+                  setDateRange(undefined);
+                  setSearchQuery("");
+                }}
+                className="inline-flex items-center gap-1 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+              >
+                <FilterX className="h-3.5 w-3.5" /> Reset
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -82,14 +274,14 @@ function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {orders.map((order, idx) => (
+              {filteredOrders.map((order, idx) => (
                 <tr key={order.id ? `order-${order.id}-${idx}` : `order-row-${idx}`} className="hover:bg-muted/30">
                   <td className="px-6 py-4 font-medium">{order.id}</td>
                   <td className="px-6 py-4">
                     <div>{order.customer_name}</div>
                     {order.customer_email ? <div className="text-xs text-muted-foreground">{order.customer_email}</div> : null}
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground">{order.date}</td>
+                  <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">{formatOrderDateTime(order)}</td>
                   <td className="px-6 py-4 font-semibold">₹{order.total}</td>
                   <td className="px-6 py-4 font-medium">
                     <div className="flex flex-col gap-1">
@@ -475,12 +667,13 @@ function AdminOrders() {
                             </button>
                             <button 
                               onClick={async () => {
-                                if (await confirm({ title: "Cancel Shipment", message: "Are you sure you want to cancel this shipment?" })) {
-                                  cancelMutation.mutate(order.id);
+                                if (await confirm({ title: "Delete Order", message: "Are you sure you want to delete this order? This action cannot be undone." })) {
+                                  deleteMutation.mutate(order.id);
                                 }
                               }}
-                              disabled={cancelMutation.isPending}
+                              disabled={deleteMutation.isPending}
                               className="inline-flex h-7 w-7 items-center justify-center rounded-full text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              title="Delete Order"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -517,10 +710,14 @@ function AdminOrders() {
                   </td>
                 </tr>
               ))}
-              {orders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                    No orders found.
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <FilterX className="h-8 w-8 text-muted-foreground/50" />
+                      <div className="font-semibold text-sm">No orders found</div>
+                      <div className="text-xs text-muted-foreground">Try adjusting your filters or search terms.</div>
+                    </div>
                   </td>
                 </tr>
               )}
