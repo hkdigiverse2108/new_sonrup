@@ -143,14 +143,59 @@ async def delete_faq(q: str, admin=Depends(require_admin), db=Depends(get_databa
     await db["faqs"].delete_one({"q": q})
     return {"success": True}
 
+import asyncio
+
 # ---------------------------------------------------------
 # Orders Management
 # ---------------------------------------------------------
 @router.get("/orders")
 async def get_all_orders(admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import sync_delhivery_status_for_order
     cursor = db["orders"].find({}, {"_id": 0}).sort("_id", -1)
     orders = await cursor.to_list(length=1000)
+    
+    # Auto-sync active orders that have delhivery_awb and aren't already final (Delivered/Cancelled)
+    active_orders = [o for o in orders if o.get("delhivery_awb") and o.get("status") not in ["Delivered", "Cancelled"]]
+    if active_orders:
+        async def sync_with_timeout(o):
+            try:
+                return await asyncio.wait_for(sync_delhivery_status_for_order(o, db), timeout=2.5)
+            except Exception:
+                return o
+                
+        await asyncio.gather(*[sync_with_timeout(o) for o in active_orders], return_exceptions=True)
+
     return orders
+
+@router.post("/orders/sync-delhivery")
+async def sync_all_delhivery_orders(admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import sync_delhivery_status_for_order
+    cursor = db["orders"].find({"delhivery_awb": {"$ne": None}}, {"_id": 0})
+    orders = await cursor.to_list(length=1000)
+    updated_count = 0
+    
+    async def process_sync(order):
+        nonlocal updated_count
+        prev_status = order.get("status")
+        prev_delhivery = order.get("delhivery_status")
+        res = await sync_delhivery_status_for_order(order, db)
+        if res.get("status") != prev_status or res.get("delhivery_status") != prev_delhivery:
+            updated_count += 1
+
+    await asyncio.gather(*[process_sync(o) for o in orders], return_exceptions=True)
+    return {"success": True, "updated_count": updated_count}
+
+@router.post("/orders/{order_id}/sync-delhivery")
+async def sync_single_delhivery_order(order_id: str, admin=Depends(require_admin), db=Depends(get_database)):
+    from backend.main import sync_delhivery_status_for_order
+    order = await db["orders"].find_one({"id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if not order.get("delhivery_awb"):
+        raise HTTPException(status_code=400, detail="Order does not have a Delhivery AWB")
+        
+    synced_order = await sync_delhivery_status_for_order(order, db)
+    return {"success": True, "status": synced_order.get("status"), "delhivery_status": synced_order.get("delhivery_status")}
 
 @router.post("/orders/offline")
 async def create_offline_order(payload: CreateOfflineOrderModel, admin=Depends(require_admin), db=Depends(get_database)):
@@ -453,7 +498,14 @@ async def get_shipping_label(order_id: str, admin=Depends(require_admin), db=Dep
             if not packages:
                 raise HTTPException(status_code=400, detail="Failed to fetch label details from Delhivery")
             
-            return {"success": True, "label_data": packages[0]}
+            pkg = packages[0]
+            cust_phone = order.get("customer_phone") or (order.get("shipping_address") or {}).get("phone") or ""
+            if cust_phone:
+                pkg["customer_phone"] = cust_phone
+                if not pkg.get("phone"):
+                    pkg["phone"] = cust_phone
+
+            return {"success": True, "label_data": pkg, "customer_phone": cust_phone}
     except HTTPException:
         raise
     except Exception as e:

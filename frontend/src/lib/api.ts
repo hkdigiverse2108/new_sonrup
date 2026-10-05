@@ -267,6 +267,8 @@ export const apiAdminUpdateOrderStatus = (id: string, status: string) => fetchJs
 export const apiAdminShipOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/ship`, { method: "POST" });
 export const apiAdminPickupOrder = (id: string) => fetchJson(`/api/admin/orders/${id}/pickup`, { method: "POST" });
 export const apiAdminCancelShipment = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}/cancel-shipment`, { method: "POST" });
+export const apiAdminSyncAllDelhiveryOrders = () => fetchJson<{ success: boolean; updated_count: number }>("/api/admin/orders/sync-delhivery", { method: "POST" });
+export const apiAdminSyncSingleDelhiveryOrder = (id: string) => fetchJson<{ success: boolean; status: string; delhivery_status: string }>(`/api/admin/orders/${id}/sync-delhivery`, { method: "POST" });
 export const apiAdminGetOrderLabel = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}/label`);
 export const apiAdminDeleteOrder = (orderId: string) => fetchJson(`/api/admin/orders/${orderId}`, { method: "DELETE" });
 

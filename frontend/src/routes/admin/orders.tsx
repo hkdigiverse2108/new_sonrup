@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiAdminGetOrders, apiAdminCreateOfflineOrder, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel, fetchJson } from "@/lib/api";
-import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard, Search, Calendar as CalendarIcon, FilterX, Filter } from "lucide-react";
+import { apiAdminGetOrders, apiAdminCreateOfflineOrder, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel, apiAdminSyncAllDelhiveryOrders, apiAdminSyncSingleDelhiveryOrder, fetchJson } from "@/lib/api";
+import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard, Search, Calendar as CalendarIcon, FilterX, Filter, RefreshCw } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
 import { toast } from "sonner";
 import { DateRange } from "react-day-picker";
@@ -97,6 +97,24 @@ function AdminOrders() {
     onError: (err: any) => toast.error(err.message || "Failed to delete order"),
   });
 
+  const syncAllMutation = useMutation({
+    mutationFn: () => apiAdminSyncAllDelhiveryOrders(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
+      toast.success(`Delhivery sync complete. Updated ${data.updated_count || 0} order(s).`);
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to sync Delhivery statuses"),
+  });
+
+  const syncSingleMutation = useMutation({
+    mutationFn: (id: string) => apiAdminSyncSingleDelhiveryOrder(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin_orders"] });
+      toast.success(`Synced order status: ${data.status} (${data.delhivery_status || 'Delhivery'})`);
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to sync order status"),
+  });
+
   const filteredOrders = orders.filter((order) => {
     // 1. Channel Filter (Online vs Offline)
     if (typeFilter === "online" && order.is_offline) return false;
@@ -106,10 +124,30 @@ function AdminOrders() {
     if (statusFilter !== "all") {
       const mainStatus = (order.status || "").toLowerCase();
       const delhiveryStatus = (order.delhivery_status || "").toLowerCase();
-      const targetStatus = statusFilter.toLowerCase();
+      const target = statusFilter.toLowerCase();
 
-      if (!mainStatus.includes(targetStatus) && !delhiveryStatus.includes(targetStatus)) {
-        return false;
+      if (target === "ready to ship") {
+        const isReadyToShip = mainStatus === "processing" || mainStatus === "ready to ship" || delhiveryStatus === "manifested" || (!order.delhivery_awb && mainStatus !== "cancelled" && mainStatus !== "delivered");
+        if (!isReadyToShip) return false;
+      } else if (target === "ready for pickup") {
+        const isReadyForPickup = mainStatus.includes("pickup") || delhiveryStatus.includes("pickup") || delhiveryStatus === "pickup scheduled";
+        if (!isReadyForPickup) return false;
+      } else if (target === "in transit") {
+        const isInTransit = mainStatus === "shipped" || delhiveryStatus.includes("transit") || delhiveryStatus.includes("dispatched") || delhiveryStatus.includes("out for delivery");
+        if (!isInTransit) return false;
+      } else if (target === "rto - in transit") {
+        const isRTO = mainStatus.includes("rto") || delhiveryStatus.includes("rto") || delhiveryStatus.includes("return");
+        if (!isRTO) return false;
+      } else if (target === "delivered") {
+        const isDelivered = mainStatus === "delivered" || delhiveryStatus.includes("delivered") || delhiveryStatus === "dl";
+        if (!isDelivered) return false;
+      } else if (target === "cancelled") {
+        const isCancelled = mainStatus === "cancelled" || mainStatus === "canceled" || delhiveryStatus.includes("cancel");
+        if (!isCancelled) return false;
+      } else {
+        if (!mainStatus.includes(target) && !delhiveryStatus.includes(target)) {
+          return false;
+        }
       }
     }
 
@@ -222,12 +260,12 @@ function AdminOrders() {
               className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Statuses</option>
-              <option value="Processing">Processing</option>
-              <option value="Shipped">Shipped</option>
+              <option value="Ready to ship">Ready to ship</option>
+              <option value="Ready for pickup">Ready for pickup</option>
+              <option value="In transit">In transit</option>
+              <option value="RTO - In transit">RTO - In transit</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
-              <option value="Pickup Scheduled">Pickup Scheduled</option>
-              <option value="Manifested">Manifested</option>
             </select>
 
             {/* Interactive Date Range Calendar Popover */}
@@ -324,37 +362,54 @@ function AdminOrders() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      order.status === "Processing" ? "bg-amber-100 text-amber-800" :
-                      order.status === "Shipped" ? "bg-blue-100 text-blue-800" :
-                      "bg-green-100 text-green-800"
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                      order.status === "Processing" ? "bg-amber-100 text-amber-800 border-amber-200" :
+                      order.status === "Shipped" ? "bg-blue-100 text-blue-800 border-blue-200" :
+                      order.status === "Delivered" ? "bg-emerald-100 text-emerald-800 border-emerald-200" :
+                      "bg-red-100 text-red-800 border-red-200"
                     }`}>
                       {order.status === "Processing" && <Clock className="h-3 w-3" />}
                       {order.status === "Shipped" && <Truck className="h-3 w-3" />}
                       {order.status === "Delivered" && <CheckCircle className="h-3 w-3" />}
+                      {order.status === "Cancelled" && <X className="h-3 w-3" />}
                       {order.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     {order.delhivery_awb ? (
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center rounded-full bg-[#E8F2F1] px-2.5 py-1 text-xs font-bold text-[#297C82]">
+                          <span className="inline-flex items-center rounded-full bg-[#E8F2F1] px-2.5 py-0.5 text-xs font-bold text-[#297C82]">
                             DELHIVERY
                           </span>
                           <span className="text-[13px] font-semibold text-[#0A548B]">{order.delhivery_awb}</span>
+                          <button
+                            type="button"
+                            onClick={() => syncSingleMutation.mutate(order.id)}
+                            disabled={syncSingleMutation.isPending && syncSingleMutation.variables === order.id}
+                            className="p-1 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-muted"
+                            title="Sync Delhivery status for this order"
+                          >
+                            <RefreshCw className={`h-3.5 w-3.5 ${syncSingleMutation.isPending && syncSingleMutation.variables === order.id ? "animate-spin text-primary" : ""}`} />
+                          </button>
                         </div>
                         <div className="text-[11px] text-muted-foreground mr-1">
-                          Status: <span className="font-semibold text-[#0A548B]">{order.delhivery_status || 'Manifested'}</span>
+                          Status: <span className={`font-bold ${
+                            (order.delhivery_status || "").toLowerCase().includes("delivered") || order.delhivery_status === "DL" ? "text-emerald-700" :
+                            (order.delhivery_status || "").toLowerCase().includes("cancel") || (order.delhivery_status || "").toLowerCase().includes("rto") ? "text-red-600" :
+                            "text-[#0A548B]"
+                          }`}>{order.delhivery_status || 'Manifested'}</span>
                         </div>
                         <div className="flex items-start gap-2 mt-1.5">
-                          <button 
-                            onClick={() => pickupMutation.mutate(order.id)}
-                            disabled={pickupMutation.isPending || order.delhivery_status === 'Pickup Scheduled'}
-                            className="inline-flex h-7 items-center rounded-full bg-[#788a6d] px-3.5 text-[11px] font-bold tracking-wide text-white hover:bg-[#687a5d] disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {order.delhivery_status === 'Pickup Scheduled' ? 'SCHEDULED' : 'PICKUP'}
-                          </button>
+                          {order.status !== 'Delivered' && (order.delhivery_status || '').toLowerCase() !== 'delivered' && order.delhivery_status !== 'DL' && (
+                            <button 
+                              onClick={() => pickupMutation.mutate(order.id)}
+                              disabled={pickupMutation.isPending || order.delhivery_status === 'Pickup Scheduled'}
+                              className="inline-flex h-7 items-center rounded-full bg-[#788a6d] px-3.5 text-[11px] font-bold tracking-wide text-white hover:bg-[#687a5d] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {order.delhivery_status === 'Pickup Scheduled' ? 'SCHEDULED' : 'PICKUP'}
+                            </button>
+                          )}
                           <button 
                             onClick={async () => {
                               // Open window synchronously to prevent browser popup blockers from blocking it
@@ -371,7 +426,7 @@ function AdminOrders() {
                                   throw new Error("No label details returned from Delhivery");
                                 }
                                 const data = res.label_data;
-                                const phone = data.phone || data.mobile || data.cust_phone || data.ph || "";
+                                const phone = res.customer_phone || data.customer_phone || data.phone || data.mobile || data.cust_phone || data.ph || data.consignee_phone || data.c_phone || order.customer_phone || (order.shipping_address && order.shipping_address.phone) || "";
                                 const itemsRows = order.items && order.items.length > 0
                                   ? order.items.map((item: any) => `
                                       <tr>
@@ -589,7 +644,7 @@ function AdminOrders() {
                                         <div class="shipto-left">
                                           Shipping Address:<br/>
                                           <span style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${data.name}</span><br/>
-                                          <span style="font-size: 11px; display: block; margin-top: 1px; color: #333;">Phone: ${phone}</span>
+                                          <span style="font-size: 11px; display: block; margin-top: 2px; margin-bottom: 2px; color: #000; font-weight: bold;">Phone: ${phone || 'N/A'}</span>
                                           ${data.address}<br/>
                                           ${data.destination}<br/>
                                           PIN:${data.pin}

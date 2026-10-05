@@ -843,6 +843,55 @@ async def get_delhivery_tracking_info(awb: str, db):
         print("[DELHIVERY TRACKING FETCH ERROR]", str(e))
     return None
 
+def map_delhivery_to_main_status(delhivery_status: str, current_status: str = "Shipped") -> str:
+    if not delhivery_status:
+        return current_status
+    
+    ds = str(delhivery_status).strip().lower()
+
+    # Delivered status variations from Delhivery API (e.g. "Delivered", "DL", "Delivered to consignee")
+    if "delivered" in ds or ds in ["dl", "delivered"]:
+        return "Delivered"
+    
+    # Cancellation / RTO status variations from Delhivery
+    if any(k in ds for k in ["cancelled", "canceled", "rto", "returned", "return to origin", "lost"]):
+        return "Cancelled"
+    
+    # Active shipping / in-transit statuses
+    if any(k in ds for k in ["in transit", "in-transit", "dispatched", "out for delivery", "pickup scheduled", "manifested", "picked up"]):
+        if current_status in ["Processing", "Shipped"]:
+            return "Shipped"
+
+    return current_status
+
+async def sync_delhivery_status_for_order(order: dict, db) -> dict:
+    awb = order.get("delhivery_awb")
+    if not awb:
+        return order
+    
+    try:
+        live_tracking = await get_delhivery_tracking_info(awb, db)
+        if live_tracking and live_tracking.get("status"):
+            new_delhivery_status = live_tracking["status"]
+            current_main_status = order.get("status", "Shipped")
+            new_main_status = map_delhivery_to_main_status(new_delhivery_status, current_main_status)
+            
+            updates = {}
+            if new_delhivery_status != order.get("delhivery_status"):
+                updates["delhivery_status"] = new_delhivery_status
+                order["delhivery_status"] = new_delhivery_status
+                
+            if new_main_status != current_main_status:
+                updates["status"] = new_main_status
+                order["status"] = new_main_status
+                
+            if updates:
+                await db["orders"].update_one({"id": order["id"]}, {"$set": updates})
+    except Exception as e:
+        print(f"[DELHIVERY SYNC ERROR for {order.get('id')}]:", str(e))
+            
+    return order
+
 @app.get("/api/track-order")
 async def track_order(query: str = Query(...), db=Depends(get_database)):
     clean_query = query.strip()
@@ -858,21 +907,34 @@ async def track_order(query: str = Query(...), db=Depends(get_database)):
             live_tracking = await get_delhivery_tracking_info(awb, db)
             if live_tracking:
                 order["delhivery_tracking"] = live_tracking
-                if live_tracking.get("status") and live_tracking.get("status") != order.get("delhivery_status"):
-                    await db["orders"].update_one(
-                        {"id": order["id"]},
-                        {"$set": {"delhivery_status": live_tracking["status"]}}
-                    )
-                    order["delhivery_status"] = live_tracking["status"]
+                if live_tracking.get("status"):
+                    new_delhivery_status = live_tracking["status"]
+                    new_main_status = map_delhivery_to_main_status(new_delhivery_status, order.get("status", "Shipped"))
+                    
+                    updates = {}
+                    if new_delhivery_status != order.get("delhivery_status"):
+                        updates["delhivery_status"] = new_delhivery_status
+                        order["delhivery_status"] = new_delhivery_status
+                        
+                    if new_main_status != order.get("status"):
+                        updates["status"] = new_main_status
+                        order["status"] = new_main_status
+                        
+                    if updates:
+                        await db["orders"].update_one(
+                            {"id": order["id"]},
+                            {"$set": updates}
+                        )
         return order
         
     # If not found in DB, check if clean_query is a raw Delhivery AWB number
     live_tracking = await get_delhivery_tracking_info(clean_query, db)
     if live_tracking and (live_tracking.get("status") or live_tracking.get("scans")):
+        main_st = map_delhivery_to_main_status(live_tracking.get("status", ""), "Shipped")
         return {
             "id": live_tracking.get("awb", clean_query),
             "date": live_tracking.get("status_time", ""),
-            "status": live_tracking.get("status", "In Transit"),
+            "status": main_st,
             "delhivery_awb": clean_query,
             "delhivery_status": live_tracking.get("status"),
             "delhivery_tracking": live_tracking,
@@ -881,6 +943,29 @@ async def track_order(query: str = Query(...), db=Depends(get_database)):
         }
         
     raise HTTPException(status_code=404, detail="Order not found. Please check your Order ID or AWB number.")
+
+from fastapi import Request
+
+@app.post("/api/delhivery-webhook")
+async def delhivery_webhook(request: Request, db=Depends(get_database)):
+    try:
+        body = await request.json()
+        awb = body.get("waybill") or body.get("awb") or body.get("AWB") or (body.get("Shipment") or {}).get("AWB")
+        status = body.get("status") or body.get("Status") or (body.get("Status") or {}).get("Status")
+        
+        if awb and status:
+            order = await db["orders"].find_one({"delhivery_awb": str(awb)})
+            if order:
+                new_main_status = map_delhivery_to_main_status(str(status), order.get("status", "Shipped"))
+                await db["orders"].update_one(
+                    {"id": order["id"]},
+                    {"$set": {"delhivery_status": str(status), "status": new_main_status}}
+                )
+                return {"success": True, "updated": order["id"], "new_status": new_main_status}
+        return {"success": True, "message": "Webhook received"}
+    except Exception as e:
+        print("[DELHIVERY WEBHOOK ERROR]", str(e))
+        return {"success": False, "error": str(e)}
 
 from pydantic import BaseModel
 
