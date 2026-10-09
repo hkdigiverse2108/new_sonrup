@@ -20,7 +20,7 @@ from backend.database import connect_to_mongo, close_mongo_connection, get_datab
 from backend.models import (
     UserRegister, UserLogin, UserModel, UserUpdate, AddressModel, OrderModel, NewsletterSubscribe,
     HomePageContentModel, AboutPageContentModel, ContactPageContentModel, JournalPageContentModel, PostModel, PolicyModel, ContactSubmissionModel, BroadcastPayload, IntegrationsModel, LoginPageContentModel,
-    ForgotPasswordRequest, VerifyOtpRequest, ResetPasswordOtpRequest
+    ForgotPasswordRequest, VerifyOtpRequest, ResetPasswordOtpRequest, ValidateCouponModel
 )
 
 load_dotenv()
@@ -771,15 +771,77 @@ async def sync_my_addresses(addresses: List[AddressModel], current_user=Depends(
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True}
 
+@app.post("/api/coupons/validate")
+async def validate_coupon(req: ValidateCouponModel, db=Depends(get_database)):
+    code_upper = req.code.strip().upper()
+    if not code_upper:
+        raise HTTPException(status_code=400, detail="Please enter a coupon code.")
+        
+    coupon = await db["coupons"].find_one({"code": code_upper})
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Invalid coupon code.")
+        
+    if not coupon.get("is_active", True):
+        raise HTTPException(status_code=400, detail="This coupon code is inactive.")
+        
+    expiry = coupon.get("expiry_date")
+    if expiry:
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        if expiry < today_str:
+            raise HTTPException(status_code=400, detail="This coupon has expired.")
+            
+    usage_limit = coupon.get("usage_limit")
+    used_count = coupon.get("used_count", 0)
+    if usage_limit is not None and used_count >= usage_limit:
+        raise HTTPException(status_code=400, detail="This coupon usage limit has been reached.")
+        
+    min_amount = coupon.get("min_order_amount", 0.0) or 0.0
+    if req.subtotal < min_amount:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Minimum order amount of Rs. {min_amount:g} required to use coupon {code_upper}."
+        )
+        
+    disc_type = coupon.get("discount_type", "percentage")
+    disc_val = float(coupon.get("discount_value", 0.0))
+    
+    if disc_type == "percentage":
+        discount_amount = round((req.subtotal * disc_val) / 100.0, 2)
+        max_cap = coupon.get("max_discount_amount")
+        if max_cap is not None and max_cap > 0 and discount_amount > max_cap:
+            discount_amount = float(max_cap)
+    else:
+        discount_amount = round(min(disc_val, req.subtotal), 2)
+        
+    final_total = max(0.0, round(req.subtotal - discount_amount, 2))
+    
+    return {
+        "valid": True,
+        "code": code_upper,
+        "discount_type": disc_type,
+        "discount_value": disc_val,
+        "discount_amount": discount_amount,
+        "final_total": final_total,
+        "message": f"Coupon '{code_upper}' applied successfully!"
+    }
+
 @app.post("/api/orders")
 async def create_order(order: OrderModel, db=Depends(get_database)):
-    await db["orders"].insert_one(order.model_dump())
+    order_dict = order.model_dump()
+    await db["orders"].insert_one(order_dict)
+    
+    if order.coupon_code:
+        await db["coupons"].update_one(
+            {"code": order.coupon_code.strip().upper()},
+            {"$inc": {"used_count": 1}}
+        )
     
     # Generate a token so the user can immediately view their orders without needing an OTP
     access_token_expires = timedelta(days=30)
     token = create_access_token(data={"sub": order.customer_email}, expires_delta=access_token_expires)
     
     return {"success": True, "order_id": order.id, "token": token}
+
 
 async def get_delhivery_tracking_info(awb: str, db):
     try:

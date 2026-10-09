@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiAdminGetOrders, apiAdminCreateOfflineOrder, apiAdminUpdateOrderStatus, apiAdminShipOrder, apiAdminPickupOrder, apiAdminCancelShipment, apiAdminDeleteOrder, apiAdminGetOrderLabel, apiAdminSyncAllDelhiveryOrders, apiAdminSyncSingleDelhiveryOrder, fetchJson } from "@/lib/api";
-import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard, Search, Calendar as CalendarIcon, FilterX, Filter, RefreshCw } from "lucide-react";
+import { CheckCircle, Clock, Truck, Package, Printer, Trash2, Plus, X, User, MapPin, PlusCircle, CreditCard, Search, Calendar as CalendarIcon, FilterX, Filter, RefreshCw, Ticket, Tag, Eye } from "lucide-react";
 import { useConfirm } from "@/components/ui/confirm";
 import { toast } from "sonner";
 import { DateRange } from "react-day-picker";
@@ -56,8 +56,9 @@ function AdminOrders() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedViewOrder, setSelectedViewOrder] = useState<any>(null);
 
-  const [typeFilter, setTypeFilter] = useState<"all" | "online" | "offline">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "online" | "offline" | "coupon">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -116,9 +117,10 @@ function AdminOrders() {
   });
 
   const filteredOrders = orders.filter((order) => {
-    // 1. Channel Filter (Online vs Offline)
+    // 1. Channel / Coupon Filter (Online vs Offline vs Coupon)
     if (typeFilter === "online" && order.is_offline) return false;
     if (typeFilter === "offline" && !order.is_offline) return false;
+    if (typeFilter === "coupon" && !order.coupon_code) return false;
 
     // 2. Status Filter
     if (statusFilter !== "all") {
@@ -182,8 +184,9 @@ function AdminOrders() {
       const email = (order.customer_email || "").toLowerCase();
       const phone = (order.customer_phone || "").toLowerCase();
       const awb = (order.delhivery_awb || "").toLowerCase();
+      const coupon = (order.coupon_code || "").toLowerCase();
 
-      if (!id.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !awb.includes(q)) {
+      if (!id.includes(q) && !name.includes(q) && !email.includes(q) && !phone.includes(q) && !awb.includes(q) && !coupon.includes(q)) {
         return false;
       }
     }
@@ -250,6 +253,15 @@ function AdminOrders() {
                 }`}
               >
                 Offline ({orders.filter((o) => o.is_offline).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter("coupon")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all inline-flex items-center gap-1 ${
+                  typeFilter === "coupon" ? "bg-emerald-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Ticket className="h-3 w-3" /> Coupon ({orders.filter((o) => o.coupon_code).length})
               </button>
             </div>
 
@@ -344,7 +356,14 @@ function AdminOrders() {
                     {order.customer_email ? <div className="text-xs text-muted-foreground">{order.customer_email}</div> : null}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">{formatOrderDateTime(order)}</td>
-                  <td className="px-6 py-4 font-semibold">₹{order.total}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-foreground">₹{order.total}</div>
+                    {order.coupon_code && (
+                      <div className="mt-0.5 text-xs text-muted-foreground whitespace-nowrap">
+                        Coupon: <span className="font-medium text-foreground">{order.coupon_code}</span>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 font-medium">
                     <div className="flex flex-col gap-1">
                       <span className={`inline-flex items-center gap-1 font-semibold text-xs px-2.5 py-0.5 rounded-full w-max ${
@@ -806,6 +825,142 @@ function AdminOrders() {
       )}
 
       <AddOfflineOrderModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      {selectedViewOrder && (
+        <ViewOrderDetailsModal order={selectedViewOrder} onClose={() => setSelectedViewOrder(null)} />
+      )}
+    </div>
+  );
+}
+
+function ViewOrderDetailsModal({ order, onClose }: { order: any; onClose: () => void }) {
+  if (!order) return null;
+
+  const itemsSubtotal = (order.items || []).reduce((acc: number, item: any) => acc + (Number(item.price || 0) * Number(item.qty || 1)), 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              Order Details #{order.id}
+              {order.is_offline && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                  OFFLINE
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-muted-foreground">{formatOrderDateTime(order)}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-4 space-y-6">
+          {/* Customer Info */}
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Customer Details</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div><span className="text-muted-foreground">Name:</span> <strong className="text-foreground">{order.customer_name}</strong></div>
+              {order.customer_email ? <div><span className="text-muted-foreground">Email:</span> <span className="text-foreground">{order.customer_email}</span></div> : null}
+              {order.customer_phone ? <div><span className="text-muted-foreground">Phone:</span> <span className="text-foreground">{order.customer_phone}</span></div> : null}
+              {order.payment_method ? <div><span className="text-muted-foreground">Payment Method:</span> <span className="font-semibold uppercase">{order.payment_method}</span></div> : null}
+            </div>
+            {order.shipping_address && (
+              <div className="pt-2 border-t border-border/60 text-xs text-muted-foreground">
+                <span className="font-bold text-foreground">Address: </span>
+                {order.shipping_address.line1 || order.shipping_address.address}, {order.shipping_address.city}, {order.shipping_address.state} - {order.shipping_address.pincode}
+              </div>
+            )}
+          </div>
+
+          {/* Coupon Highlight Box if applied */}
+          {order.coupon_code ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 flex items-center justify-between text-emerald-900">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                  <Ticket className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Coupon Applied</div>
+                  <div className="text-base font-extrabold text-emerald-900">{order.coupon_code}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-emerald-700 font-medium">Discount Savings</div>
+                <div className="text-base font-extrabold text-emerald-800">-₹{order.discount_amount || 0}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs text-muted-foreground flex items-center gap-2">
+              <Tag className="h-4 w-4 opacity-50" />
+              <span>No coupon was applied to this order.</span>
+            </div>
+          )}
+
+          {/* Order Items */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ordered Items</h3>
+            <div className="rounded-xl border border-border overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-muted/50 text-muted-foreground font-semibold">
+                  <tr>
+                    <th className="p-3">Item</th>
+                    <th className="p-3 text-center">Qty</th>
+                    <th className="p-3 text-right">Price</th>
+                    <th className="p-3 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {(order.items || []).map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="p-3 font-medium text-foreground">{item.name || item.slug}</td>
+                      <td className="p-3 text-center font-bold">{item.qty || 1}</td>
+                      <td className="p-3 text-right">₹{item.price}</td>
+                      <td className="p-3 text-right font-bold">₹{Number(item.price || 0) * Number(item.qty || 1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className="rounded-xl border border-border bg-card p-4 space-y-2 text-sm">
+            {order.coupon_code ? (
+              <div className="flex justify-between text-muted-foreground text-xs">
+                <span>Items Subtotal</span>
+                <span>₹{itemsSubtotal}</span>
+              </div>
+            ) : null}
+            {order.coupon_code ? (
+              <div className="flex justify-between text-emerald-600 font-medium text-xs">
+                <span>Coupon Discount ({order.coupon_code})</span>
+                <span>-₹{order.discount_amount || 0}</span>
+              </div>
+            ) : null}
+            <div className="flex justify-between font-bold text-base border-t border-border pt-2">
+              <span>Grand Total</span>
+              <span className="text-primary">₹{order.total}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-4 border-t border-border flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

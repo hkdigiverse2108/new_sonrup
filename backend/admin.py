@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from backend.database import get_database
-from backend.models import ProductModel, ReorderProductsModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel, CreateOfflineOrderModel
+from backend.models import ProductModel, ReorderProductsModel, ReviewModel, FaqModel, HomePageContentModel, FlavourModel, ProductReviewModel, IntegrationsModel, LoginPageContentModel, AboutPageContentModel, JournalPageContentModel, PostModel, CreateOfflineOrderModel, CouponModel
 from typing import Any, Dict
 import os
 import uuid
@@ -702,3 +702,66 @@ async def update_milestone(year: str, val: MilestoneModel, admin=Depends(require
 async def delete_milestone(year: str, admin=Depends(require_admin), db=Depends(get_database)):
     await db["milestones"].delete_one({"year": year})
     return {"success": True}
+
+# ---------------------------------------------------------
+# Coupons CRUD
+# ---------------------------------------------------------
+@router.get("/coupons")
+async def list_coupons(admin=Depends(require_admin), db=Depends(get_database)):
+    coupons = await db["coupons"].find({}, {"_id": 0}).to_list(1000)
+    return coupons
+
+@router.post("/coupons")
+async def create_coupon(coupon: CouponModel, admin=Depends(require_admin), db=Depends(get_database)):
+    code = coupon.code.strip().upper()
+    existing = await db["coupons"].find_one({"code": code})
+    if existing:
+        raise HTTPException(status_code=400, detail="Coupon code already exists")
+    
+    data = coupon.model_dump()
+    data["code"] = code
+    if not data.get("created_at"):
+        data["created_at"] = datetime.now(timezone.utc).isoformat()
+        
+    await db["coupons"].insert_one(data)
+    return {"success": True, "code": code}
+
+@router.put("/coupons/{code}")
+async def update_coupon(code: str, coupon: CouponModel, admin=Depends(require_admin), db=Depends(get_database)):
+    code_upper = code.strip().upper()
+    existing = await db["coupons"].find_one({"code": code_upper})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+        
+    data = coupon.model_dump()
+    new_code = (coupon.code or "").strip().upper() or code_upper
+    
+    if new_code != code_upper:
+        another = await db["coupons"].find_one({"code": new_code})
+        if another:
+            raise HTTPException(status_code=400, detail=f"Coupon code '{new_code}' is already taken.")
+            
+    data["code"] = new_code
+    if "used_count" not in data or data["used_count"] is None:
+        data["used_count"] = existing.get("used_count", 0)
+        
+    await db["coupons"].replace_one({"code": code_upper}, data)
+    return {"success": True}
+
+@router.delete("/coupons/{code}")
+async def delete_coupon(code: str, admin=Depends(require_admin), db=Depends(get_database)):
+    code_upper = code.strip().upper()
+    await db["coupons"].delete_one({"code": code_upper})
+    return {"success": True}
+
+@router.patch("/coupons/{code}/toggle")
+async def toggle_coupon_status(code: str, admin=Depends(require_admin), db=Depends(get_database)):
+    code_upper = code.strip().upper()
+    existing = await db["coupons"].find_one({"code": code_upper})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+        
+    new_status = not existing.get("is_active", True)
+    await db["coupons"].update_one({"code": code_upper}, {"$set": {"is_active": new_status}})
+    return {"success": True, "is_active": new_status}
+

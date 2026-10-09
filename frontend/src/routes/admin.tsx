@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, FileText,
   LogOut, Eye, EyeOff, Lock, User,
   ChevronDown, Home, Star, Layers, CheckCircle, Settings, MessageCircle, Users, Plug,
-  Menu, X
+  Menu, X, Ticket
 } from "lucide-react";
 
 const ADMIN_TOKEN_KEY = "sonrup_admin_token";
@@ -76,6 +76,7 @@ function AdminLayout() {
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { to: "/admin/orders", label: "Orders", icon: ShoppingCart },
     { to: "/admin/products", label: "Products", icon: Package },
+    { to: "/admin/coupons", label: "Coupons", icon: Ticket },
     { to: "/admin/product-reviews", label: "Product Reviews", icon: Star },
     { to: "/admin/contacts", label: "Contact Inquiry", icon: MessageCircle },
     { to: "/admin/subscribers", label: "Subscribers", icon: Users },

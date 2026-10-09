@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Container, Crumbs, NotFoundBlock, RouteError } from "@/components/site/Page";
 import { Badge, BrandButton, Price, ProductCard, QtyStepper, Rating, Reveal, SectionTitle } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
-import { useProducts, useProductReviews, fetchJson, productDetailQueryOptions, productsQueryOptions, getImageUrl } from "@/lib/api";
+import { useProducts, useProductReviews, fetchJson, productDetailQueryOptions, productsQueryOptions, getImageUrl, useIntegrationsSettings } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,8 @@ function getTrustIcon(iconName: string) {
 
 function ProductPage() {
   const { product } = Route.useLoaderData();
+  const { data: settings } = useIntegrationsSettings();
+  const threshold = settings?.free_shipping_amount ?? 499;
   const { add, wishlist, toggleWish, setCartOpen } = useStore();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
@@ -235,7 +237,7 @@ function ProductPage() {
               ))
             ) : (
               <>
-                <Trust icon={<Truck className="h-4 w-4" />} text="Free shipping above ₹499" />
+                <Trust icon={<Truck className="h-4 w-4" />} text={threshold === 0 ? "Free shipping on all orders" : `Free shipping above ${inr(threshold)}`} />
                 <Trust icon={<ShieldCheck className="h-4 w-4" />} text="Lab tested every batch" />
                 <Trust icon={<Undo2 className="h-4 w-4" />} text="7-day easy returns" />
               </>

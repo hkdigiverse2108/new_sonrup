@@ -162,6 +162,8 @@ class OrderModel(BaseModel):
     delhivery_status: Optional[str] = None
     is_offline: Optional[bool] = False
     notes: Optional[str] = None
+    coupon_code: Optional[str] = None
+    discount_amount: Optional[float] = 0.0
 
 class CreateOfflineOrderModel(BaseModel):
     customer_name: str
@@ -511,3 +513,25 @@ class LoginPageContentModel(BaseModel):
     image: str = "/multi-vitamin.jpg"
     subtitle: str = "Delicious Nutrition."
     description: str = "Formulated with care to make taking your vitamins the best part of your day. Your wellness journey starts here."
+
+# -------------------------------------------------------------------
+# COUPON MODEL
+# -------------------------------------------------------------------
+
+class CouponModel(BaseModel):
+    code: str
+    discount_type: str = "percentage"  # "percentage" or "fixed"
+    discount_value: float  # e.g., 10 for 10% or 100 for ₹100
+    min_order_amount: Optional[float] = 0.0
+    max_discount_amount: Optional[float] = None  # Cap for percentage discount
+    expiry_date: Optional[str] = None  # YYYY-MM-DD or ISO string
+    usage_limit: Optional[int] = None  # Max allowed uses across system
+    used_count: Optional[int] = 0
+    is_active: Optional[bool] = True
+    description: Optional[str] = ""
+    created_at: Optional[str] = None
+
+class ValidateCouponModel(BaseModel):
+    code: str
+    subtotal: float
+

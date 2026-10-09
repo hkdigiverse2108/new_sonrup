@@ -474,3 +474,65 @@ export const apiAdminCreateFaq = (data: any) => fetchJson("/api/admin/faqs", { m
 export const apiAdminUpdateFaq = (q: string, data: any) => fetchJson(`/api/admin/faqs/${encodeURIComponent(q)}`, { method: "PUT", body: JSON.stringify(data) });
 export const apiAdminDeleteFaq = (q: string) => fetchJson(`/api/admin/faqs/${encodeURIComponent(q)}`, { method: "DELETE" });
 
+// ─── Coupons API ─────────────────────────────────────────────────────────────
+
+export interface Coupon {
+  code: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  expiry_date?: string;
+  usage_limit?: number;
+  used_count?: number;
+  is_active?: boolean;
+  description?: string;
+  created_at?: string;
+}
+
+export interface CouponValidationResult {
+  valid: boolean;
+  code: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  discount_amount: number;
+  final_total: number;
+  message: string;
+}
+
+export const useAdminCoupons = () => {
+  return useQuery({
+    queryKey: ["admin_coupons"],
+    queryFn: () => fetchJson<Coupon[]>("/api/admin/coupons"),
+  });
+};
+
+export const apiAdminCreateCoupon = (data: Partial<Coupon>) =>
+  fetchJson<{ success: boolean; code: string }>("/api/admin/coupons", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminUpdateCoupon = (code: string, data: Partial<Coupon>) =>
+  fetchJson<{ success: boolean }>(`/api/admin/coupons/${encodeURIComponent(code)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const apiAdminDeleteCoupon = (code: string) =>
+  fetchJson<{ success: boolean }>(`/api/admin/coupons/${encodeURIComponent(code)}`, {
+    method: "DELETE",
+  });
+
+export const apiAdminToggleCouponStatus = (code: string) =>
+  fetchJson<{ success: boolean; is_active: boolean }>(`/api/admin/coupons/${encodeURIComponent(code)}/toggle`, {
+    method: "PATCH",
+  });
+
+export const apiValidateCoupon = (code: string, subtotal: number) =>
+  fetchJson<CouponValidationResult>("/api/coupons/validate", {
+    method: "POST",
+    body: JSON.stringify({ code, subtotal }),
+  });
+
+

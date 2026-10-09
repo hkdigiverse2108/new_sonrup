@@ -29,8 +29,8 @@ function CartPage() {
     setIsMounted(true);
   }, []);
 
-  const FREE_SHIPPING_THRESHOLD = isMounted && settings?.free_shipping_amount ? settings.free_shipping_amount : 499;
-  const SHIPPING_CHARGE = isMounted && settings?.shipping_charge ? settings.shipping_charge : 59;
+  const FREE_SHIPPING_THRESHOLD = isMounted ? (settings?.free_shipping_amount ?? 499) : 499;
+  const SHIPPING_CHARGE = isMounted ? (settings?.shipping_charge ?? 59) : 59;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_CHARGE;
 
   return (
@@ -44,7 +44,11 @@ function CartPage() {
             <EmptyState
               icon={<ShoppingBag className="h-8 w-8" />}
               title="Your cart is empty"
-              body="Add a tube or two — free shipping kicks in above ₹499."
+              body={
+                FREE_SHIPPING_THRESHOLD === 0
+                  ? "Add a tube or two — enjoy free shipping on all orders."
+                  : `Add a tube or two — free shipping kicks in above ${inr(FREE_SHIPPING_THRESHOLD)}.`
+              }
               action={
                 <Link to="/shop">
                   <BrandButton variant="solid">Shop gummies</BrandButton>

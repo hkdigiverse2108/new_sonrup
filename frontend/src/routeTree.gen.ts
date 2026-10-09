@@ -28,6 +28,7 @@ import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminContactsRouteImport } from './routes/admin/contacts'
 import { Route as AdminContentRouteImport } from './routes/admin/content'
+import { Route as AdminCouponsRouteImport } from './routes/admin/coupons'
 import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin/integrations'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
@@ -152,6 +153,11 @@ const AdminContactsRoute = AdminContactsRouteImport.update({
 const AdminContentRoute = AdminContentRouteImport.update({
   id: '/content',
   path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCouponsRoute = AdminCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCustomersRoute = AdminCustomersRouteImport.update({
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -375,6 +382,7 @@ export interface FileRoutesByTo {
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/wishlist': typeof WishlistRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRouteWithChildren
+  '/admin/coupons': typeof AdminCouponsRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
+    | '/admin/coupons'
     | '/admin/customers'
     | '/admin/integrations'
     | '/admin/orders'
@@ -530,6 +540,7 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
+    | '/admin/coupons'
     | '/admin/customers'
     | '/admin/integrations'
     | '/admin/orders'
@@ -581,6 +592,7 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/admin/contacts'
     | '/admin/content'
+    | '/admin/coupons'
     | '/admin/customers'
     | '/admin/integrations'
     | '/admin/orders'
@@ -770,6 +782,13 @@ declare module '@tanstack/react-router' {
       path: '/content'
       fullPath: '/admin/content'
       preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/coupons': {
+      id: '/admin/coupons'
+      path: '/coupons'
+      fullPath: '/admin/coupons'
+      preLoaderRoute: typeof AdminCouponsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/customers': {
@@ -1006,6 +1025,7 @@ const AdminContentRouteWithChildren = AdminContentRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminContentRoute: typeof AdminContentRouteWithChildren
+  AdminCouponsRoute: typeof AdminCouponsRoute
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
@@ -1034,6 +1054,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminContentRoute: AdminContentRouteWithChildren,
+  AdminCouponsRoute: AdminCouponsRoute,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
   AdminOrdersRoute: AdminOrdersRoute,

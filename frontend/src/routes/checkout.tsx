@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, CreditCard, Lock, ShoppingBag, Truck } from "lucide-react";
+import { CheckCircle2, CreditCard, Lock, ShoppingBag, Truck, Ticket, Tag, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Container, Crumbs, EmptyState, RouteError } from "@/components/site/Page";
@@ -7,7 +7,7 @@ import { BrandButton } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { useAuth, type Order } from "@/lib/auth";
-import { apiAddOrder, useIntegrationsSettings, getImageUrl } from "@/lib/api";
+import { apiAddOrder, useIntegrationsSettings, getImageUrl, apiValidateCoupon, type CouponValidationResult } from "@/lib/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 import { cn } from "@/lib/utils";
@@ -42,15 +42,48 @@ function Checkout() {
   const { data: settings } = useIntegrationsSettings();
   const isOnlineActive = settings?.razorpay_active !== false;
 
+  // Coupon State
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const discountAmount = appliedCoupon ? appliedCoupon.discount_amount : 0;
+  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
+  const SHIPPING_CHARGE = settings?.shipping_charge ?? 59;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_CHARGE;
+  const grandTotal = Math.max(0, subtotal - discountAmount + shipping);
+
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!couponCodeInput.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+    setIsValidatingCoupon(true);
+    try {
+      const res = await apiValidateCoupon(couponCodeInput.trim(), subtotal);
+      if (res.valid) {
+        setAppliedCoupon(res);
+        toast.success(res.message || "Coupon applied successfully!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Invalid coupon code");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCodeInput("");
+    toast.info("Coupon code removed");
+  };
+
   useEffect(() => {
     if (settings && settings.razorpay_active === false && pay === "online") {
       setPay("cod");
     }
   }, [settings, pay]);
-
-  const FREE_SHIPPING_THRESHOLD = settings?.free_shipping_amount ?? 499;
-  const SHIPPING_CHARGE = settings?.shipping_charge ?? 59;
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -136,7 +169,7 @@ function Checkout() {
                 date: formattedDate,
                 created_at: now.toISOString(),
                 status: "Processing",
-                total: subtotal + shipping,
+                total: grandTotal,
                 items: lines.map((l) => ({
                   slug: l.product.slug,
                   name: l.product.name,
@@ -150,6 +183,8 @@ function Checkout() {
                 customer_phone: customerPhone,
                 shipping_address: shippingAddress,
                 payment_method: pay,
+                coupon_code: appliedCoupon?.code || null,
+                discount_amount: discountAmount,
               };
 
               if (pay === "online") {
@@ -165,14 +200,14 @@ function Checkout() {
                   const orderRes = await fetch(`${API_URL}/api/razorpay/create-order`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ amount: Number(subtotal + shipping) })
+                    body: JSON.stringify({ amount: Number(grandTotal) })
                   }).then(r => r.json());
                   
                   if (!orderRes.order_id) throw new Error("Failed to create Razorpay order");
                   
                   const options = {
                     key: settings?.razorpay_key_id,
-                    amount: (subtotal + shipping) * 100,
+                    amount: Math.round(grandTotal * 100),
                     currency: "INR",
                     name: "Sonrup Nutrition",
                     description: "Order Payment",
@@ -391,7 +426,7 @@ function Checkout() {
                   step === 2 && "bg-secondary hover:bg-secondary/90"
                 )}
               >
-                {isProcessing ? "Processing..." : step < 2 ? "Continue" : `Pay ${inr(subtotal + shipping)}`}
+                {isProcessing ? "Processing..." : step < 2 ? "Continue" : `Pay ${inr(grandTotal)}`}
                 {step === 2 && !isProcessing && <CreditCard className="h-4 w-4 shrink-0" />}
               </BrandButton>
             </div>
@@ -411,18 +446,70 @@ function Checkout() {
                 </div>
               ))}
             </div>
-            <dl className="mt-6 grid gap-3 border-t border-border pt-5 text-sm">
+            {/* Coupon Code Input Widget */}
+            <div className="mt-6 border-t border-border pt-5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5 mb-2.5">
+                <Ticket className="h-4 w-4 text-primary" /> Coupon Code
+              </span>
+
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <div>
+                      <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300">{appliedCoupon.code}</span>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Discount: -{inr(appliedCoupon.discount_amount)}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-xs font-bold text-muted-foreground hover:text-destructive transition"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="ENTER COUPON CODE"
+                    value={couponCodeInput}
+                    onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono font-bold uppercase placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={isValidatingCoupon || !couponCodeInput.trim()}
+                    className="rounded-xl bg-ink px-4 py-2 text-xs font-bold text-cream transition hover:bg-ink/80 disabled:opacity-50 shrink-0"
+                  >
+                    {isValidatingCoupon ? "..." : "Apply"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <dl className="mt-5 grid gap-3 border-t border-border pt-5 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Subtotal</dt>
                 <dd className="font-semibold">{inr(subtotal)}</dd>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <dt className="flex items-center gap-1 text-xs">
+                    <Tag className="h-3.5 w-3.5" /> Coupon ({appliedCoupon.code})
+                  </dt>
+                  <dd>-{inr(discountAmount)}</dd>
+                </div>
+              )}
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Shipping</dt>
                 <dd className="font-semibold">{shipping === 0 ? "Free" : inr(shipping)}</dd>
               </div>
               <div className="flex items-baseline justify-between border-t border-border pt-4">
                 <dt className="font-display text-lg font-extrabold">Total</dt>
-                <dd className="font-display text-2xl font-extrabold">{inr(subtotal + shipping)}</dd>
+                <dd className="font-display text-2xl font-extrabold">{inr(grandTotal)}</dd>
               </div>
             </dl>
           </aside>

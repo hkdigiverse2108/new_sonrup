@@ -279,7 +279,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
 
 export function FreeShipBar({ subtotal, threshold }: { subtotal: number; threshold: number }) {
   const remaining = Math.max(0, threshold - subtotal);
-  const pct = Math.min(100, (subtotal / threshold) * 100);
+  const pct = threshold > 0 ? Math.min(100, (subtotal / threshold) * 100) : 100;
   return (
     <div className="rounded-2xl bg-muted/70 p-4">
       <p className="text-xs font-semibold">

@@ -16,7 +16,7 @@ export function CartDrawer() {
     setIsMounted(true);
   }, []);
 
-  const FREE_SHIPPING_THRESHOLD = isMounted && settings?.free_shipping_amount ? settings.free_shipping_amount : 499;
+  const FREE_SHIPPING_THRESHOLD = isMounted ? (settings?.free_shipping_amount ?? 499) : 499;
 
   return (
     <div className={cn("fixed inset-0 z-70", cartOpen ? "pointer-events-auto" : "pointer-events-none")}>

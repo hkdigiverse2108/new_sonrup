@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Container, EmptyState, RouteError } from "@/components/site/Page";
 import { BrandButton, Eyebrow, Price, Rating, Reveal } from "@/components/site/Primitives";
 import { inr } from "@/lib/products";
-import { useProducts, getImageUrl } from "@/lib/api";
+import { useProducts, useIntegrationsSettings, getImageUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/wishlist")({
@@ -23,8 +23,10 @@ export const Route = createFileRoute("/wishlist")({
 function WishlistPage() {
   const { wishlist, toggleWish, add } = useStore();
   const { data: products = [] } = useProducts();
+  const { data: settings } = useIntegrationsSettings();
   const saved = products.filter((p) => wishlist.includes(p.slug));
   const total = saved.reduce((s, p) => s + p.price, 0);
+  const threshold = settings?.free_shipping_amount ?? 499;
 
   return (
     <main>
@@ -43,7 +45,7 @@ function WishlistPage() {
           </h1>
           {saved.length > 0 && (
             <p className="mask-rise mt-5 text-sm text-cream/60 [--d:240ms]">
-              Wishlist value {inr(total)} · free shipping applies over {inr(499)}
+              Wishlist value {inr(total)} · {threshold === 0 ? "free shipping on all orders" : `free shipping applies over ${inr(threshold)}`}
             </p>
           )}
         </Container>
