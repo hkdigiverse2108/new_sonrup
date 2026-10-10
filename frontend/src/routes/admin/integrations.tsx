@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAdminIntegrationsSettings, apiAdminUpdateIntegrationsSettings } from "@/lib/api";
-import { CheckCircle2, Truck, Package, Eye, EyeOff, Megaphone, CreditCard, SlidersHorizontal } from "lucide-react";
+import { CheckCircle2, Truck, Package, Eye, EyeOff, Megaphone, CreditCard, SlidersHorizontal, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/integrations")({
@@ -91,6 +91,76 @@ function IntegrationsSettingsPage() {
               </label>
             </div>
           </div>
+
+        {/* Promotional Offer Banner Settings */}
+        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col gap-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                  <Ticket className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Promotional Offer Banner</h2>
+                  <p className="text-sm text-muted-foreground">Floating coupon bar displayed on Desktop & Mobile.</p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.offer_banner_enabled !== false}
+                  onChange={(e) => setForm({ ...form, offer_banner_enabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+            </div>
+            
+            <div className="space-y-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">Coupon Code</span>
+                <input
+                  type="text"
+                  value={form.offer_banner_code ?? "WELCOME100"}
+                  onChange={(e) => setForm({ ...form, offer_banner_code: e.target.value.toUpperCase() })}
+                  placeholder="e.g. WELCOME100"
+                  className="rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm font-mono uppercase font-bold transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">Banner Title</span>
+                <input
+                  type="text"
+                  value={form.offer_banner_title ?? "Flat ₹100 OFF on Your Order"}
+                  onChange={(e) => setForm({ ...form, offer_banner_title: e.target.value })}
+                  placeholder="e.g. Flat ₹100 OFF on Your Order"
+                  className="rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">Banner Subtitle / Details</span>
+                <input
+                  type="text"
+                  value={form.offer_banner_subtitle ?? "Use code WELCOME100 at checkout"}
+                  onChange={(e) => setForm({ ...form, offer_banner_subtitle: e.target.value })}
+                  placeholder="e.g. Use code WELCOME100 at checkout"
+                  className="rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">Button Text</span>
+                <input
+                  type="text"
+                  value={form.offer_banner_button_text ?? "Copy Code"}
+                  onChange={(e) => setForm({ ...form, offer_banner_button_text: e.target.value })}
+                  placeholder="e.g. Copy Code"
+                  className="rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary w-full max-w-xl"
+                />
+              </label>
+            </div>
+        </div>
 
         {/* Shipping Settings */}
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col gap-6">

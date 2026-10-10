@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { productsQueryOptions, useIntegrationsSettings, getImageUrl } from "@/lib/api";
+import { OfferBanner } from "./OfferBanner";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
@@ -292,6 +293,7 @@ export function Header() {
           </div>
         )}
       </div>
+      <OfferBanner />
     </header>
   );
 }

@@ -33,6 +33,11 @@ class IntegrationsModel(BaseModel):
         "MADE WITH REAL FRUIT FLAVOURS",
         "VEGETARIAN · PECTIN BASED"
     ]
+    offer_banner_enabled: bool = True
+    offer_banner_code: str = "WELCOME100"
+    offer_banner_title: str = "Flat ₹100 OFF on Your Order"
+    offer_banner_subtitle: str = "Use code WELCOME100 at checkout"
+    offer_banner_button_text: str = "Copy Code"
 
 class ProductModel(BaseModel):
     slug: str

@@ -219,7 +219,8 @@ export const integrationsSettingsQueryOptions = () =>
   queryOptions({
     queryKey: ["integrations_settings"],
     queryFn: () => fetchJson<any>("/api/settings/integrations"),
-    staleTime: 1000 * 60,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
 // ─── React Query Hooks (delegating to Query Options) ─────────────────────────
