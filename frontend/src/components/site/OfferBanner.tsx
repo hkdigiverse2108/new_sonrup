@@ -14,7 +14,6 @@ export function OfferBanner() {
   const enabled = activeSettings?.offer_banner_enabled !== false;
   const code = activeSettings?.offer_banner_code || "WELCOME100";
   const title = activeSettings?.offer_banner_title || "Flat ₹100 OFF on Your Order";
-  const subtitle = activeSettings?.offer_banner_subtitle || "Use code WELCOME100 at checkout";
   const buttonText = activeSettings?.offer_banner_button_text || "Copy Code";
 
   if (!enabled) return null;
@@ -28,71 +27,62 @@ export function OfferBanner() {
 
   return (
     <>
-      {/* Desktop: Full-width bar with RICH GOLDEN SHADING + LARGER HIGH-CONTRAST TEXT */}
+      {/* Desktop: Centered Full-Width Golden Offer Bar with Larger High-Contrast Typography */}
       <div className="hidden lg:block w-full bg-gradient-to-r from-[#c69229] via-[#ecd067] to-[#c69229] border-b border-[#b8851f] shadow-md">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 lg:px-10 py-3">
-          {/* Left: Code tag + offer message */}
-          <div className="flex items-center gap-3.5">
-            {/* Dark Ink Badge pill for high contrast code */}
-            <span className="flex items-center gap-1.5 rounded-full border border-[#1a1208] bg-[#1a1208] px-3.5 py-1 font-mono text-[12.5px] font-black uppercase tracking-widest text-[#f7dc78] shrink-0 shadow-sm">
-              ✦ {code}
-            </span>
-            <p className="text-[14.5px] font-black text-[#1a1208] tracking-tight">
-              {title}
-              <span className="ml-2 font-bold text-[#3b280e]">— {subtitle}</span>
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 lg:px-10 py-3 text-center">
+          {/* Centered text & button container */}
+          <div className="mx-auto flex items-center justify-center gap-3.5">
+            <p className="text-[16px] font-black text-[#1a1208] tracking-tight">
+              <span>{title}</span>
+              <span className="ml-2 font-black text-[#1a1208]">— Use code</span>
             </p>
-          </div>
 
-          {/* Right: Larger Sleek Dark Ink CTA Copy Button */}
-          <div className="flex items-center gap-2 shrink-0">
+            {/* High-Contrast Centered Coupon Code Badge */}
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#1a1208] px-4.5 py-1.5 text-[12px] font-black text-[#f7dc78] shadow-md transition-all hover:bg-[#2e1f0e] active:scale-95"
+              title="Click to copy coupon code"
+              className="group relative inline-flex items-center gap-2 rounded-full border border-[#1a1208] bg-[#1a1208] px-5.5 py-1.5 font-mono text-[15px] font-black uppercase tracking-widest text-[#f7dc78] shadow-[0_4px_16px_rgba(26,18,8,0.4)] ring-2 ring-[#1a1208]/30 ring-offset-1 ring-offset-[#ecd067] transition-all hover:bg-[#2b1e0f] hover:scale-105 active:scale-95 cursor-pointer"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-[#f7dc78]" /> : <Copy className="h-3.5 w-3.5 text-[#f7dc78]" />}
-              {copied ? "Copied!" : buttonText}
+              {copied ? (
+                <Check className="h-4 w-4 text-[#f7dc78] animate-in zoom-in" />
+              ) : (
+                <Copy className="h-4 w-4 text-[#f7dc78]" />
+              )}
+              <span className="font-mono text-[15px] font-black tracking-widest">{copied ? "COPIED!" : code}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile: Fixed bottom card with LARGER TEXT */}
+      {/* Mobile: Fixed bottom card with Coupon CTA */}
       <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40 rounded-2xl border border-[#b8851f] bg-gradient-to-b from-[#ecd067] to-[#c69229] p-4 shadow-[0_16px_40px_rgba(198,146,41,0.5)] animate-in slide-in-from-bottom duration-500">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            {/* Icon box */}
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#1a1208]/30 bg-[#1a1208]/15 text-[#1a1208]">
-              <Ticket className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-display text-[15px] font-black tracking-tight text-[#1a1208]">
-                {title}
-              </h3>
-              {/* Code pill */}
-              <span className="mt-0.5 inline-block rounded-md bg-[#1a1208] px-2.5 py-0.5 font-mono text-[12px] font-bold text-[#f7dc78]">
-                {code}
-              </span>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#1a1208]/30 bg-[#1a1208]/15 text-[#1a1208]">
+            <Ticket className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-[16px] font-black tracking-tight text-[#1a1208]">
+              {title}
+            </h3>
+            <p className="text-[13px] font-black text-[#1a1208]">
+              Use coupon code below
+            </p>
           </div>
         </div>
 
-        <p className="mt-2.5 text-[13px] font-bold text-[#3b280e] leading-relaxed">
-          {subtitle}
-        </p>
-
         <button
           onClick={handleCopy}
-          className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1a1208] px-4 py-2.5 text-[13px] font-black text-[#f7dc78] shadow-md transition-all hover:bg-[#2e1f0e] active:scale-[0.98]"
+          className="mt-3.5 flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#1a1208] px-4 py-3 text-[14.5px] font-black text-[#f7dc78] shadow-[0_4px_16px_rgba(26,18,8,0.4)] transition-all hover:bg-[#2e1f0e] active:scale-[0.98]"
         >
           {copied ? (
             <>
               <Check className="h-4 w-4 text-[#f7dc78]" />
-              <span>Copied to Clipboard! 🎉</span>
+              <span>COPIED TO CLIPBOARD! 🎉</span>
             </>
           ) : (
             <>
+              <Copy className="h-4 w-4 text-[#f7dc78]" />
               <span>{buttonText} — {code}</span>
-              <ArrowRight className="h-4 w-4 text-[#f7dc78]" />
             </>
           )}
         </button>
